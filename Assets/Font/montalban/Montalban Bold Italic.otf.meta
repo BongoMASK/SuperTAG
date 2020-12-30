@@ -1,0 +1,25 @@
+fileFormatVersion: 2
+guid: ae2e0d23e6afbf74382276a2a1e7852b
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Montalban
+  fontNames:
+  - Montalban
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 1e02fac7257269c45a46affd9806a2db, type: 3}
+  - {fileID: 12800000, guid: 53aaccabff03ef7408e8cc957aabadf2, type: 3}
+  - {fileID: 12800000, guid: b7d3f3bb8e1ff9e4d97d19aaecd35055, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

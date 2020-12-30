@@ -1,0 +1,24 @@
+fileFormatVersion: 2
+guid: 7f514ef3c07f9914685e6a6214a6a991
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Montalban Condensed
+  fontNames:
+  - Montalban Condensed
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 7acd8737c49c63045bb4e448ea860c56, type: 3}
+  - {fileID: 12800000, guid: be39992a87fff9941ab8efc74b225018, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
