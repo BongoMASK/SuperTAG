@@ -130,15 +130,29 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     /// Find user input. Should put this in its own class but im lazy
     /// </summary>
     private void MyInput() {
-        x = Input.GetAxisRaw("Horizontal");
-        y = Input.GetAxisRaw("Vertical");
-        jumping = Input.GetButton("Jump");
-        crouching = Input.GetKey(KeyCode.LeftShift);
+        if (Input.GetKey(GameManager.GM.right))
+            x = 1;     //Input.GetAxisRaw("Horizontal");
+        else if (Input.GetKey(GameManager.GM.left))
+            x = -1;
+        else {
+            x = 0;
+        }
+
+        if (Input.GetKey(GameManager.GM.forward))
+            y = 1;     //Input.GetAxisRaw("Horizontal");
+        else if (Input.GetKey(GameManager.GM.backward))
+            y = -1;
+        else {
+            y = 0;
+        }
+        //y = Input.GetAxisRaw("Vertical");
+        jumping = Input.GetKey(GameManager.GM.jump);  //Input.GetButton("Jump");
+        crouching = Input.GetKey(GameManager.GM.crouch);
 
         //Crouching
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (Input.GetKeyDown(GameManager.GM.crouch))
             StartCrouch();
-        if (Input.GetKeyUp(KeyCode.LeftShift))
+        if (Input.GetKeyUp(GameManager.GM.crouch))
             StopCrouch();
     }
 

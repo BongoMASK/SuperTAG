@@ -4,5 +4,17 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/StartScreen.unity
+    guid: 76aaec1d4fe1302458f400c2edfbd33c
+  - enabled: 1
+    path: Assets/Scenes/gg maps.unity
+    guid: 7969194af63eddd4e90c968be7be0adb
+  - enabled: 1
+    path: Assets/Scenes/Practice.unity
+    guid: 451ceb0785fd3f44d9340bf4b6fcb69a
+  - enabled: 1
+    path: Assets/Scenes/Tutorial.unity
+    guid: 7195010f754429448b8e295340de64c4
   m_configObjects: {}
