@@ -52,13 +52,19 @@ MonoBehaviour:
     source: {fileID: 0}
   - name: Jump
     clip: {fileID: 8300000, guid: fa6df1a35243c6d4196bcb97dfaa689b, type: 3}
-    volume: 0
-    pitch: 0
+    volume: 1
+    pitch: 1
     loop: 0
     source: {fileID: 0}
   - name: Slide
     clip: {fileID: 8300000, guid: e56b7482ff3041b40ab0400f3f1b8cd4, type: 3}
-    volume: 0
-    pitch: 0
+    volume: 1
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: TagSound
+    clip: {fileID: 8300000, guid: 0323345dacdbd6248817e4d6f08f031e, type: 3}
+    volume: 1
+    pitch: 1.33
     loop: 0
     source: {fileID: 0}

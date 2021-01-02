@@ -118,11 +118,38 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         Respawn();
+        Sounds();
     }
 
     void Respawn() {
         if (transform.position.y <= -40f) {
             transform.position = new Vector3(0f, 0f, 0f);
+        }
+    }
+
+    void Sounds() {
+        //Slide
+        if(crouching && !jumping && grounded) {
+            if (!FindObjectOfType<AudioManager>().GetAudioSource("Slide").isPlaying) {
+                FindObjectOfType<AudioManager>().Play("Slide");
+            }
+        }
+
+        //Footsteps
+        if (grounded && !crouching) {
+            if (Mathf.Abs(x) > 0 || Mathf.Abs(y) > 0) {
+                soundTimer -= Time.deltaTime;
+                if (soundTimer <= 0f) {
+                    //TODO: add better sound (should be like rubber souls on concrete like when you run in the society) 
+                    FindObjectOfType<AudioManager>().Play("Footsteps");
+                    soundTimer = 0.4f;
+                }
+            }
+        }
+
+        //Jump
+        if(grounded && readyToJump && jumping) {
+            FindObjectOfType<AudioManager>().Play("Jump");
         }
     }
 
@@ -239,6 +266,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     void ChangeOnTeamsChange() {
         countdown = countdownStart;
         renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
+        FindObjectOfType<AudioManager>().Play("TagSound");
 
         if (InfoText != null) {
             InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString();
@@ -294,17 +322,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         //Apply forces to move player
         rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
         rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier);
-
-        if (grounded) {
-            if(Mathf.Abs(x) > 0 || Mathf.Abs(y) > 0) {
-                soundTimer -= Time.deltaTime;
-                if (soundTimer <= 0f) {
-                    //TODO: add better sound (should be like rubber souls on concrete like when you run in the society) 
-                    //FindObjectOfType<AudioManager>().Play("Footsteps");
-                    soundTimer = 0.4f;
-                }
-            }
-        }
     }
 
     private void Jump() {
