@@ -85,8 +85,15 @@ public class TeamSetup : MonoBehaviour
             scoreText.text = "Score:  " + (int)PV.Owner.CustomProperties["score"];
 
             timeUntilRestart -= Time.deltaTime;
-            if (timeUntilRestart <= 0) {
-                StartNewRound();
+            if (PhotonNetwork.IsMasterClient) {
+                if (timeUntilRestart <= 0) {
+                    StartNewRound();
+                }
+            }
+            else {
+                if (timeUntilRestart <= -2) {   //TODO: send this timeUntilRestart over the network to not cause delay
+                    StartNewRound();            //this is a bad solution to this problem lol
+                }
             }
         }
 

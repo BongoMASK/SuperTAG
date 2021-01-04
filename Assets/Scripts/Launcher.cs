@@ -38,6 +38,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     Player player;
 
     string randomName;
+    private List<GameObject> _listings = new List<GameObject>();
 
     private void Awake() {
         Instance = this;
@@ -111,6 +112,11 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     public override void OnJoinedRoom() {
+        _listings.Clear();
+        foreach (Transform trans in roomListContent) {
+            Destroy(trans.gameObject);
+        }
+
         MenuManager.Instance.OpenMenu("room");
         roomNameText.text = PhotonNetwork.CurrentRoom.Name;
 
@@ -176,16 +182,55 @@ public class Launcher : MonoBehaviourPunCallbacks
         MenuManager.Instance.OpenMenu("title");
     }
 
-    public override void OnRoomListUpdate(List<RoomInfo> roomList) {
-        /*foreach (Transform trans in roomListContent) {
+    /*public override void OnRoomListUpdate(List<RoomInfo> roomList) {
+        foreach (Transform trans in roomListContent) {
+            
             Destroy(trans.gameObject);
-        }*/
+        }
 
         for (int i = 0; i < roomList.Count; i++) {
             if(roomList[i].RemovedFromList) {
                 continue;
             }
             Instantiate(roomListItemPrefab, roomListContent).GetComponent<RoomListItem>().SetUp(roomList[i]);
+        }
+    }*/
+
+    public override void OnRoomListUpdate(List<RoomInfo> roomList) {    //12:47
+        foreach(RoomInfo info in roomList) {
+            //removed from list
+            if(info.RemovedFromList) {
+                int index = _listings.FindIndex(a => a.GetComponent<RoomListItem>().info.Name == info.Name);
+                if(index != -1) {
+                    Destroy(_listings[index].gameObject);
+                    _listings.RemoveAt(index);
+                }
+            }
+            
+            //added to list
+            else {
+                for (int i = 0; i < roomList.Count; i++) {
+                    if (roomList[i].RemovedFromList) {
+                        //continue;
+                    }
+
+                    else if (info.Name == roomList[i].Name) {     //if room already exists, delete previous room
+                        Debug.Log("found duplicate");
+                        int index = _listings.FindIndex(a => a.GetComponent<RoomListItem>().info.Name == roomList[i].Name);
+                        if (index != -1) {
+                            Destroy(_listings[index].gameObject);
+                            _listings.RemoveAt(index);
+                        }
+                    }
+                    GameObject listing = Instantiate(roomListItemPrefab, roomListContent);
+                    Debug.Log("added room");
+                    if (listing != null) {
+                        listing.GetComponent<RoomListItem>().SetUp(roomList[i]);
+                        _listings.Add(listing);
+                    }
+
+                }
+            }
         }
     }
 
