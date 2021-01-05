@@ -16,7 +16,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] TMP_InputField playerNameInputField;
     [SerializeField] TMP_Text errorText;
     [SerializeField] TMP_Text roomNameText;
-    public string playerNameText;
+    [SerializeField] TMP_Text playerNameText;
 
     //Room List Variables
     [SerializeField] Transform roomListContent;
@@ -35,9 +35,6 @@ public class Launcher : MonoBehaviourPunCallbacks
     int time = 120;
     [SerializeField] TMP_Text timeText;
 
-    Player player;
-
-    string randomName;
     private List<GameObject> _listings = new List<GameObject>();
 
     private void Awake() {
@@ -69,6 +66,9 @@ public class Launcher : MonoBehaviourPunCallbacks
             { "countdown", false }
         };
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash1);
+
+        PhotonNetwork.NickName = PlayerPrefs.GetString("playerName", "Player " + Random.Range(0, 1000).ToString("0000"));
+        playerNameText.text = PlayerPrefs.GetString("playerName", "Player " + Random.Range(0, 1000).ToString("0000"));
     }
 
     private void Update() {
@@ -84,11 +84,6 @@ public class Launcher : MonoBehaviourPunCallbacks
     public override void OnJoinedLobby() {
         MenuManager.Instance.OpenMenu("title");
         Debug.Log("joined lobby");
-
-        if (string.IsNullOrEmpty(playerNameInputField.text)) {
-            randomName = "Player " + Random.Range(0, 1000).ToString("0000");
-            PhotonNetwork.NickName = randomName;
-        }
     }
 
     public void CreateRoom() {
@@ -105,10 +100,21 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     public void CreatePlayerName() {
         if (string.IsNullOrEmpty(playerNameInputField.text)) {
+            ErrorMessage("Username must exist");
             return;
         }
-        playerNameText = playerNameInputField.text;
-        PhotonNetwork.NickName = playerNameText;
+        else if (playerNameInputField.text[0].ToString() == " ") {
+            ErrorMessage("Cannot start username with a Space");
+            return;
+        }
+        else if (playerNameInputField.text.Length >= 50) {
+            ErrorMessage("Username cannot go over 50 characters");
+            return;
+        }
+
+        PlayerPrefs.SetString("playerName", playerNameInputField.text);
+        PhotonNetwork.NickName = playerNameInputField.text;
+        playerNameText.text = playerNameInputField.text;
     }
 
     public override void OnJoinedRoom() {
@@ -182,26 +188,18 @@ public class Launcher : MonoBehaviourPunCallbacks
         MenuManager.Instance.OpenMenu("title");
     }
 
-    /*public override void OnRoomListUpdate(List<RoomInfo> roomList) {
-        foreach (Transform trans in roomListContent) {
-            
-            Destroy(trans.gameObject);
-        }
-
-        for (int i = 0; i < roomList.Count; i++) {
-            if(roomList[i].RemovedFromList) {
-                continue;
-            }
-            Instantiate(roomListItemPrefab, roomListContent).GetComponent<RoomListItem>().SetUp(roomList[i]);
-        }
-    }*/
+    void ErrorMessage(string message) {
+        errorText.text = message;
+        Debug.LogError(message);
+        MenuManager.Instance.OpenMenu("error");
+    }
 
     public override void OnRoomListUpdate(List<RoomInfo> roomList) {    //12:47
         foreach(RoomInfo info in roomList) {
             //removed from list
             if(info.RemovedFromList) {
                 int index = _listings.FindIndex(a => a.GetComponent<RoomListItem>().info.Name == info.Name);
-                if(index != -1) {
+                if(index != -1) {   //indicates if index is found
                     Destroy(_listings[index].gameObject);
                     _listings.RemoveAt(index);
                 }
@@ -211,11 +209,10 @@ public class Launcher : MonoBehaviourPunCallbacks
             else {
                 for (int i = 0; i < roomList.Count; i++) {
                     if (roomList[i].RemovedFromList) {
-                        //continue;
+                        continue;
                     }
 
                     else if (info.Name == roomList[i].Name) {     //if room already exists, delete previous room
-                        Debug.Log("found duplicate");
                         int index = _listings.FindIndex(a => a.GetComponent<RoomListItem>().info.Name == roomList[i].Name);
                         if (index != -1) {
                             Destroy(_listings[index].gameObject);
@@ -223,7 +220,6 @@ public class Launcher : MonoBehaviourPunCallbacks
                         }
                     }
                     GameObject listing = Instantiate(roomListItemPrefab, roomListContent);
-                    Debug.Log("added room");
                     if (listing != null) {
                         listing.GetComponent<RoomListItem>().SetUp(roomList[i]);
                         _listings.Add(listing);

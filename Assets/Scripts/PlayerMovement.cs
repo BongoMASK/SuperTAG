@@ -16,7 +16,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     //Rotation and look
     private float xRotation;
-    public static float sensitivity = 50f;
+    public static float sensitivity = 50;
     private float sensMultiplier = 1f;
 
     //Movement
@@ -118,7 +118,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         Respawn();
-        Sounds();
+        //Sounds();
     }
 
     void Respawn() {
@@ -266,7 +266,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     void ChangeOnTeamsChange() {
         countdown = countdownStart;
         renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
-        FindObjectOfType<AudioManager>().Play("TagSound");
+        //FindObjectOfType<AudioManager>().Play("TagSound");
 
         if (InfoText != null) {
             InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString();

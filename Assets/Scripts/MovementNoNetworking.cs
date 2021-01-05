@@ -12,7 +12,7 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
 
     //Rotation and look
     private float xRotation;
-    public static float sensitivity = 50f;
+    public static float sensitivity = 50;
     private float sensMultiplier = 1f;
 
     //Movement

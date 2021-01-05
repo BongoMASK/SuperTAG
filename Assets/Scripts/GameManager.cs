@@ -3,6 +3,7 @@ using Photon.Pun;
 using UnityEngine.SceneManagement;
 using TMPro;
 using Photon.Realtime;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject pauseMenu;
     [SerializeField] GameObject optionsMenu;
     [SerializeField] GameObject mainPauseMenu;
+    [SerializeField] Slider slider;
 
     [SerializeField] GameObject leaderBoard;
 
@@ -32,8 +34,7 @@ public class GameManager : MonoBehaviour
     public KeyCode left { get; set; }
     public KeyCode right { get; set; }
     public KeyCode crouch { get; set; }
-
-
+    public int sensitivity { get; set; }
 
     void Awake() {
         //Singleton pattern
@@ -58,12 +59,18 @@ public class GameManager : MonoBehaviour
         right = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("rightKey", "D"));
         crouch = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("crouchKey", "LeftShift"));
 
+        sensitivity = PlayerPrefs.GetInt("sensitivity", 50);
+        mouseSensText.text = PlayerPrefs.GetInt("sensitivity", 50).ToString();
+
+        PlayerMovement.sensitivity = sensitivity;
+        MovementNoNetworking.sensitivity = sensitivity;
     }
 
     private void Start() {
         pauseMenu.SetActive(false);
-        mouseSensText.text = PlayerMovement.sensitivity.ToString();
-        mouseSensText.text = MovementNoNetworking.sensitivity.ToString();
+        slider.value = sensitivity;
+        //mouseSensText.text = PlayerMovement.sensitivity.ToString();
+        //mouseSensText.text = MovementNoNetworking.sensitivity.ToString();
 
         if (PhotonNetwork.CurrentRoom != null) {
             roomNameText.text = PhotonNetwork.CurrentRoom.Name;
@@ -146,6 +153,7 @@ public class GameManager : MonoBehaviour
     public void ChangeMouseSens(float newSens) {
         PlayerMovement.sensitivity = newSens;
         MovementNoNetworking.sensitivity = newSens;
+        PlayerPrefs.SetInt("sensitivity", (int)newSens);
         mouseSensText.text = ((int)newSens).ToString();
     }
 }
