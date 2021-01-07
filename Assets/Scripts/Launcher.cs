@@ -30,10 +30,14 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] GameObject startGameButton;
     [SerializeField] GameObject incrementTimeButton;
     [SerializeField] GameObject decrementTimeButton;
+    [SerializeField] GameObject incrementDennerButton;
+    [SerializeField] GameObject decrementDennerButton;
     [SerializeField] GameObject roomManager;
 
     int time = 120;
+    int dennerCount = 1;
     [SerializeField] TMP_Text timeText;
+    [SerializeField] TMP_Text dennerCountText;
 
     private List<GameObject> _listings = new List<GameObject>();
 
@@ -50,11 +54,17 @@ public class Launcher : MonoBehaviourPunCallbacks
         Cursor.visible = true;
 
         Hashtable hash = new Hashtable {
-            { "time", time }
+            { "time", time },
+            { "denner", dennerCount }
         };
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
 
+        if (PhotonNetwork.IsMasterClient) {
+            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        }
+
         timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
+        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
 
         Instantiate(roomManager);
 
@@ -73,6 +83,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     private void Update() {
         timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
+        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
     }
 
     public override void OnConnectedToMaster() {
@@ -123,6 +134,15 @@ public class Launcher : MonoBehaviourPunCallbacks
             Destroy(trans.gameObject);
         }
 
+        Hashtable hash = new Hashtable {
+            { "time", time },
+            { "denner", dennerCount }
+        };
+
+        if (PhotonNetwork.IsMasterClient) {
+            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        }
+
         MenuManager.Instance.OpenMenu("room");
         roomNameText.text = PhotonNetwork.CurrentRoom.Name;
 
@@ -139,6 +159,8 @@ public class Launcher : MonoBehaviourPunCallbacks
         startGameButton.SetActive(PhotonNetwork.IsMasterClient);
         incrementTimeButton.SetActive(PhotonNetwork.IsMasterClient);
         decrementTimeButton.SetActive(PhotonNetwork.IsMasterClient);
+        incrementDennerButton.SetActive(PhotonNetwork.IsMasterClient);
+        decrementDennerButton.SetActive(PhotonNetwork.IsMasterClient);
     }
 
     public override void OnJoinRoomFailed(short returnCode, string message) {
@@ -235,6 +257,13 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     public void SetTime(int increment) {
+        if (time <= 20 && increment < 0) {
+            return;
+        }
+        if (time >= 300 && increment > 0) {
+            return;
+        }
+
         time += increment;
         timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
 
@@ -243,6 +272,28 @@ public class Launcher : MonoBehaviourPunCallbacks
         };
 
         foreach(Player player in PhotonNetwork.PlayerList) {
+            player.SetCustomProperties(hash);
+        }
+    }
+
+    public void SetDenner(int increment) {
+        if (dennerCount <= 1 && increment < 0) {
+            return;
+        }
+        if (dennerCount >= PhotonNetwork.CurrentRoom.PlayerCount - 1 && increment > 0) {
+            return;
+        }
+
+        dennerCount += increment;
+        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
+
+        Hashtable hash = new Hashtable {
+            { "denner", dennerCount }
+        };
+
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+
+        foreach (Player player in PhotonNetwork.PlayerList) {
             player.SetCustomProperties(hash);
         }
     }

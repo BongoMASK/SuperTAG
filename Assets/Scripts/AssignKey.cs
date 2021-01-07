@@ -36,8 +36,6 @@ public class AssignKey : MonoBehaviour {
 				optionPanel.GetChild(i).GetComponentInChildren<TMP_Text>().text = GameManager.GM.right.ToString();
 			else if (optionPanel.GetChild(i).name == "Jump")
 				optionPanel.GetChild(i).GetComponentInChildren<TMP_Text>().text = GameManager.GM.jump.ToString();
-			else
-				Debug.Log("Not found");
 		}
 	}
 

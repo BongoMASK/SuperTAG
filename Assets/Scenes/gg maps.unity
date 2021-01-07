@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -9814,7 +9814,7 @@ MonoBehaviour:
   pauseMenu: {fileID: 781336605}
   optionsMenu: {fileID: 1426988316}
   mainPauseMenu: {fileID: 883562742}
-  slider: {fileID: 0}
+  slider: {fileID: 890389003}
   leaderBoard: {fileID: 1232253264}
   mouseSensText: {fileID: 908957116}
   roomNameText: {fileID: 268077355}

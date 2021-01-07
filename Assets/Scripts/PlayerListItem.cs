@@ -36,7 +36,7 @@ public class PlayerListItem : MonoBehaviourPunCallbacks
 
     public void SetUp(Player _player) {
         player = _player;
-        SetPlayerText(_player);
+        text.text = player.NickName;
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer) {
@@ -48,26 +48,4 @@ public class PlayerListItem : MonoBehaviourPunCallbacks
     public override void OnLeftRoom() {
         Destroy(gameObject);
     }
-
-    private void SetPlayerText(Player _player) {
-        string dennerOrNot;
-        if (_player.CustomProperties.ContainsKey("team")) {
-            dennerOrNot = _player.CustomProperties["TeamName"].ToString();
-        }
-        else {
-            //Resetting custom properties here makes the client a master client for some reason
-            dennerOrNot = "No Team";
-        }
-        text.text = player.NickName + " (" + dennerOrNot + ")";
-    }
-
-    public override void OnPlayerPropertiesUpdate(Player targetPlayer, ExitGames.Client.Photon.Hashtable changedProps) {
-        base.OnPlayerPropertiesUpdate(targetPlayer, changedProps);
-        if(targetPlayer != null && targetPlayer == player) {
-            if(changedProps.ContainsKey("team")) {
-                SetPlayerText(targetPlayer);
-            }
-        }
-    }
-
 }
