@@ -166,17 +166,17 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         if (runner <= 0) {
             int value = Random.Range(0, PhotonNetwork.PlayerList.Length);
             Hashtable hash2 = new Hashtable {
-                    { "team", 0 },
-                    { "TeamName", PlayerInfo.Instance.allTeams[0] }
-                };
+                { "team", 0 },
+                { "TeamName", PlayerInfo.Instance.allTeams[0] }
+            };
             PhotonNetwork.PlayerList[value].SetCustomProperties(hash2);
         }
         else if (denner <= 0) {
             int value = Random.Range(0, PhotonNetwork.PlayerList.Length);
             Hashtable hash2 = new Hashtable {
-                    { "team", 1 },
-                    { "TeamName", PlayerInfo.Instance.allTeams[1] }
-                };
+                { "team", 1 },
+                { "TeamName", PlayerInfo.Instance.allTeams[1] }
+            };
             PhotonNetwork.PlayerList[value].SetCustomProperties(hash2);
         }
         else if (denner > (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]) {
@@ -188,9 +188,9 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                 }
                 else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
                     Hashtable hash2 = new Hashtable {
-                            { "team", 0 },
-                            { "TeamName", PlayerInfo.Instance.allTeams[0] }
-                        };
+                        { "team", 0 },
+                        { "TeamName", PlayerInfo.Instance.allTeams[0] }
+                    };
                     PhotonNetwork.PlayerList[i].SetCustomProperties(hash2);
                     surplus++;
                 }
@@ -205,9 +205,9 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                 }
                 else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
                     Hashtable hash2 = new Hashtable {
-                            { "team", 1 },
-                            { "TeamName", PlayerInfo.Instance.allTeams[1] }
-                        };
+                        { "team", 1 },
+                        { "TeamName", PlayerInfo.Instance.allTeams[1] }
+                    };
                     PhotonNetwork.PlayerList[i].SetCustomProperties(hash2);
                     surplus++;
                 }
@@ -221,7 +221,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         }
         if (otherPlayer != player) {
             CheckForDenners();
-            Invoke("CheckForDenners", 2.0f);
+            //Invoke("CheckForDenners", 2.0f);
         }
     }
 
@@ -231,7 +231,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         }
         if (newPlayer != player) {
             CheckForDenners();
-            Invoke("CheckForDenners", 2.0f);
+            //Invoke("CheckForDenners", 2.0f);
         }
     }*/
 

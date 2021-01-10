@@ -66,6 +66,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     float soundTimer = 0f;
 
     [SerializeField] Material[] material; 
+    [SerializeField] GameObject glasses;
+    [SerializeField] GameObject canvas;
 
     void Awake() {
         rb = GetComponent<Rigidbody>();
@@ -77,6 +79,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         if(PV.IsMine) {
             EquipItem(1);
             GetComponent<MeshRenderer>().enabled = false;
+            Destroy(glasses);
         }
         else {
             Destroy(playerCam.gameObject);
@@ -115,6 +118,10 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             MyInput();
             Look();
             ChangeItem();
+        }
+
+        if(canvas != null) {
+            canvas.SetActive(!GameManager.gameIsPaused);
         }
 
         Respawn();
