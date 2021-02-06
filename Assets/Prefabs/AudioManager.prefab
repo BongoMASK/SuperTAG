@@ -51,20 +51,63 @@ MonoBehaviour:
     loop: 0
     source: {fileID: 0}
   - name: Jump
-    clip: {fileID: 8300000, guid: fa6df1a35243c6d4196bcb97dfaa689b, type: 3}
+    clip: {fileID: 8300000, guid: 1fb1391ee223f7041ac588551dcbb0a5, type: 3}
     volume: 1
     pitch: 1
     loop: 0
     source: {fileID: 0}
   - name: Slide
-    clip: {fileID: 8300000, guid: e56b7482ff3041b40ab0400f3f1b8cd4, type: 3}
+    clip: {fileID: 8300000, guid: 55d5518cc808a49408a1625f98b84ff7, type: 3}
     volume: 1
     pitch: 1
     loop: 0
     source: {fileID: 0}
   - name: TagSound
-    clip: {fileID: 8300000, guid: 0323345dacdbd6248817e4d6f08f031e, type: 3}
-    volume: 1
+    clip: {fileID: 8300000, guid: bd8ff701c8370814fb576a08df12ea70, type: 3}
+    volume: 0.6
     pitch: 1.33
+    loop: 0
+    source: {fileID: 0}
+  - name: Breeze
+    clip: {fileID: 8300000, guid: d37470923bc98a2488f91994f3e5c2a4, type: 3}
+    volume: 0.8
+    pitch: 1
+    loop: 1
+    source: {fileID: 0}
+  - name: Round Timer
+    clip: {fileID: 8300000, guid: 0323345dacdbd6248817e4d6f08f031e, type: 3}
+    volume: 0.5
+    pitch: 1.33
+    loop: 0
+    source: {fileID: 0}
+  - name: Round Timer End
+    clip: {fileID: 8300000, guid: 778b5c9cd08c4e14f9bef4006079bba1, type: 3}
+    volume: 0.8
+    pitch: 0.5
+    loop: 0
+    source: {fileID: 0}
+  - name: Slide Get Up
+    clip: {fileID: 8300000, guid: 91767787315b36c47875b830120ffd16, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  randomFootsteps:
+  - name: Footsteps
+    clip: {fileID: 8300000, guid: 3be21a84c1c4f2541af306ccaed564ec, type: 3}
+    volume: 0.3
+    pitch: 0.6
+    loop: 0
+    source: {fileID: 0}
+  - name: Footsteps
+    clip: {fileID: 8300000, guid: dd54321af4dd2b34aa8e5687c23d8df5, type: 3}
+    volume: 0.3
+    pitch: 0.6
+    loop: 0
+    source: {fileID: 0}
+  - name: Footsteps
+    clip: {fileID: 8300000, guid: bb10b4236af400d46bc98fbabc5729da, type: 3}
+    volume: 0.3
+    pitch: 0.6
     loop: 0
     source: {fileID: 0}

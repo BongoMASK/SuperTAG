@@ -20,7 +20,17 @@ public class PlayerManager : MonoBehaviour
     }
 
     void CreateController() {
-        Vector3 spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
+        Vector3 spawnPosition;
+
+        spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
+
+        if (FindObjectOfType<SpawnPoints>() != null) {
+            Transform[] spawnPositions = FindObjectOfType<SpawnPoints>().spawnPoints;
+            for (int i = 0; i < spawnPositions.Length; i++) {
+                spawnPosition = spawnPositions[i].position;
+            }
+        }
+
         PhotonNetwork.Instantiate(Path.Combine("PhotonPrefabs", "PlayerContainer 1"), spawnPosition, Quaternion.identity);
     }
 }

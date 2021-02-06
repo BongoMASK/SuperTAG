@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] TMP_Text[] score;
     [SerializeField] TMP_Text[] playerName;
 
+    Player[] playerList;
+
     //Used for singleton
     public static GameManager GM;
 
@@ -94,12 +96,13 @@ public class GameManager : MonoBehaviour
     }
 
     void SortPlayersByScore() {
-        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
-            for (int j = i + 1; j < PhotonNetwork.PlayerList.Length; j++) {
-                if ((int)PhotonNetwork.PlayerList[i].CustomProperties["score"] > (int)PhotonNetwork.PlayerList[j].CustomProperties["score"]) {
-                    Player a = PhotonNetwork.PlayerList[i];
-                    PhotonNetwork.PlayerList[i] = PhotonNetwork.PlayerList[j];
-                    PhotonNetwork.PlayerList[j] = a;
+        playerList = PhotonNetwork.PlayerList;
+        for (int i = 0; i < playerList.Length; i++) {
+            for (int j = i + 1; j < playerList.Length; j++) {
+                if ((int)playerList[i].CustomProperties["score"] < (int)playerList[j].CustomProperties["score"]) {
+                    Player a = playerList[i];
+                    playerList[i] = playerList[j];
+                    playerList[j] = a;
                 }
             }
         }
@@ -109,11 +112,15 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Tab)) {
             leaderBoard.SetActive(true);
 
-            //SortPlayersByScore();
-            for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
-                Player player = PhotonNetwork.PlayerList[i];
+            SortPlayersByScore();
+            for (int i = 0; i < playerList.Length; i++) {
+                Player player = playerList[i];
                 playerName[i].text = player.NickName + " (" + player.CustomProperties["TeamName"].ToString() + ")";
                 score[i].text = ((int)player.CustomProperties["score"]).ToString();
+            }
+            for (int i = PhotonNetwork.PlayerList.Length; i < 6; i++) {
+                playerName[i].text = "...";
+                score[i].text = "...";
             }
         }
         if(Input.GetKeyUp(KeyCode.Tab)) {

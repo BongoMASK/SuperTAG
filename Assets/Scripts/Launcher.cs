@@ -27,17 +27,19 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] GameObject playerListItemPrefab;
 
     //Other GameObjects
-    [SerializeField] GameObject startGameButton;
-    [SerializeField] GameObject incrementTimeButton;
-    [SerializeField] GameObject decrementTimeButton;
-    [SerializeField] GameObject incrementDennerButton;
-    [SerializeField] GameObject decrementDennerButton;
+    [SerializeField] GameObject[] masterClientButtons;
+
     [SerializeField] GameObject roomManager;
 
     int time = 120;
     int dennerCount = 1;
+    int mapCount = 1;
+    int tagCountdown = 5;
+
     [SerializeField] TMP_Text timeText;
     [SerializeField] TMP_Text dennerCountText;
+    [SerializeField] TMP_Text tagCountdownText;
+    [SerializeField] TMP_Text mapText;
 
     private List<GameObject> _listings = new List<GameObject>();
 
@@ -47,6 +49,8 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     void Start()
     {
+        PhotonNetwork.OfflineMode = false;
+
         Debug.Log("connecting to Master");
         PhotonNetwork.ConnectUsingSettings();
 
@@ -73,7 +77,8 @@ public class Launcher : MonoBehaviourPunCallbacks
             { "TeamName", "Runner" },
             { "name", PhotonNetwork.LocalPlayer.NickName },
             { "score", 1 },
-            { "countdown", false }
+            { "countdown", false },
+            { "mapCount", mapCount },
         };
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash1);
 
@@ -84,6 +89,10 @@ public class Launcher : MonoBehaviourPunCallbacks
     private void Update() {
         timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
         dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
+        if (PhotonNetwork.CurrentRoom != null && tagCountdownText != null) {
+            tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"]).ToString();
+            mapText.text = GetSceneNameByIndex((int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"]);
+        }
     }
 
     public override void OnConnectedToMaster() {
@@ -136,11 +145,18 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         Hashtable hash = new Hashtable {
             { "time", time },
-            { "denner", dennerCount }
+            { "denner", dennerCount },
+            { "mapCount", mapCount },
+            { "tagCountdown", tagCountdown},
+            { "roundNumber", 0 }
         };
 
         if (PhotonNetwork.IsMasterClient) {
             PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        }
+
+        if (!PhotonNetwork.IsMasterClient) {
+            mapCount = (int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"];
         }
 
         MenuManager.Instance.OpenMenu("room");
@@ -156,11 +172,9 @@ public class Launcher : MonoBehaviourPunCallbacks
             Instantiate(playerListItemPrefab, playerListContent).GetComponent<PlayerListItem>().SetUp(players[i]);
         }
 
-        startGameButton.SetActive(PhotonNetwork.IsMasterClient);
-        incrementTimeButton.SetActive(PhotonNetwork.IsMasterClient);
-        decrementTimeButton.SetActive(PhotonNetwork.IsMasterClient);
-        incrementDennerButton.SetActive(PhotonNetwork.IsMasterClient);
-        decrementDennerButton.SetActive(PhotonNetwork.IsMasterClient);
+        for (int i = 0; i < masterClientButtons.Length; i++) {
+            masterClientButtons[i].SetActive(PhotonNetwork.IsMasterClient);
+        }
     }
 
     public override void OnJoinRoomFailed(short returnCode, string message) {
@@ -170,7 +184,9 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     public override void OnMasterClientSwitched(Player newMasterClient) {
-        startGameButton.SetActive(PhotonNetwork.IsMasterClient);
+        for (int i = 0; i < masterClientButtons.Length; i++) {
+            masterClientButtons[i].SetActive(PhotonNetwork.IsMasterClient);
+        }
         Debug.Log("Master Client switched");
     }
 
@@ -186,6 +202,10 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     public void StartMap2() {
         PhotonNetwork.LoadLevel(2);
+    }
+
+    public void StartRoom() {
+        PhotonNetwork.LoadLevel(mapCount);
     }
 
     public void StartTutorial() {
@@ -246,7 +266,6 @@ public class Launcher : MonoBehaviourPunCallbacks
                         listing.GetComponent<RoomListItem>().SetUp(roomList[i]);
                         _listings.Add(listing);
                     }
-
                 }
             }
         }
@@ -296,6 +315,58 @@ public class Launcher : MonoBehaviourPunCallbacks
         foreach (Player player in PhotonNetwork.PlayerList) {
             player.SetCustomProperties(hash);
         }
+    }
+
+    public void SetCountdown(int increment) {
+        if (tagCountdown <= 2 && increment < 0) {
+            return;
+        }
+        if (tagCountdown >= 7 && increment > 0) {
+            return;
+        }
+
+        tagCountdown += increment;
+        tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"]).ToString();
+
+        Hashtable hash = new Hashtable {
+            { "tagCountdown", tagCountdown }
+        };
+
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+    }
+
+    public void ChooseMap(int increment) {
+        if (mapCount <= 1 && increment < 0) {
+            return;
+        }
+        if (mapCount >= SceneManager.sceneCountInBuildSettings - 4 && increment > 0) {
+            return;
+        }
+
+        mapCount += increment;
+        mapText.text = GetSceneNameByIndex(mapCount);
+
+        Hashtable hash = new Hashtable {
+            { "mapCount", mapCount }
+        };
+
+        foreach (Player player in PhotonNetwork.PlayerList) {
+            player.SetCustomProperties(hash);
+        }
+
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+    }
+
+    private static string GetSceneNameByIndex(int buildIndex) {
+        if (buildIndex > SceneManager.sceneCountInBuildSettings - 1) {
+            Debug.LogErrorFormat("Incorrect buildIndex {0}!", buildIndex);
+            return null;
+        }
+
+        string scenePath = SceneUtility.GetScenePathByBuildIndex(buildIndex);
+        string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenePath);
+
+        return sceneName;
     }
 
     public void Quit() {

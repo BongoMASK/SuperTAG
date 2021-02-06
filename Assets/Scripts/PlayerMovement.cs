@@ -68,6 +68,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     [SerializeField] Material[] material; 
     [SerializeField] GameObject glasses;
     [SerializeField] GameObject canvas;
+    public PlayerAudio playerAudio;
 
     void Awake() {
         rb = GetComponent<Rigidbody>();
@@ -94,6 +95,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
         InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString();
 
+        countdownStart = (int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"];
+
+        FindObjectOfType<AudioManager>().Play("Breeze");
     }
 
     private void FixedUpdate() {
@@ -108,10 +112,12 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             return;
         }
 
-        if(countdown > -0.5f)   //So that it doesnt keep doing the countdown to infinity
+        if (countdown > -0.5f) { //So that it doesnt keep doing the countdown to infinity
             countdown -= Time.deltaTime;
+            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\nTag Cooldown: " + (int)countdown;
+        }
 
-        if(countdown <= 0)
+        if (countdown <= 0)
             InfoText.gameObject.SetActive(false);
 
         if (!GameManager.gameIsPaused) {
@@ -125,7 +131,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         Respawn();
-        //Sounds();
+        Sounds();
     }
 
     void Respawn() {
@@ -134,29 +140,58 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
     }
 
+    bool crouchSound = false;
+
     void Sounds() {
         //Slide
         if(crouching && !jumping && grounded) {
-            if (!FindObjectOfType<AudioManager>().GetAudioSource("Slide").isPlaying) {
-                FindObjectOfType<AudioManager>().Play("Slide");
+            if (Mathf.Abs(rb.velocity.x) > 3 || Mathf.Abs(rb.velocity.z) > 3) {
+                crouchSound = true;
+                if (!playerAudio.GetAudioSource("Slide").isPlaying) {
+                    PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
+                }
             }
+            else if(Mathf.Abs(rb.velocity.x) < 3 || Mathf.Abs(rb.velocity.z) < 3) {
+                //FindObjectOfType<AudioManager>().Play("Slide Get Up");
+                //FindObjectOfType<AudioManager>().Pause("Slide");
+
+                PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide Get Up");
+                PV.RPC("RPC_PauseSound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
+                crouchSound = false;
+            }
+        }
+        else if((!crouching || jumping) && crouchSound == true) { 
+            //FindObjectOfType<AudioManager>().Play("Slide Get Up");
+            //FindObjectOfType<AudioManager>().Pause("Slide");
+
+            PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide Get Up");
+            PV.RPC("RPC_PauseSound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
+
+            crouchSound = false;
         }
 
         //Footsteps
         if (grounded && !crouching) {
-            if (Mathf.Abs(x) > 0 || Mathf.Abs(y) > 0) {
+            if (Mathf.Abs(rb.velocity.x) > 2 || Mathf.Abs(rb.velocity.z) > 2) {
                 soundTimer -= Time.deltaTime;
                 if (soundTimer <= 0f) {
-                    //TODO: add better sound (should be like rubber souls on concrete like when you run in the society) 
-                    FindObjectOfType<AudioManager>().Play("Footsteps");
-                    soundTimer = 0.4f;
+                    //FindObjectOfType<AudioManager>().PlayRandomFootstep();
+                    soundTimer = 0.35f;
+                    PV.RPC("RPC_GetSound", RpcTarget.All, GetComponentInChildren<PhotonView>().ViewID);
+                    //playerAudio.PlayRandomFootstep();
                 }
             }
         }
 
         //Jump
         if(grounded && readyToJump && jumping) {
-            FindObjectOfType<AudioManager>().Play("Jump");
+            PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponentInChildren<PhotonView>().ViewID, "Jump");
+            //FindObjectOfType<AudioManager>().Play("Jump");
+        }
+
+        //Breeze
+        if (!FindObjectOfType<AudioManager>().GetAudioSource("Breeze").isPlaying) {
+            FindObjectOfType<AudioManager>().Play("Breeze");
         }
     }
 
@@ -173,7 +208,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         if (Input.GetKey(GameManager.GM.forward))
-            y = 1;     //Input.GetAxisRaw("Horizontal");
+            y = 1;
         else if (Input.GetKey(GameManager.GM.backward))
             y = -1;
         else {
@@ -273,10 +308,10 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     void ChangeOnTeamsChange() {
         countdown = countdownStart;
         renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
-        //FindObjectOfType<AudioManager>().Play("TagSound");
+        FindObjectOfType<AudioManager>().Play("TagSound");
 
         if (InfoText != null) {
-            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString();
+            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString()+ "\nTag Cooldown: " + (int)countdown;
             InfoText.gameObject.SetActive(true);
 
             if (PV.Owner.CustomProperties["team"] != null) {
@@ -476,7 +511,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     float countdown = 5f;
     public float countdownStart = 5f;
 
-    private void OnCollisionEnter(Collision other) {
+    /*private void OnCollisionEnter(Collision other) {
         if (other.gameObject.CompareTag("Player") && countdown <= 0f) {
             if ((int)PV.Owner.CustomProperties["team"] == 1 &&
             (int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == 0) {
@@ -485,6 +520,29 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
                 PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, 1);
 
                 ChangeMyTeam(0);
+                countdown = countdownStart;
+            }
+        }
+    }*/
+
+    private void OnTriggerEnter(Collider other) {
+        if (other.gameObject.CompareTag("Player") && countdown <= 0f) {
+            if ((int)PV.Owner.CustomProperties["team"] == 1 &&
+            (int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == 0) {
+
+                // calling function to master client because only the master client can change the custom properties of other players
+                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, 1);
+
+                ChangeMyTeam(0);
+                countdown = countdownStart;
+            }
+            else if ((int)PV.Owner.CustomProperties["team"] == 0 &&
+                (int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == 1) {
+
+                // calling function to master client because only the master client can change the custom properties of other players
+                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, 0);
+
+                ChangeMyTeam(1);
                 countdown = countdownStart;
             }
         }
@@ -508,8 +566,24 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash2);
     }
 
+    [PunRPC]
+    void RPC_PlaySound(int viewID, string name) {
+        PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.Play(name);
+    }
+
+    [PunRPC]
+    void RPC_PauseSound(int viewID, string name) {
+        PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.Pause(name);
+    }
+
+    [PunRPC]
+    void RPC_GetSound(int viewID) {
+        /*AudioSource source = testAudioSource;//PhotonView.Find(viewID).gameObject.GetComponent<AudioSource>();
+        FindObjectOfType<AudioManager>().PlayOthersFootsteps(source);*/
+        PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.PlayRandomFootstep();
+    }
+
     private void StopGrounded() {
         grounded = false;
     }
-
 }

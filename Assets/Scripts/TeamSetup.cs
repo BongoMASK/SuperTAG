@@ -16,12 +16,15 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public TMP_Text PlayerNameText;
     public TMP_Text scoreText;
 
-    Player player;
+    Player[] playerList;
 
-    float time;
+    public float time;
+    float timer;
     float timeUntilRestart = 10f;
 
     float checkForDennerCountdown = 10f;
+    float scoreCountdown = 20f;
+
     int roundNumber = 1;
 
     bool hasWon = false;
@@ -59,66 +62,146 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     }
 
     void Update() {
+
+        if(!PV.IsMine) {
+            return;
+        }
+
         GameOver();
-        checkForDennerCountdown -= Time.deltaTime;
-        if (checkForDennerCountdown <= 0f) {
-            CheckForDenners();
-            checkForDennerCountdown = 10f;
+
+        if (PhotonNetwork.IsMasterClient && time >= 0f) {
+            scoreCountdown -= Time.deltaTime;
+            if (scoreCountdown <= 0f) {
+                SetScore();
+                scoreCountdown = 20f; 
+            }
+
+            checkForDennerCountdown -= Time.deltaTime;
+            if (checkForDennerCountdown <= 0f && PhotonNetwork.IsMasterClient) {
+                CheckForDenners();
+                checkForDennerCountdown = 10f;
+            }
+        }
+    }
+
+    void SetScore() {
+        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
+            Hashtable hash = new Hashtable();
+            if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {   
+                hash.Add("score", (int)PhotonNetwork.PlayerList[i].CustomProperties["score"] + 2);
+            }
+            else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
+                hash.Add("score", (int)PhotonNetwork.PlayerList[i].CustomProperties["score"] + 1);
+            }
+            PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
         }
     }
 
     void GameOver() {
+        if (PhotonNetwork.IsMasterClient) {
+            time -= Time.deltaTime;
+
+            Hashtable ht = PhotonNetwork.CurrentRoom.CustomProperties;  //send time to room
+            ht.Remove("Time");
+            ht.Add("Time", time);
+            PhotonNetwork.CurrentRoom.SetCustomProperties(ht);
+        }
+        else {
+            time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
+        }
+
+        Debug.Log("current round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] + ", " + roundNumber);
+
         if (PhotonNetwork.CurrentRoom.PlayerCount <= 1) {
             TimeText.text = "Waiting For Players";
             time = (int)PV.Owner.CustomProperties["time"];
+            scoreCountdown = 20f;
         }
         else {
-            if (time <= 0f && WinText != null) {        //after round finishes 
+            if ((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] < 0f && WinText != null) {        //after round finishes 
                 timeUntilRestart -= Time.deltaTime;
 
-                TimeText.text = "Round " + roundNumber + " in " + (int)timeUntilRestart;
-                WinText.gameObject.SetActive(true);
-                scoreText.gameObject.SetActive(true);
+                if((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] > -0.1f) {
+                    FindObjectOfType<AudioManager>().Play("Round Timer End");
+                }
+
+                if(PhotonNetwork.IsMasterClient) {
+                    SetCurrentRound();
+                }
 
                 if (hasWon == true) {
-                    roundNumber++;
-                    Hashtable hash = new Hashtable();
+                    if (PhotonNetwork.IsMasterClient) {
+                        //sends round number over network
+                        roundNumber++;
 
-                    if ((int)PV.Owner.CustomProperties["team"] == 0) {
+                        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
+                            Hashtable hash = new Hashtable();
+                            if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {
+                                hash.Add("score", (int)PhotonNetwork.PlayerList[i].CustomProperties["score"] + 4);
+                            }
+                            else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
+                                hash.Add("score", (int)PhotonNetwork.PlayerList[i].CustomProperties["score"] + 1);
+                            }
+                            PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
+                        }
+                    }
+                    else {
+                        roundNumber = (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
+                    }
+
+                    if ((int)PhotonNetwork.LocalPlayer.CustomProperties["team"] == 0) {
                         WinText.text = "You WIN!";
-                        hash.Add("score", (int)PV.Owner.CustomProperties["score"] + 2);
                     }
-                    else if ((int)PV.Owner.CustomProperties["team"] == 1) {
-                        WinText.text = "You LOST!";
-                        hash.Add("score", (int)PV.Owner.CustomProperties["score"] + 1);
+                    else if ((int)PhotonNetwork.LocalPlayer.CustomProperties["team"] == 1) {
+                        WinText.text = "You LOSE!";
                     }
-
-                    PV.Owner.SetCustomProperties(hash);
                     hasWon = false;     //so that it doesnt keep adding the score
                 }
 
                 scoreText.text = "Score:  " + (int)PV.Owner.CustomProperties["score"];
 
-                if (PhotonNetwork.IsMasterClient) {
-                    if (timeUntilRestart <= 0) {
-                        StartNewRound();
-                    }
+                if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] <= 4) {
+                    TimeText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] + " in " + (int)(10 + time);
                 }
                 else {
-                    if (timeUntilRestart <= -2) {   //TODO: send this timeUntilRestart over the network to not cause delay
-                        StartNewRound();            //this is a bad solution to this problem lol
-                    }
+                    TimeText.text = "Final Round in " + (int)timeUntilRestart;
                 }
-            }
 
-            else if (time > 0f) {
+                if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= 6 && PhotonNetwork.IsMasterClient) {
+                    SceneManager.LoadScene("WinScreen");
+                }
+
+                if (time <= -10 && PhotonNetwork.IsMasterClient) {
+                    StartNewRound();
+                }
+                else if (time <= -9.9 && !PhotonNetwork.IsMasterClient) {
+                    StartNewRound();
+                }
+
+                WinText.gameObject.SetActive(true);
+                scoreText.gameObject.SetActive(true);
+            }
+                
+            if (time >= 0f) {
                 MatchTimerStart();
             }
         }
     }
 
-    void StartNewRound() {
-        time = (int)PV.Owner.CustomProperties["time"];
+    void SetCurrentRound() {
+        Hashtable hash2 = PhotonNetwork.CurrentRoom.CustomProperties;
+        hash2.Remove("roundNumber");
+        hash2.Add("roundNumber", roundNumber);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash2);
+    }
+
+    public void StartNewRound() {  //resets player positions and stuff
+        if (PhotonNetwork.IsMasterClient) {
+            time = (int)PV.Owner.CustomProperties["time"];
+        }
+        else {
+            time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
+        }
         Vector3 spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
         transform.position = spawnPosition;
     }
@@ -240,20 +323,14 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         SceneManager.LoadScene(0);
     }
 
-    void MatchTimerStart() {
+    void MatchTimerStart() {    //sends timer over the network
         timeUntilRestart = 10f;
         hasWon = true;
+        timer -= Time.deltaTime;
 
-        if (PhotonNetwork.IsMasterClient) {
-            time -= Time.deltaTime;
-
-            Hashtable ht = PhotonNetwork.CurrentRoom.CustomProperties;
-            ht.Remove("Time");
-            ht.Add("Time", time);
-            PhotonNetwork.CurrentRoom.SetCustomProperties(ht);
-        }
-        else {
-            time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
+        if (time <= 10 && time >= 0 && timer <= 0f) {
+            timer = 1f;
+            FindObjectOfType<AudioManager>().Play("Round Timer");
         }
 
         if (WinText != null) {
