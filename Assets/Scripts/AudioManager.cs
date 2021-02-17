@@ -87,7 +87,6 @@ public class AudioManager : MonoBehaviour
     public void PlayRandomFootstep() {
         int value = UnityEngine.Random.Range(0, randomFootsteps.Length);
         Sound s = randomFootsteps[value];
-        Debug.Log(randomFootsteps[value].clip.name);
         s.source.Play();
     }
 

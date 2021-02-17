@@ -148,7 +148,7 @@ public class Launcher : MonoBehaviourPunCallbacks
             { "denner", dennerCount },
             { "mapCount", mapCount },
             { "tagCountdown", tagCountdown},
-            { "roundNumber", 0 }
+            { "roundNumber", 1 }
         };
 
         if (PhotonNetwork.IsMasterClient) {

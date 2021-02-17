@@ -16,14 +16,12 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public TMP_Text PlayerNameText;
     public TMP_Text scoreText;
 
-    Player[] playerList;
-
     public float time;
     float timer;
     float timeUntilRestart = 10f;
 
     float checkForDennerCountdown = 10f;
-    float scoreCountdown = 20f;
+    float scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
 
     int roundNumber = 1;
 
@@ -73,7 +71,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             scoreCountdown -= Time.deltaTime;
             if (scoreCountdown <= 0f) {
                 SetScore();
-                scoreCountdown = 20f; 
+                scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6; 
             }
 
             checkForDennerCountdown -= Time.deltaTime;
@@ -110,12 +108,10 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
         }
 
-        Debug.Log("current round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] + ", " + roundNumber);
-
         if (PhotonNetwork.CurrentRoom.PlayerCount <= 1) {
             TimeText.text = "Waiting For Players";
             time = (int)PV.Owner.CustomProperties["time"];
-            scoreCountdown = 20f;
+            scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
         }
         else {
             if ((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] < 0f && WinText != null) {        //after round finishes 
@@ -192,7 +188,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         Hashtable hash2 = PhotonNetwork.CurrentRoom.CustomProperties;
         hash2.Remove("roundNumber");
         hash2.Add("roundNumber", roundNumber);
-        PhotonNetwork.CurrentRoom.SetCustomProperties(hash2);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash2); 
     }
 
     public void StartNewRound() {  //resets player positions and stuff
@@ -202,6 +198,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         else {
             time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
         }
+        scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
         Vector3 spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
         transform.position = spawnPosition;
     }

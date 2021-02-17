@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using Photon.Pun;
+using UnityEngine.Audio;
 
 public class PlayerAudio : MonoBehaviour
 {
-    //[SerializeField] AudioSource source;
-
     public Sound[] sounds;
     public Sound[] randomFootsteps;
+
+    public static AudioListener audioListener;
 
     private void Awake() {
         foreach (var s in sounds) {
@@ -35,6 +37,10 @@ public class PlayerAudio : MonoBehaviour
             s.source.minDistance = 10;
             s.source.maxDistance = 100;
             s.source.playOnAwake = false;
+        }
+
+        if(!GetComponent<PhotonView>().IsMine) {
+            Destroy(audioListener);
         }
     }
 

@@ -13,12 +13,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject pauseMenu;
     [SerializeField] GameObject optionsMenu;
     [SerializeField] GameObject mainPauseMenu;
+
     [SerializeField] Slider slider;
+    [SerializeField] Slider volumeSlider;
 
     [SerializeField] GameObject leaderBoard;
 
     [SerializeField] TMP_Text mouseSensText;
+    [SerializeField] TMP_Text volumeText;
     [SerializeField] TMP_Text roomNameText;
+    [SerializeField] TMP_Text roundText;
+    [SerializeField] TMP_Text coolDownText;
 
     [SerializeField] TMP_Text[] score;
     [SerializeField] TMP_Text[] playerName;
@@ -37,6 +42,7 @@ public class GameManager : MonoBehaviour
     public KeyCode right { get; set; }
     public KeyCode crouch { get; set; }
     public int sensitivity { get; set; }
+    public int volume { get; set; }
 
     void Awake() {
         //Singleton pattern
@@ -63,16 +69,17 @@ public class GameManager : MonoBehaviour
 
         sensitivity = PlayerPrefs.GetInt("sensitivity", 50);
         mouseSensText.text = PlayerPrefs.GetInt("sensitivity", 50).ToString();
+        volume = PlayerPrefs.GetInt("volume", 100);
 
         PlayerMovement.sensitivity = sensitivity;
         MovementNoNetworking.sensitivity = sensitivity;
+        AudioListener.volume = volume/100;
     }
 
     private void Start() {
-        pauseMenu.SetActive(false);
+        mainPauseMenu.SetActive(false);
         slider.value = sensitivity;
-        //mouseSensText.text = PlayerMovement.sensitivity.ToString();
-        //mouseSensText.text = MovementNoNetworking.sensitivity.ToString();
+        volumeSlider.value = volume;
 
         if (PhotonNetwork.CurrentRoom != null) {
             roomNameText.text = PhotonNetwork.CurrentRoom.Name;
@@ -83,7 +90,8 @@ public class GameManager : MonoBehaviour
     }
 
     private void Update() {
-        if(Input.GetKeyDown(KeyCode.Escape)) {
+        pauseMenu.SetActive(gameIsPaused);
+        if (Input.GetKeyDown(KeyCode.Escape)) {
             if(gameIsPaused) {
                 Resume();
             }
@@ -94,6 +102,7 @@ public class GameManager : MonoBehaviour
 
         DisplayPlayerList();
     }
+
 
     void SortPlayersByScore() {
         playerList = PhotonNetwork.PlayerList;
@@ -111,6 +120,12 @@ public class GameManager : MonoBehaviour
     private void DisplayPlayerList() {
         if (Input.GetKeyDown(KeyCode.Tab)) {
             leaderBoard.SetActive(true);
+
+            coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
+            roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
+            if((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= 5) {
+                roundText.text = "Final Round";
+            }
 
             SortPlayersByScore();
             for (int i = 0; i < playerList.Length; i++) {
@@ -162,5 +177,11 @@ public class GameManager : MonoBehaviour
         MovementNoNetworking.sensitivity = newSens;
         PlayerPrefs.SetInt("sensitivity", (int)newSens);
         mouseSensText.text = ((int)newSens).ToString();
+    }
+
+    public void ChangeVolume(float newVolume) {
+        AudioListener.volume = newVolume/100;
+        PlayerPrefs.SetInt("volume", (int)newVolume);
+        volumeText.text = ((int)newVolume).ToString();
     }
 }

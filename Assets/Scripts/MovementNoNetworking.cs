@@ -77,6 +77,54 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
         }
 
         Respawn();
+        Sounds();
+    }
+
+    bool crouchSound = false;
+
+    void Sounds() {
+        //Slide
+        if (crouching && !jumping && grounded) {
+            if (Mathf.Abs(rb.velocity.x) > 3 || Mathf.Abs(rb.velocity.z) > 3) {
+                crouchSound = true;
+                if (!FindObjectOfType<AudioManager>().GetAudioSource("Slide").isPlaying) {
+                    FindObjectOfType<AudioManager>().Play("Slide");
+                }
+            }
+            else if (Mathf.Abs(rb.velocity.x) < 3 || Mathf.Abs(rb.velocity.z) < 3) {
+                FindObjectOfType<AudioManager>().Play("Slide Get Up");
+                FindObjectOfType<AudioManager>().Pause("Slide");
+
+                crouchSound = false;
+            }
+        }
+        else if ((!crouching || jumping) && crouchSound == true) {
+            FindObjectOfType<AudioManager>().Play("Slide Get Up");
+            FindObjectOfType<AudioManager>().Pause("Slide");
+
+            crouchSound = false;
+        }
+
+        //Footsteps
+        if (grounded && !crouching) {
+            if (Mathf.Abs(rb.velocity.x) > 2 || Mathf.Abs(rb.velocity.z) > 2) {
+                soundTimer -= Time.deltaTime;
+                if (soundTimer <= 0f) {
+                    FindObjectOfType<AudioManager>().PlayRandomFootstep();
+                    soundTimer = 0.35f;
+                }
+            }
+        }
+
+        //Jump
+        if (grounded && readyToJump && jumping) {
+            FindObjectOfType<AudioManager>().Play("Jump");
+        }
+
+        //Breeze
+        if (!FindObjectOfType<AudioManager>().GetAudioSource("Breeze").isPlaying) {
+            FindObjectOfType<AudioManager>().Play("Breeze");
+        }
     }
 
     void Respawn() {
@@ -215,17 +263,6 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
         //Apply forces to move player
         rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
         rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier);
-
-        if (grounded) {
-            if (Mathf.Abs(x) > 0 || Mathf.Abs(y) > 0) {
-                soundTimer -= Time.deltaTime;
-                if (soundTimer <= 0f) {
-                    //TODO: add better sound (should be like rubber souls on concrete like when you run in the society) 
-                    //FindObjectOfType<AudioManager>().Play("Footsteps");
-                    soundTimer = 0.4f;
-                }
-            }
-        }
     }
 
     private void Jump() {
