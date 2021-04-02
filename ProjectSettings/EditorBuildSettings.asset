@@ -9,18 +9,21 @@ EditorBuildSettings:
     path: Assets/Scenes/StartScreen.unity
     guid: 76aaec1d4fe1302458f400c2edfbd33c
   - enabled: 1
+    path: Assets/Scenes/vry gg map.unity
+    guid: 1484ce07b32b91e41b2c1be7c9efeff1
+  - enabled: 0
     path: Assets/Scenes/Horizon.unity
     guid: fbbd6bbe3bd126246a236a1b391f4e98
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Dawn.unity
     guid: 7969194af63eddd4e90c968be7be0adb
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/WinScreen.unity
     guid: cd4cab9bae3820b43b1beaed7c255f3b
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Practice.unity
     guid: 451ceb0785fd3f44d9340bf4b6fcb69a
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Tutorial.unity
     guid: 7195010f754429448b8e295340de64c4
   m_configObjects: {}

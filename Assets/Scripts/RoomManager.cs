@@ -37,8 +37,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode) {
-        if (scene.buildIndex < SceneManager.sceneCountInBuildSettings - 3 && scene.buildIndex >= 1) {     //this is the game scene
-        //if (scene.buildIndex == 1) {     //this is for testing
+        //if (scene.buildIndex < SceneManager.sceneCountInBuildSettings - 3 && scene.buildIndex >= 1) {     //this is the game scene
+        if (scene.buildIndex == 1) {     //this is for testing
             PhotonNetwork.Instantiate(Path.Combine("PhotonPrefabs", "PlayerManager"), Vector3.zero, Quaternion.identity);
         }
     }

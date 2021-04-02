@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f68c4a184119f4a48b4667b5a8d35890, type: 3}
   m_Name: Gun2
   m_EditorClassIdentifier: 
-  itemName: 
+  itemName: flashbang
+  damage: 20

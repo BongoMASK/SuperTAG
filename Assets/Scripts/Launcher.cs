@@ -112,6 +112,7 @@ public class Launcher : MonoBehaviourPunCallbacks
             return;
         }
 
+        options.MaxPlayers = 6;
         options.BroadcastPropsChangeToAll = true;
 
         PhotonNetwork.CreateRoom(roomNameInputField.text);

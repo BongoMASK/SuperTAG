@@ -23,7 +23,7 @@ public class MenuController : MonoBehaviour
 
     private void SetTeam(int team) {
         _myCustomProperties["team"] = team;
-        _myCustomProperties["name"] = PhotonNetwork.NickName;
+        _myCustomProperties["name"] = PhotonNetwork.NickName; 
         
         if (team == 1) {
             _myCustomProperties["TeamName"] = "Denner";

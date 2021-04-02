@@ -1,0 +1,40 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class ExplosiveJump : MonoBehaviour
+{
+    [SerializeField] float jumpForce, radiusOfEffect;
+
+    private void OnCollisionEnter(Collision collision) {
+        Explode();
+    }
+
+    void Explosion(GameObject other) {
+        float distance = GetDist(other.transform.position, transform.position);
+        Vector3 direction = GetDirection(other.transform.position, transform.position);
+        Rigidbody rb = other.GetComponent<Rigidbody>();
+        rb.AddForce((20 - distance) * jumpForce * direction);
+    }
+
+    void Explode() {
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, radiusOfEffect);  
+        foreach (Collider collider in hitColliders) {
+            if(collider.gameObject.CompareTag("Player")) {
+                Explosion(collider.gameObject);
+            }
+        }
+        Destroy(gameObject);
+    }
+
+    float GetDist(Vector3 p1, Vector3 p2) {
+        float distance = Mathf.Sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y) + (p1.z - p2.z) * (p1.z - p2.z));
+        return distance;
+    }
+
+    Vector3 GetDirection(Vector3 destinationVector, Vector3 startVector) {
+        Vector3 direction = destinationVector - startVector;
+        direction.Normalize();
+        return direction;
+    }
+}

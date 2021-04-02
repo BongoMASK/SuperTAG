@@ -14,7 +14,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public TMP_Text TimeText;
     public TMP_Text WinText;
     public TMP_Text PlayerNameText;
-    public TMP_Text scoreText;
+    public TMP_Text scoreText; 
 
     public float time;
     float timer;
@@ -167,12 +167,13 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                     SceneManager.LoadScene("WinScreen");
                 }
 
-                if (time <= -10 && PhotonNetwork.IsMasterClient) {
+                if (time <= -10) {
                     StartNewRound();
                 }
                 else if (time <= -9.9 && !PhotonNetwork.IsMasterClient) {
                     StartNewRound();
                 }
+                //TODO: check whether it works without this.
 
                 WinText.gameObject.SetActive(true);
                 scoreText.gameObject.SetActive(true);

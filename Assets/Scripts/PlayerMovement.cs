@@ -5,7 +5,7 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Photon.Realtime;
 using TMPro;
 
-public class PlayerMovement : MonoBehaviourPunCallbacks {
+public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     //Assingables
     public Transform playerCam;
@@ -57,7 +57,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     //Photon Networking Variables
     PhotonView PV;
-    public LayerMask whatIsPlayer;
 
     public TMP_Text InfoText;
     private Renderer renderer;
@@ -70,10 +69,17 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     [SerializeField] GameObject canvas;
     public PlayerAudio playerAudio;
 
+    [SerializeField] const float maxHealth = 100f;
+    float currentHealth = maxHealth;
+
+    PlayerManager playerManager;
+
     void Awake() {
         rb = GetComponent<Rigidbody>();
         PV = GetComponent<PhotonView>();
         renderer = GetComponent<Renderer>();
+
+        playerManager = PhotonView.Find((int)PV.InstantiationData[0]).GetComponent<PlayerManager>();
     }
 
     void Start() {
@@ -86,6 +92,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             Destroy(playerCam.gameObject);
             Destroy(rb);
             renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
+            foreach (Collider col in GetComponentsInChildren<Collider>()) {
+                col.gameObject.layer = 9;
+            }
             return;
         }
 
@@ -261,6 +270,10 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
                 EquipItem(items.Length - 1);
             }
             EquipItem(itemIndex - 1);
+        }
+
+        if(Input.GetMouseButtonDown(0)) {
+            items[itemIndex].Use();
         }
     }
 
@@ -448,9 +461,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
         //Limit diagonal running. This will also cause a full stop if sliding fast and un-crouching, so not optimal.
         if (Mathf.Sqrt(Mathf.Pow(rb.velocity.x, 2) + Mathf.Pow(rb.velocity.z, 2)) > maxSpeed) {
-            float fallspeed = rb.velocity.y;
-            Vector3 n = rb.velocity.normalized * maxSpeed;
-            rb.velocity = new Vector3(n.x, fallspeed, n.z);
+            if (grounded || jumping) {
+                float fallspeed = rb.velocity.y;
+                Vector3 n = rb.velocity.normalized * maxSpeed;
+                rb.velocity = new Vector3(n.x, fallspeed, n.z);
+            }
         }
     }
 
@@ -585,5 +600,25 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     private void StopGrounded() {
         grounded = false;
+    }
+
+    public void TakeDamage(float damage) {
+        PV.RPC("RPC_TakeDamage", RpcTarget.All, damage);
+    }
+
+    [PunRPC]
+    void RPC_TakeDamage(float damage) {
+        if (!PV.IsMine) return;
+
+        Debug.Log("took damage " + damage);
+        currentHealth -= damage;
+
+        if(currentHealth <= 0f) {
+            Die();
+        }
+    }
+
+    void Die() {
+        playerManager.Die();
     }
 }

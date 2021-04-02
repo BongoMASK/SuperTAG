@@ -1343,7 +1343,7 @@ MonoBehaviour:
   grounded: 0
   whatIsGround:
     serializedVersion: 2
-    m_Bits: 512
+    m_Bits: 256
   counterMovement: 0.5
   stopMovement: 0.2
   maxSlopeAngle: 35
