@@ -6,15 +6,24 @@ public class ExplosiveJump : MonoBehaviour
 {
     [SerializeField] float jumpForce, radiusOfEffect;
 
-    private void OnCollisionEnter(Collision collision) {
-        Explode();
+    private void Start() {
+        Destroy(gameObject, 5f);
+    }
+
+    private void OnTriggerEnter(Collider other) {
+        if(other.gameObject.layer == 8) 
+            Explode();
     }
 
     void Explosion(GameObject other) {
         float distance = GetDist(other.transform.position, transform.position);
         Vector3 direction = GetDirection(other.transform.position, transform.position);
         Rigidbody rb = other.GetComponent<Rigidbody>();
-        rb.AddForce((20 - distance) * jumpForce * direction);
+        Vector3 force = (20 ) * jumpForce * direction;
+        rb.AddForce(force);
+        //Debug.Log("distance: " + distance);
+        //Debug.Log("force: " + force);
+        Debug.Log("direction: " + direction);
     }
 
     void Explode() {
@@ -24,7 +33,7 @@ public class ExplosiveJump : MonoBehaviour
                 Explosion(collider.gameObject);
             }
         }
-        Destroy(gameObject);
+        Destroy(gameObject.transform.parent.gameObject);
     }
 
     float GetDist(Vector3 p1, Vector3 p2) {

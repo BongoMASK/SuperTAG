@@ -272,7 +272,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             EquipItem(itemIndex - 1);
         }
 
-        if(Input.GetMouseButtonDown(0)) {
+        if(Input.GetMouseButton(0)) {
             items[itemIndex].Use();
         }
     }
@@ -420,6 +420,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
         //Perform the rotations
         playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
+        //transform.localRotation =  Quaternion.Euler(0, desiredX, 0);
         orientation.transform.localRotation = Quaternion.Euler(0, desiredX, 0);
     }
 
@@ -594,7 +595,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     [PunRPC]
     void RPC_GetSound(int viewID) {
         /*AudioSource source = testAudioSource;//PhotonView.Find(viewID).gameObject.GetComponent<AudioSource>();
-        FindObjectOfType<AudioManager>().PlayOthersFootsteps(source);*/
+        FindObjectOfType<AudioManager>().PlayOthersFootsteps(source);*/ 
         PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.PlayRandomFootstep();
     }
 
