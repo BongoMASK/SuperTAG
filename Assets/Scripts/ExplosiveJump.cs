@@ -16,14 +16,10 @@ public class ExplosiveJump : MonoBehaviour
     }
 
     void Explosion(GameObject other) {
-        float distance = GetDist(other.transform.position, transform.position);
         Vector3 direction = GetDirection(other.transform.position, transform.position);
         Rigidbody rb = other.GetComponent<Rigidbody>();
         Vector3 force = (20 ) * jumpForce * direction;
         rb.AddForce(force);
-        //Debug.Log("distance: " + distance);
-        //Debug.Log("force: " + force);
-        Debug.Log("direction: " + direction);
     }
 
     void Explode() {

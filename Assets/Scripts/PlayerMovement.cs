@@ -139,6 +139,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             canvas.SetActive(!GameManager.gameIsPaused);
         }
 
+        Animations();
         Respawn();
         Sounds();
     }
@@ -247,6 +248,36 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     private void StopCrouch() {
         transform.position = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
         transform.localScale = playerScale;
+    }
+
+    void Animations() {
+        if (readyToJump && jumping && grounded) {
+            Debug.Log("jumped");
+            //jump animation
+        }
+
+        else if (grounded) {
+            //if (rb.velocity.magnitude > 1f) {
+                Debug.Log("walkin");
+                //do walk animations
+            //}
+            //else {
+                Debug.Log("Idle");
+                //do idle animation
+            //}
+        }
+
+        else {
+            //in air animation
+            if(rb.velocity.y > 0) {
+                Debug.Log("goin up");
+                //animation of going up
+            }
+            else {
+                Debug.Log("comin down");
+                //animation of coming down
+            }
+        }
     }
 
     void ChangeItem() {
@@ -420,8 +451,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
         //Perform the rotations
         playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
-        //transform.localRotation =  Quaternion.Euler(0, desiredX, 0);
-        orientation.transform.localRotation = Quaternion.Euler(0, desiredX, 0);
+        orientation.transform.rotation = Quaternion.Euler(0, desiredX, 0);
     }
 
     private void CounterMovement(float x, float y, Vector2 mag) {
