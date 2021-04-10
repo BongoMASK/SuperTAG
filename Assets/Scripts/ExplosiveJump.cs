@@ -18,7 +18,7 @@ public class ExplosiveJump : MonoBehaviour
     void Explosion(GameObject other) {
         Vector3 direction = GetDirection(other.transform.position, transform.position);
         Rigidbody rb = other.GetComponent<Rigidbody>();
-        Vector3 force = (20 ) * jumpForce * direction;
+        Vector3 force = 10 * jumpForce * direction;
         rb.AddForce(force);
     }
 

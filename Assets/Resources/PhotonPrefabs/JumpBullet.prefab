@@ -47,10 +47,11 @@ TrailRenderer:
   m_LightProbeUsage: 0
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d33b35d4d2ec1b848870f57191d4c62a, type: 2}
+  - {fileID: 2100000, guid: 47958c40e5375574e81008099d460089, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -196,10 +197,11 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d33b35d4d2ec1b848870f57191d4c62a, type: 2}
+  - {fileID: 2100000, guid: 47958c40e5375574e81008099d460089, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -220,6 +222,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!135 &7876120811781357270
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -247,6 +250,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   jumpForce: 40
   radiusOfEffect: 15
+  impactEffect: {fileID: 1329845292236604, guid: 9bba9cf244c53c5439505dfc96fdd11c,
+    type: 3}
 --- !u!54 &2865041156100203453
 Rigidbody:
   m_ObjectHideFlags: 0

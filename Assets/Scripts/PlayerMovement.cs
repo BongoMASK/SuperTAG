@@ -11,6 +11,10 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     public Transform playerCam;
     public Transform orientation;
 
+    //Multiplier
+    float goopMultiplier = 2.5f;
+    public bool gooped = false;
+
     //Other
     private Rigidbody rb;
 
@@ -139,7 +143,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             canvas.SetActive(!GameManager.gameIsPaused);
         }
 
-        Animations();
+        //Animations();
         Respawn();
         Sounds();
     }
@@ -229,10 +233,17 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         crouching = Input.GetKey(GameManager.GM.crouch);
 
         //Crouching
-        if (Input.GetKeyDown(GameManager.GM.crouch))
-            StartCrouch();
-        if (Input.GetKeyUp(GameManager.GM.crouch))
-            StopCrouch();
+        if (!gooped) {
+            if (Input.GetKeyDown(GameManager.GM.crouch))
+                StartCrouch();
+            if (Input.GetKeyUp(GameManager.GM.crouch))
+                StopCrouch();
+        }
+
+        if(gooped) {
+            jumping = false;
+            crouching = false;
+        }
     }
 
     private void StartCrouch() {
@@ -394,7 +405,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         if (y < 0 && yMag < -maxSpeed) y = 0;*/
 
         //Some multipliers
-        float multiplier = 1f, multiplierV = 1f;
+        float multiplier = 1f;
+        float multiplierV = 1f;
 
         // Movement in air
         if (!grounded) {
@@ -591,6 +603,19 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
                 ChangeMyTeam(1);
                 countdown = countdownStart;
             }
+        }
+
+        //goop gun effects
+        if (other.CompareTag("Goop")) {
+            maxSpeed = goopMultiplier;
+            gooped = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider collision) {
+        if (collision.CompareTag("Goop")) {
+            maxSpeed = 20;
+            gooped = false;
         }
     }
 
