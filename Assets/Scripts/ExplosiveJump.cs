@@ -5,6 +5,11 @@ using UnityEngine;
 public class ExplosiveJump : MonoBehaviour
 {
     [SerializeField] float jumpForce, radiusOfEffect;
+    [SerializeField] Vector3 offset = new Vector3(0, 1, 0);
+
+    [SerializeField] LayerMask whatIsGround;
+
+    [SerializeField] GameObject impactField;
 
     private void Start() {
         Destroy(gameObject, 5f);
@@ -23,9 +28,11 @@ public class ExplosiveJump : MonoBehaviour
     }
 
     void Explode() {
+        GameObject effect = Instantiate(impactField, transform.position + offset, Quaternion.identity);
+        Destroy(effect, 2f);
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, radiusOfEffect);  
         foreach (Collider collider in hitColliders) {
-            if(collider.gameObject.CompareTag("Player")) {
+            if(collider.gameObject.GetComponent<Rigidbody>()) {
                 Explosion(collider.gameObject);
             }
         }

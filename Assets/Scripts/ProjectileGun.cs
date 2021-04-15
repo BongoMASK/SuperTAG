@@ -17,6 +17,8 @@ public class ProjectileGun : Gun {
     [SerializeField] TMP_Text ammoText;
     [SerializeField] TMP_Text weaponText;
 
+    [SerializeField] Color32 weaponColor;
+
     PhotonView PV;
 
     public override void Use() {
@@ -40,6 +42,8 @@ public class ProjectileGun : Gun {
         fireCountdown -= Time.deltaTime;
 
         if (itemGameObject.activeSelf) {
+            ammoText.color = weaponColor;
+            weaponText.color = weaponColor;
             ammoText.text = currentAmmo.ToString();
             weaponText.text = gameObject.name;
         }

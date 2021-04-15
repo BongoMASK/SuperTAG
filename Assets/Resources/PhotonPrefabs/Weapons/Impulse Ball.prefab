@@ -57,6 +57,9 @@ MonoBehaviour:
   fireRate: 0
   ammoText: {fileID: 0}
   weaponText: {fileID: 0}
+  weaponColor:
+    serializedVersion: 2
+    rgba: 4291035497
 --- !u!114 &5571256790442948052
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -18,7 +18,7 @@ public class PlayerAnims : MonoBehaviour
 
     void Update()
     {
-        //ChangeAnim();
+        ChangeAnim();
     }
 
     void ChangeAnim() {
@@ -34,23 +34,29 @@ public class PlayerAnims : MonoBehaviour
         based on the angle do animation
         */
 
-        if (angle > -45 && angle < 45) {
+        bool isForward = animator.GetBool("forward");
+
+        if (!isForward && angle > -45 && angle < 45) {
+            animator.SetBool("forward", true);
             Debug.Log("moving straight");
             //moving straight
         }
 
         if (angle > 45 && angle < 135) {
             if (playerVel.x * orientaionPos.y > 0) {    //checks if player moves left or right
+                animator.SetBool("right", true);
                 Debug.Log("moving right");
                 //moving right
             }
 
             else {
+                animator.SetBool("left", true);
                 Debug.Log("moving left");
                 //moving left
             }
         }
         if (angle > 135 && angle < 225) {
+            animator.SetBool("backward", true);
             Debug.Log("moving back");
             //moving back
         }

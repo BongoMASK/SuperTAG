@@ -89,7 +89,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     private void Update() {
         timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
         dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
-        if (PhotonNetwork.CurrentRoom != null && tagCountdownText != null) {
+        if (PhotonNetwork.CurrentRoom != null && tagCountdownText.isActiveAndEnabled) {
             tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"]).ToString();
             mapText.text = GetSceneNameByIndex((int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"]);
         }
@@ -219,6 +219,9 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     public void LeaveRoom() {
         PhotonNetwork.LeaveRoom();
+        Hashtable hash = new Hashtable();
+        hash.Add("score", 1);
+        PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
         MenuManager.Instance.OpenMenu("loading");
     }
 

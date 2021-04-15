@@ -5,47 +5,33 @@ using TMPro;
 
 public class AssignKey : MonoBehaviour {
 
-	[SerializeField] Transform optionPanel;
+	[SerializeField] Transform[] optionPanel;
+
 	Event keyEvent;
 	TMP_Text buttonText;
 	KeyCode newKey;
 
 	bool waitingForKey;
 
-
 	void Start() {
-		//Assign menuPanel to the Panel object in our Canvas
-		//Make sure it's not active when the game starts
+
 		waitingForKey = false;
 
-		/*iterate through each child of the panel and check
-		 * the names of each one. Each if statement will
-		 * set each button's text component to display
-		 * the name of the key that is associated
-		 * with each command. Example: the ForwardKey
-		 * button will display "W" in the middle of it
-		 */
-		for (int i = 0; i < optionPanel.childCount; i++) {
-			if (optionPanel.GetChild(i).name == "Forward")
-				optionPanel.GetChild(i).GetComponentInChildren<TMP_Text>().text = GameManager.GM.forward.ToString();
-			else if (optionPanel.GetChild(i).name == "Backward")
-				optionPanel.GetChild(i).GetComponentInChildren<TMP_Text>().text = GameManager.GM.backward.ToString();
-			else if (optionPanel.GetChild(i).name == "Left")
-				optionPanel.GetChild(i).GetComponentInChildren<TMP_Text>().text = GameManager.GM.left.ToString();
-			else if (optionPanel.GetChild(i).name == "Right")
-				optionPanel.GetChild(i).GetComponentInChildren<TMP_Text>().text = GameManager.GM.right.ToString();
-			else if (optionPanel.GetChild(i).name == "Jump")
-				optionPanel.GetChild(i).GetComponentInChildren<TMP_Text>().text = GameManager.GM.jump.ToString();
+		for (int j = 0; j < optionPanel.Length; j++) {
+			for (int i = 0; i < optionPanel[j].childCount; i++) {
+
+				GameObject option = optionPanel[j].GetChild(i).gameObject;
+
+				if (GameManager.GM.movementKeys.ContainsKey(option.name))
+					option.GetComponentInChildren<TMP_Text>().text = GameManager.GM.movementKeys[option.name].key.ToString();
+
+				else if(GameManager.GM.itemKeys[i].keyName == option.name)
+					option.GetComponentInChildren<TMP_Text>().text = GameManager.GM.itemKeys[i].key.ToString();
+
+				else
+					Debug.LogWarning(option.name + " does not exist.");
+			}
 		}
-	}
-
-
-	void Update() {
-		//Escape key will open or close the panel
-		/*if (Input.GetKeyDown(KeyCode.Escape) && !menuPanel.gameObject.activeSelf)
-			menuPanel.gameObject.SetActive(true);
-		else if (Input.GetKeyDown(KeyCode.Escape) && menuPanel.gameObject.activeSelf)
-			menuPanel.gameObject.SetActive(false);*/
 	}
 
 	void OnGUI() {
@@ -95,40 +81,29 @@ public class AssignKey : MonoBehaviour {
 		waitingForKey = true;
 
 		yield return WaitForKey(); //Executes endlessly until user presses a key
+		InputKeys inputKeys;
 
-		switch (keyName) {
-			case "forward":
-				GameManager.GM.forward = newKey; //Set forward to new keycode
-				buttonText.text = GameManager.GM.forward.ToString(); //Set button text to new key
-				PlayerPrefs.SetString("forwardKey", GameManager.GM.forward.ToString()); //save new key to PlayerPrefs
-				break;
-			case "backward":
-				GameManager.GM.backward = newKey; //set backward to new keycode
-				buttonText.text = GameManager.GM.backward.ToString(); //set button text to new key
-				PlayerPrefs.SetString("backwardKey", GameManager.GM.backward.ToString()); //save new key to PlayerPrefs
-				break;
-			case "left":
-				GameManager.GM.left = newKey; //set left to new keycode
-				buttonText.text = GameManager.GM.left.ToString(); //set button text to new key
-				PlayerPrefs.SetString("leftKey", GameManager.GM.left.ToString()); //save new key to playerprefs
-				break;
-			case "right":
-				GameManager.GM.right = newKey; //set right to new keycode
-				buttonText.text = GameManager.GM.right.ToString(); //set button text to new key
-				PlayerPrefs.SetString("rightKey", GameManager.GM.right.ToString()); //save new key to playerprefs
-				break;
-			case "jump":
-				GameManager.GM.jump = newKey; //set jump to new keycode
-				buttonText.text = GameManager.GM.jump.ToString(); //set button text to new key
-				PlayerPrefs.SetString("jumpKey", GameManager.GM.jump.ToString()); //save new key to playerprefs
-				break;
-			case "crouch":
-				GameManager.GM.crouch = newKey; //set jump to new keycode
-				buttonText.text = GameManager.GM.crouch.ToString(); //set button text to new key
-				PlayerPrefs.SetString("crouchKey", GameManager.GM.crouch.ToString()); //save new key to playerprefs
-				break;
+		foreach (var i in GameManager.GM.movementKeys) {
+			if(keyName == i.Key) 
+			{
+				inputKeys = i.Value;
+				Assign(inputKeys);
+			}
+        }
+
+        for (int i = 0; i < GameManager.GM.itemKeys.Count; i++) {
+			if(GameManager.GM.itemKeys[i].keyName == keyName) {
+				inputKeys = GameManager.GM.itemKeys[i];
+				Assign(inputKeys);
+			}
 		}
 
 		yield return null;
+	}
+
+	void Assign(InputKeys inputKeys) {
+		inputKeys.key = newKey;
+		buttonText.text = inputKeys.key.ToString();
+		PlayerPrefs.SetString(inputKeys.keyName, inputKeys.key.ToString());
 	}
 }

@@ -48,6 +48,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     //Input
     float x, y;
     bool jumping, sprinting, crouching, mouseDown;
+    KeyCode switchPrev;
 
     //Sliding
     private Vector3 normalVector = Vector3.up;
@@ -58,6 +59,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     int itemIndex;
     int previousItemIndex = -1;
+    int prevWeapon = -1;
 
     //Photon Networking Variables
     PhotonView PV;
@@ -71,6 +73,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     [SerializeField] Material[] material; 
     [SerializeField] GameObject glasses;
     [SerializeField] GameObject canvas;
+    [SerializeField] GameObject tagFeed;
+    [SerializeField] Transform tagFeedList;
+
     public PlayerAudio playerAudio;
 
     [SerializeField] const float maxHealth = 100f;
@@ -213,34 +218,37 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     /// Find user input. Should put this in its own class but im lazy
     /// </summary>
     private void MyInput() {
-        if (Input.GetKey(GameManager.GM.right))
+
+        if (Input.GetKey(GameManager.GM.movementKeys["right"].key))
             x = 1;     //Input.GetAxisRaw("Horizontal");
-        else if (Input.GetKey(GameManager.GM.left))
+        else if (Input.GetKey(GameManager.GM.movementKeys["left"].key))
             x = -1;
         else {
             x = 0;
         }
 
-        if (Input.GetKey(GameManager.GM.forward))
+        if (Input.GetKey(GameManager.GM.movementKeys["forward"].key))
             y = 1;
-        else if (Input.GetKey(GameManager.GM.backward))
+        else if (Input.GetKey(GameManager.GM.movementKeys["backward"].key))
             y = -1;
         else {
             y = 0;
         }
-        //y = Input.GetAxisRaw("Vertical");
-        jumping = Input.GetKey(GameManager.GM.jump);  //Input.GetButton("Jump");
-        crouching = Input.GetKey(GameManager.GM.crouch);
+
+        
+        switchPrev = GameManager.GM.movementKeys["prevWeapon"].key;
+        jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
+        crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
 
         //Crouching
         if (!gooped) {
-            if (Input.GetKeyDown(GameManager.GM.crouch))
+            if (Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key))
                 StartCrouch();
-            if (Input.GetKeyUp(GameManager.GM.crouch))
+            if (Input.GetKeyUp(GameManager.GM.movementKeys["crouch"].key))
                 StopCrouch();
         }
 
-        if(gooped) {
+        if (gooped) {
             jumping = false;
             crouching = false;
         }
@@ -293,7 +301,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     void ChangeItem() {
         for (int i = 0; i < items.Length; i++) {
-            if (Input.GetKeyDown((i + 1).ToString())) {
+            if (Input.GetKeyDown(GameManager.GM.itemKeys[i].key)) {
                 EquipItem(i);
                 break;
             }
@@ -311,18 +319,27 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             if (itemIndex <= 0) {
                 EquipItem(items.Length - 1);
             }
-            EquipItem(itemIndex - 1);
+            else {
+                EquipItem(itemIndex - 1);
+            }
+        }
+
+        //switch to prev weapon
+        if (Input.GetKeyDown(GameManager.GM.movementKeys["prevWeapon"].key)) {
+            EquipItem(prevWeapon);
         }
 
         if(Input.GetMouseButton(0)) {
             items[itemIndex].Use();
         }
+
     }
 
     void EquipItem(int _index) {
         if (_index == previousItemIndex) {
             return;
         }
+        prevWeapon = itemIndex;
         itemIndex = _index;
 
         if (items.Length > 0) {
@@ -569,20 +586,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     float countdown = 5f;
     public float countdownStart = 5f;
 
-    /*private void OnCollisionEnter(Collision other) {
-        if (other.gameObject.CompareTag("Player") && countdown <= 0f) {
-            if ((int)PV.Owner.CustomProperties["team"] == 1 &&
-            (int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == 0) {
-
-                // calling function to master client because only the master client can change the custom properties of other players
-                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, 1);
-
-                ChangeMyTeam(0);
-                countdown = countdownStart;
-            }
-        }
-    }*/
-
     private void OnTriggerEnter(Collider other) {
         if (other.gameObject.CompareTag("Player") && countdown <= 0f) {
             if ((int)PV.Owner.CustomProperties["team"] == 1 &&
@@ -593,6 +596,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
                 ChangeMyTeam(0);
                 countdown = countdownStart;
+
+                //SendFeedToAll(PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
+                PV.RPC("SpawnTagFeed", RpcTarget.All, PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
             }
             else if ((int)PV.Owner.CustomProperties["team"] == 0 &&
                 (int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == 1) {
@@ -602,6 +608,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
                 ChangeMyTeam(1);
                 countdown = countdownStart;
+
+                //SendFeedToAll(PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner, PhotonNetwork.LocalPlayer);
+                PV.RPC("SpawnTagFeed", RpcTarget.All, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner, PhotonNetwork.LocalPlayer);
             }
         }
 
@@ -629,6 +638,12 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         PhotonView.Find(viewID).Owner.SetCustomProperties(hash);
     }
 
+    void SendFeedToAll(Player player1, Player player2) {
+        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
+            PV.RPC("SpawnTagFeed", PhotonNetwork.PlayerList[i], player1, player2);
+        }
+    }
+
     void ChangeMyTeam(int team) {
         Hashtable hash2 = new Hashtable {
             { "team", team },
@@ -648,10 +663,35 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     [PunRPC]
+    void SpawnTagFeed(Player player1, Player player2) {
+        DisplayTagFeed(player1, player2);
+    }
+
+    [PunRPC]
     void RPC_GetSound(int viewID) {
         /*AudioSource source = testAudioSource;//PhotonView.Find(viewID).gameObject.GetComponent<AudioSource>();
         FindObjectOfType<AudioManager>().PlayOthersFootsteps(source);*/ 
         PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.PlayRandomFootstep();
+    }
+
+    void DisplayTagFeed(Player player1, Player player2) {
+        //if (!PV.IsMine) return;
+        Debug.Log(player1.NickName + " tagged " + player2.NickName);
+
+        GameObject t = Instantiate(tagFeed);
+
+        if (tagFeedList != null) {
+            t.transform.SetParent(tagFeedList);
+            if (tagFeedList.childCount > 4) {
+                Destroy(tagFeedList.GetChild(0));
+            }
+        }
+        else {
+            Debug.Log("no tagfeed lol. view ID" + PV.ViewID);
+        }
+
+        t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " tagged " + player2.NickName;
+        Destroy(t, 7f);
     }
 
     private void StopGrounded() {

@@ -24,7 +24,6 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void Start() {
         timer = destroyAfter;
-        particle.startLifetime = destroyAfter + 2;
         Destroy(gameObject.transform.parent.gameObject, destroyAfter);
     }
 
@@ -39,6 +38,7 @@ public class ProjectileBehaviour : MonoBehaviour
     void ProcessCollision(GameObject collider) {
         if (collider.layer == 8) {
             rb.isKinematic = true;
+            particle.startLifetime = timer - 1f;
             particle.Play();
             particle2.Play();
             transform.localEulerAngles = new Vector3(0, 0, 0);

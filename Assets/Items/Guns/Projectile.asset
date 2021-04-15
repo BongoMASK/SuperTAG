@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f68c4a184119f4a48b4667b5a8d35890, type: 3}
-  m_Name: GoopGun
+  m_Name: Projectile
   m_EditorClassIdentifier: 
   itemName: Projectile Gun
   damage: 0
