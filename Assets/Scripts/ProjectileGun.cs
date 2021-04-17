@@ -5,18 +5,30 @@ using Photon.Pun;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using System.IO;
 using TMPro;
+using UnityEngine.UI;
 
 public class ProjectileGun : Gun {
+    //GameObjects
     [SerializeField] GameObject bullet, shootingPoint, camera;
+    [SerializeField] Slider ammoSlider;
+    
+    //speed
     [SerializeField] float speedx, speedy;
-    [SerializeField] int maxAmmo = 3;
-    [SerializeField] float reloadTime = 2, fireRate = 1;
+
+    //Ammo
     int currentAmmo;
+    [SerializeField] int maxAmmo = 3;
+
+    //Reload / Firing
+    [SerializeField] bool reloadWhenInactive = false;
+    [SerializeField] float reloadTime = 2, fireRate = 1;
     float fireCountdown = 0, reloadCountdown;
 
+    //Text
     [SerializeField] TMP_Text ammoText;
     [SerializeField] TMP_Text weaponText;
 
+    //Color
     [SerializeField] Color32 weaponColor;
 
     PhotonView PV;
@@ -32,12 +44,12 @@ public class ProjectileGun : Gun {
     }
 
     private void Update() {
-        if (currentAmmo < maxAmmo && itemGameObject.activeSelf) {
-            if (reloadCountdown <= 0f) {
-                currentAmmo++;
-                reloadCountdown = reloadTime;
+        if (itemGameObject.activeSelf) {
+            if(!reloadWhenInactive) {
+                Reload();
             }
-            reloadCountdown -= Time.deltaTime;
+            ammoSlider.maxValue = reloadTime;
+            ammoSlider.value = reloadTime - reloadCountdown;
         }
         fireCountdown -= Time.deltaTime;
 
@@ -47,6 +59,8 @@ public class ProjectileGun : Gun {
             ammoText.text = currentAmmo.ToString();
             weaponText.text = gameObject.name;
         }
+
+        if (reloadWhenInactive) Reload();
     }
 
     void Shoot() {
@@ -62,6 +76,16 @@ public class ProjectileGun : Gun {
             fireCountdown = fireRate;
             reloadCountdown = reloadTime;
             currentAmmo--;
+        }
+    }
+
+    void Reload() {
+        if (currentAmmo < maxAmmo) {
+            if (reloadCountdown <= 0f) {
+                currentAmmo++;
+                reloadCountdown = reloadTime;
+            }
+            reloadCountdown -= Time.deltaTime;
         }
     }
 
