@@ -50,10 +50,12 @@ MonoBehaviour:
   bullet: {fileID: 7876120812476563209, guid: 4d93ea94e15655649b4d32346ceec64d, type: 3}
   shootingPoint: {fileID: 0}
   camera: {fileID: 0}
+  ammoSlider: {fileID: 0}
   speedx: 2500
   speedy: 0
   maxAmmo: 1
-  reloadTime: 1
+  reloadWhenInactive: 0
+  reloadTime: 10
   fireRate: 0
   ammoText: {fileID: 0}
   weaponText: {fileID: 0}

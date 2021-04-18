@@ -76,6 +76,12 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     [SerializeField] GameObject tagFeed;
     [SerializeField] Transform tagFeedList;
 
+    //step climb objects
+    [SerializeField] GameObject stepUpper;
+    [SerializeField] GameObject stepLower;
+    [SerializeField] float stepHeight = 0.3f;
+    [SerializeField] float stepsmooth = 0.1f;
+
     public PlayerAudio playerAudio;
 
     [SerializeField] const float maxHealth = 100f;
@@ -89,6 +95,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         renderer = GetComponent<Renderer>();
 
         playerManager = PhotonView.Find((int)PV.InstantiationData[0]).GetComponent<PlayerManager>();
+
+        stepUpper.transform.position = new Vector3(stepUpper.transform.position.x, stepHeight, stepUpper.transform.position.z);
     }
 
     void Start() {
@@ -123,6 +131,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             return;
         }
         Movement();
+        //StepClimb(0.1f, 0.15f);
     }
 
     private void Update() {
@@ -525,6 +534,22 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
                 float fallspeed = rb.velocity.y;
                 Vector3 n = rb.velocity.normalized * maxSpeed;
                 rb.velocity = new Vector3(n.x, fallspeed, n.z);
+            }
+        }
+    }
+
+    void StepClimb(float raycastLength, float raycastLength2) {
+        CreateStepClimbDirections(orientation.transform.forward, raycastLength, raycastLength2);
+        CreateStepClimbDirections(new Vector3(1.5f, 0, 1), raycastLength, raycastLength2);
+        CreateStepClimbDirections(new Vector3(-1.5f, 0, 1), raycastLength, raycastLength2);
+    }
+
+    void CreateStepClimbDirections(Vector3 direction, float raycastLength, float raycastLength2) {
+        RaycastHit lower;
+        if (Physics.Raycast(stepLower.transform.position, transform.TransformDirection(direction), out lower, raycastLength)) {
+            RaycastHit upper;
+            if (!Physics.Raycast(stepUpper.transform.position, transform.TransformDirection(direction), out upper, raycastLength2)) {
+                rb.position -= new Vector3(0f, -stepsmooth, 0f);
             }
         }
     }
