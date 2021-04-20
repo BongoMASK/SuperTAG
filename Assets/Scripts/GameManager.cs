@@ -4,7 +4,6 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using Photon.Realtime;
 using System.Collections.Generic;
-using System;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
@@ -108,7 +107,7 @@ public class GameManager : MonoBehaviour
 
     private void Update() {
         pauseMenu.SetActive(gameIsPaused);
-        if (Input.GetKeyDown(KeyCode.Escape)) {
+        if (Input.GetKeyDown(KeyCode.Escape) && SceneManager.GetActiveScene().buildIndex != 0) {
             gameIsPaused = !gameIsPaused;
         }
         if (!gameIsPaused) {
@@ -192,14 +191,16 @@ public class GameManager : MonoBehaviour
         DebugController.showConsole = false;
         gameIsPaused = false;
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = gameIsPaused;
+        if (SceneManager.GetActiveScene().buildIndex != 0) {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = gameIsPaused;
+        }
     }
 
     public void LeaveRoom() {
         PhotonNetwork.Disconnect();       //need to disconnect the player before we change scenes
         SceneManager.LoadScene(0);
-        //gameIsPaused = false;
+        gameIsPaused = false;
     }
 
     public void Options() {
