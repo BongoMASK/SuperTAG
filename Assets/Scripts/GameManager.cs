@@ -73,6 +73,7 @@ public class GameManager : MonoBehaviour
         movementKeys.Add("right", new InputKeys("rightKey", "D"));
         movementKeys.Add("crouch", new InputKeys("crouchKey", "LeftShift"));
         movementKeys.Add("prevWeapon", new InputKeys("prevWeaponKey", "Q"));
+        movementKeys.Add("console", new InputKeys("consoleKey", "C"));
 
         itemKeys.Add(new InputKeys("item1key", "Alpha1"));
         itemKeys.Add(new InputKeys("item2key", "Alpha2"));
@@ -107,7 +108,7 @@ public class GameManager : MonoBehaviour
 
     private void Update() {
         pauseMenu.SetActive(gameIsPaused);
-        if (Input.GetKeyDown(KeyCode.Escape)) {
+        if (Input.GetKeyDown(KeyCode.H)) {
             if(gameIsPaused) {
                 Resume();
             }
@@ -189,9 +190,10 @@ public class GameManager : MonoBehaviour
     public void Resume() {
         pauseMenu.SetActive(false);
         gameIsPaused = false;
+        DebugController.showConsole = false;
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        //Cursor.lockState = CursorLockMode.Locked;
+        //Cursor.visible = false;
     }
 
     public void LeaveRoom() {

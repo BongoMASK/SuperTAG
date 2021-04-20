@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
-using Hashtable = ExitGames.Client.Photon.Hashtable;
-using System.IO;
 using TMPro;
 using UnityEngine.UI;
 
@@ -66,13 +64,12 @@ public class ProjectileGun : Gun {
     void Shoot() {
         if (fireCountdown <= 0f && currentAmmo > 0) {
             Vector3 direction = camera.transform.forward;
-            PV.RPC("RPC_SpawnProjectile", RpcTarget.AllViaServer, shootingPoint.transform.position, direction);   //doing it to all makes multiple 
-                                                                                                            //instances of the same object
-            /*GameObject b = Instantiate(bullet, shootingPoint.transform.position, Quaternion.identity);      //create the bullet on the side from where it was shot
-            Rigidbody rb = b.GetComponentInChildren<Rigidbody>();
-            rb.AddForce(direction * speedx);
-            rb.AddForce(Vector2.up * speedy);*/ 
-             
+            PV.RPC("RPC_SpawnProjectile", RpcTarget.AllViaServer, shootingPoint.transform.position, direction);   
+
+            //doing it to all makes multiple                                                                                        
+            //instances of the same object
+            //create the bullet on the side from where it was shot
+ 
             fireCountdown = fireRate;
             reloadCountdown = reloadTime;
             currentAmmo--;
@@ -92,10 +89,18 @@ public class ProjectileGun : Gun {
     [PunRPC]
     void RPC_SpawnProjectile(Vector3 shootingPoint, Vector3 cameraPoint) {      //creates bullet for others
         GameObject b = Instantiate(bullet, shootingPoint, Quaternion.identity);
-        //Collider c = b.GetComponentInChildren<Collider>();  //destroying collider to not make 2 of the same object
-        //Destroy(c);
         Rigidbody rb = b.GetComponentInChildren<Rigidbody>();
         rb.AddForce(cameraPoint * speedx);
         rb.AddForce(Vector2.up * speedy);
+    }
+
+    public void ChangeValues(string name, int newValue) {
+        if (name == nameof(maxAmmo)) maxAmmo = newValue;
+        if (name == nameof(reloadTime)) reloadTime = newValue;
+        if (name == nameof(fireRate)) fireRate = newValue;
+    }
+
+    public void ChangeValues(string name, bool newValue) {
+        if (name == nameof(reloadWhenInactive)) reloadWhenInactive = newValue;
     }
 }

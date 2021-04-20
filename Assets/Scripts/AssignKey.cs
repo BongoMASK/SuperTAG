@@ -11,6 +11,14 @@ public class AssignKey : MonoBehaviour {
 	TMP_Text buttonText;
 	KeyCode newKey;
 
+	KeyCode[] MouseButtons = {  KeyCode.Mouse0,
+								KeyCode.Mouse1,
+								KeyCode.Mouse2,
+								KeyCode.Mouse3,
+								KeyCode.Mouse4,
+								KeyCode.Mouse5,
+								KeyCode.Mouse6, };
+
 	bool waitingForKey;
 
 	void Start() {
@@ -46,6 +54,12 @@ public class AssignKey : MonoBehaviour {
 		if (keyEvent.isKey && waitingForKey) {
 			newKey = keyEvent.keyCode; //Assigns newKey to the key user presses
 			waitingForKey = false;
+		}
+
+		if (keyEvent.isMouse && waitingForKey) {
+			newKey = MouseButtons[keyEvent.button]; //Assigns newKey to the key user presses
+			waitingForKey = false;
+			Debug.Log(keyEvent.button);
 		}
 	}
 

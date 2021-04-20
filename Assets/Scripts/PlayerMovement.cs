@@ -249,6 +249,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
         crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
 
+        if (Input.GetKeyDown(GameManager.GM.movementKeys["console"].key)) {
+            DebugController.showConsole = !DebugController.showConsole;
+            GameManager.gameIsPaused = !GameManager.gameIsPaused;
+        }
+
         //Crouching
         if (!gooped) {
             if (Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key))
