@@ -108,13 +108,14 @@ public class GameManager : MonoBehaviour
 
     private void Update() {
         pauseMenu.SetActive(gameIsPaused);
-        if (Input.GetKeyDown(KeyCode.H)) {
-            if(gameIsPaused) {
-                Resume();
-            }
-            else {
-                Pause();
-            }
+        if (Input.GetKeyDown(KeyCode.Escape)) {
+            gameIsPaused = !gameIsPaused;
+        }
+        if (!gameIsPaused) {
+            Resume();
+        }
+        else {
+            Pause();
         }
         DisplayPlayerList();
 
@@ -181,25 +182,24 @@ public class GameManager : MonoBehaviour
         pauseMenu.SetActive(true);
         optionsMenu.SetActive(false);
         mainPauseMenu.SetActive(true);
-        gameIsPaused = true;
 
         Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        Cursor.visible = gameIsPaused;
     }
 
     public void Resume() {
         pauseMenu.SetActive(false);
-        gameIsPaused = false;
         DebugController.showConsole = false;
+        gameIsPaused = false;
 
-        //Cursor.lockState = CursorLockMode.Locked;
-        //Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = gameIsPaused;
     }
 
     public void LeaveRoom() {
         PhotonNetwork.Disconnect();       //need to disconnect the player before we change scenes
         SceneManager.LoadScene(0);
-        gameIsPaused = false;
+        //gameIsPaused = false;
     }
 
     public void Options() {

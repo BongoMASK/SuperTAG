@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemInfo: {fileID: 11400000, guid: 9912185814e81bb46b8d6318c42636b4, type: 2}
   itemGameObject: {fileID: 5195025230847727613}
+  weaponName: Impulse Ball
   bullet: {fileID: 7876120812476563209, guid: 4d93ea94e15655649b4d32346ceec64d, type: 3}
   shootingPoint: {fileID: 0}
   camera: {fileID: 0}

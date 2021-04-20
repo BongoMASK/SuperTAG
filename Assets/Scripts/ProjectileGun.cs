@@ -6,6 +6,9 @@ using TMPro;
 using UnityEngine.UI;
 
 public class ProjectileGun : Gun {
+
+    [SerializeField] string weaponName;
+
     //GameObjects
     [SerializeField] GameObject bullet, shootingPoint, camera;
     [SerializeField] Slider ammoSlider;
@@ -94,13 +97,25 @@ public class ProjectileGun : Gun {
         rb.AddForce(Vector2.up * speedy);
     }
 
-    public void ChangeValues(string name, int newValue) {
+    [PunRPC]
+    void RPC_ChangeValues(string name, int newValue, string _weaponName) {
         if (name == nameof(maxAmmo)) maxAmmo = newValue;
         if (name == nameof(reloadTime)) reloadTime = newValue;
         if (name == nameof(fireRate)) fireRate = newValue;
     }
 
-    public void ChangeValues(string name, bool newValue) {
+    public void ChangeValues(string name, int newValue, string _weaponName) {
+        if (!PhotonNetwork.IsMasterClient) return; 
+        if (weaponName != _weaponName) return;
+
+        PV.RPC("RPC_ChangeValues", RpcTarget.AllBuffered, name, newValue, _weaponName);
+    }
+
+    public void ChangeValues(string name, bool newValue, string _weaponName) {
+        if (weaponName != _weaponName) return;
+
         if (name == nameof(reloadWhenInactive)) reloadWhenInactive = newValue;
     }
+
+
 }

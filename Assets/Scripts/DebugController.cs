@@ -6,6 +6,7 @@ public class DebugController : MonoBehaviour
 {
 
     public static bool showConsole;
+    [SerializeField] GUIStyle consoleStyle;
 
     string input;
 
@@ -13,6 +14,8 @@ public class DebugController : MonoBehaviour
     public static DebugCommand hello;
     public static DebugCommand<int> setGold;
     public static DebugCommand<string, int> set_impulseBall;
+    public static DebugCommand<string, int> set_goopGun;
+    public static DebugCommand<string, int> set_player;
 
     public List<object> commandList;
 
@@ -21,26 +24,34 @@ public class DebugController : MonoBehaviour
     }
 
     private void Awake() {
-        KILL_ALL = new DebugCommand("kill_all", "Removes all heroes from scene.", "kill_all", () => {
-            Debug.Log("All enemies killed");
+        set_impulseBall = new DebugCommand<string, int>("set_impulseBall", "Sets values of impulse ball", "set_impulseBall <variable name, value>", (b, a) => {
+            Debug.Log("Changed impulse ball's " + b + " to " + a);
+            ProjectileGun[] weapons = FindObjectsOfType<ProjectileGun>();
+            foreach(ProjectileGun weapon in weapons) {
+                weapon.ChangeValues(b, a, "Impulse Ball");
+            }
         });
 
-        hello = new DebugCommand("hello", "Types hello in console.", "hello", () => {
-            Debug.Log("helo");
+        set_goopGun = new DebugCommand<string, int>("set_goopGun", "Sets values of goop gun", "set_goopGun <variable name, value>", (b, a) => {
+            Debug.Log("Changed goop gun's " + b + "to " + a);
+            ProjectileGun[] weapons = FindObjectsOfType<ProjectileGun>();
+            foreach (ProjectileGun weapon in weapons) {
+                weapon.ChangeValues(b, a, "Goop Gun");
+            }
         });
 
-        setGold = new DebugCommand<int>("set_gold", "Sets the amount of gold", "set_gold <gold amount>", (a) => {
-            Debug.Log("set gold to " + a);
-        }); 
-        
-        set_impulseBall = new DebugCommand<string, int>("set_impulseBall", "Sets the amount of gold", "set_impulseBall <variable name> <value>", (b, a) => {
-            Debug.Log("Changed impulse ball's " + b + "to " + a);
+        set_player = new DebugCommand<string, int>("set_player", "Sets values of player", "set_player <variable name, value>", (b, a) => {
+            Debug.Log("Changed player's " + b + " to " + a);
+            PlayerMovement[] players = FindObjectsOfType<PlayerMovement>();
+            foreach (PlayerMovement player in players) {
+                player.ChangeValues(b, a);
+            }
         });
 
         commandList = new List<object> {
-            KILL_ALL,
-            hello,
-            setGold
+            set_impulseBall,
+            set_goopGun,
+            set_player
         };
     }
 
@@ -58,9 +69,10 @@ public class DebugController : MonoBehaviour
 
         float y = 0f;
 
-        GUI.Box(new Rect(0, y, Screen.width, 30), "");
+        GUI.Box(new Rect(0, y, Screen.width, 60), "");
         GUI.backgroundColor = new Color(0, 0, 0, 0);
-        input = GUI.TextField(new Rect(10f, y+ 5f, Screen.width - 20f, 20f), input);   
+        input = GUI.TextField(new Rect(10f, y+ 5f, Screen.width - 20f, 100f), input, consoleStyle);   
+        
     }
 
     void HandleInput() {
@@ -78,6 +90,9 @@ public class DebugController : MonoBehaviour
                 else if(commandList[i] as DebugCommand<string, int> != null) {
                     (commandList[i] as DebugCommand<string, int>).Invoke(properties[properties.Length - 2], int.Parse(properties[properties.Length - 1]));
                 }
+            }
+            else {
+                Debug.LogWarning("no command like this lol");
             }
         }
     }

@@ -159,12 +159,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemInfo: {fileID: 11400000, guid: 9912185814e81bb46b8d6318c42636b4, type: 2}
   itemGameObject: {fileID: 2406578259965424416}
+  weaponName: Goop Gun
   bullet: {fileID: 4996163600598882643, guid: b03aec2c08eb1ac419ecc7a57e5cb135, type: 3}
   shootingPoint: {fileID: 0}
   camera: {fileID: 0}
+  ammoSlider: {fileID: 0}
   speedx: 5000
   speedy: 300
   maxAmmo: 3
+  reloadWhenInactive: 0
   reloadTime: 2
   fireRate: 1
   ammoText: {fileID: 0}

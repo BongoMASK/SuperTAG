@@ -747,4 +747,17 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     void Die() {
         playerManager.Die();
     }
+
+    public void ChangeValues(string name, int newValue) {
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        PV.RPC("RPC_ChangeValuesOnAll", RpcTarget.AllBuffered, name, newValue);
+    }
+
+    [PunRPC]
+    void RPC_ChangeValuesOnAll(string name, int newValue) {
+        if (name == nameof(maxSpeed)) maxSpeed = newValue;
+        if (name == nameof(jumpForce)) jumpForce = newValue;
+        if (name == nameof(slideForce)) slideForce = newValue;
+    }
 }
