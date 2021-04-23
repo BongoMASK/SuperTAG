@@ -50,7 +50,7 @@ public class ProjectileGun : Gun {
                 Reload();
             }
             ammoSlider.maxValue = reloadTime;
-            ammoSlider.value = reloadTime - reloadCountdown;
+            ammoSlider.value = reloadCountdown;
         }
         fireCountdown -= Time.deltaTime;
 

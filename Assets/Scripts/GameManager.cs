@@ -179,8 +179,6 @@ public class GameManager : MonoBehaviour
 
     public void Pause() {
         pauseMenu.SetActive(true);
-        optionsMenu.SetActive(false);
-        mainPauseMenu.SetActive(true);
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = gameIsPaused;
@@ -188,6 +186,9 @@ public class GameManager : MonoBehaviour
 
     public void Resume() {
         pauseMenu.SetActive(false);
+        optionsMenu.SetActive(false);
+        mainPauseMenu.SetActive(true);
+
         DebugController.showConsole = false;
         gameIsPaused = false;
 

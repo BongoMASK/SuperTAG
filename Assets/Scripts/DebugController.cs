@@ -10,12 +10,16 @@ public class DebugController : MonoBehaviour
 
     string input;
 
-    public static DebugCommand KILL_ALL;
-    public static DebugCommand hello;
-    public static DebugCommand<int> setGold;
     public static DebugCommand<string, int> set_impulseBall;
     public static DebugCommand<string, int> set_goopGun;
     public static DebugCommand<string, int> set_player;
+    public static DebugCommand<int> set_time;
+    public static DebugCommand<float> set_game_time;
+    public static DebugCommand time_pause;
+    public static DebugCommand restart_round;
+    public static DebugCommand restart_game;
+
+    //TODO: set time, reset score, restart round
 
     public List<object> commandList;
 
@@ -33,7 +37,7 @@ public class DebugController : MonoBehaviour
         });
 
         set_goopGun = new DebugCommand<string, int>("set_goopGun", "Sets values of goop gun", "set_goopGun <variable name, value>", (b, a) => {
-            Debug.Log("Changed goop gun's " + b + "to " + a);
+            Debug.Log("Changed goop gun's " + b + " to " + a);
             ProjectileGun[] weapons = FindObjectsOfType<ProjectileGun>();
             foreach (ProjectileGun weapon in weapons) {
                 weapon.ChangeValues(b, a, "Goop Gun");
@@ -48,10 +52,50 @@ public class DebugController : MonoBehaviour
             }
         });
 
-        commandList = new List<object> {
+        set_time = new DebugCommand<int>("set_time", "Sets values of player", "set_time <value>", (a) => {
+            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
+            foreach (TeamSetup player in players) {
+                player.ChangeTime(a);
+            }
+        });
+
+        set_game_time = new DebugCommand<float>("set_game_time", "Sets values of player", "set_game_time <value>", (a) => {
+            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
+            foreach (TeamSetup player in players) {
+                player.ChangeGameTime(a);
+            }
+        });
+
+        time_pause = new DebugCommand("time_pause", "Sets values of player", "time_pause <value>", () => {
+            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
+            foreach (TeamSetup player in players) {
+                player.PauseMatch();
+            }
+        });
+
+        restart_round = new DebugCommand("restart_round", "Sets values of player", "restart_round", () => {
+            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
+            foreach (TeamSetup player in players) {
+                player.RestartRound();
+            }
+        });
+
+        restart_game = new DebugCommand("restart_game", "Sets values of player", "restart_game", () => {
+            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
+            foreach (TeamSetup player in players) {
+                player.RestartGame();
+            }
+        });
+
+        commandList = new List<object> { 
             set_impulseBall,
             set_goopGun,
-            set_player
+            set_player,
+            set_time,
+            set_game_time,
+            time_pause,
+            restart_round,
+            restart_game
         };
     }
 
@@ -90,10 +134,10 @@ public class DebugController : MonoBehaviour
                 else if(commandList[i] as DebugCommand<string, int> != null) {
                     (commandList[i] as DebugCommand<string, int>).Invoke(properties[properties.Length - 2], int.Parse(properties[properties.Length - 1]));
                 }
-            }
-            else {
-                Debug.LogWarning("no command like this lol");
+                goto l;
             }
         }
+        Debug.LogWarning("no command like this lol");
+        l:;
     }
 }
