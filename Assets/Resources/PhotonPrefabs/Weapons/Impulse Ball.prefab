@@ -52,8 +52,8 @@ MonoBehaviour:
   shootingPoint: {fileID: 0}
   camera: {fileID: 0}
   ammoSlider: {fileID: 0}
-  speedx: 2500
-  speedy: 0
+  speedx: 5000
+  speedy: 300
   maxAmmo: 1
   reloadWhenInactive: 1
   reloadTime: 2
