@@ -1762,7 +1762,7 @@ MonoBehaviour:
   orientation: {fileID: 7799819605974004852}
   gooped: 0
   moveSpeed: 1500
-  maxSpeed: 20
+  maxSpeed: 25
   grounded: 0
   whatIsGround:
     serializedVersion: 2
@@ -1772,7 +1772,7 @@ MonoBehaviour:
   maxSlopeAngle: 35
   slideForce: 400
   slideCounterMovement: 0.2
-  jumpForce: 250
+  jumpForce: 280
   items:
   - {fileID: 7235711933485400552}
   - {fileID: 6191872268981847321}
