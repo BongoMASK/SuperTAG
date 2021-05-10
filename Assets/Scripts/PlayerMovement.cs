@@ -70,7 +70,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     float soundTimer = 0f;
 
-    [SerializeField] Material[] material; 
+    [SerializeField] Material[] material;
     [SerializeField] GameObject glasses;
     [SerializeField] GameObject canvas;
     [SerializeField] GameObject tagFeed;
@@ -100,7 +100,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     void Start() {
-        if(PV.IsMine) {
+        if (PV.IsMine) {
             EquipItem(1);
             GetComponent<MeshRenderer>().enabled = false;
             Destroy(glasses);
@@ -153,7 +153,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             ChangeItem();
         }
 
-        if(canvas != null) {
+        if (canvas != null) {
             canvas.SetActive(!GameManager.gameIsPaused);
         }
 
@@ -172,14 +172,14 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     void Sounds() {
         //Slide
-        if(crouching && !jumping && grounded) {
+        if (crouching && !jumping && grounded) {
             if (Mathf.Abs(rb.velocity.x) > 3 || Mathf.Abs(rb.velocity.z) > 3) {
                 crouchSound = true;
                 if (!playerAudio.GetAudioSource("Slide").isPlaying) {
                     PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
                 }
             }
-            else if(Mathf.Abs(rb.velocity.x) < 3 || Mathf.Abs(rb.velocity.z) < 3) {
+            else if (Mathf.Abs(rb.velocity.x) < 3 || Mathf.Abs(rb.velocity.z) < 3) {
                 //FindObjectOfType<AudioManager>().Play("Slide Get Up");
                 //FindObjectOfType<AudioManager>().Pause("Slide");
 
@@ -188,7 +188,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
                 crouchSound = false;
             }
         }
-        else if((!crouching || jumping) && crouchSound == true) { 
+        else if ((!crouching || jumping) && crouchSound == true) {
             //FindObjectOfType<AudioManager>().Play("Slide Get Up");
             //FindObjectOfType<AudioManager>().Pause("Slide");
 
@@ -212,7 +212,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         //Jump
-        if(grounded && readyToJump && jumping) {
+        if (grounded && readyToJump && jumping) {
             PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponentInChildren<PhotonView>().ViewID, "Jump");
             //FindObjectOfType<AudioManager>().Play("Jump");
         }
@@ -244,7 +244,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             y = 0;
         }
 
-        
+
         switchPrev = GameManager.GM.movementKeys["prevWeapon"].key;
         jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
         crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
@@ -291,18 +291,18 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
         else if (grounded) {
             //if (rb.velocity.magnitude > 1f) {
-                Debug.Log("walkin");
-                //do walk animations
+            Debug.Log("walkin");
+            //do walk animations
             //}
             //else {
-                Debug.Log("Idle");
-                //do idle animation
+            Debug.Log("Idle");
+            //do idle animation
             //}
         }
 
         else {
             //in air animation
-            if(rb.velocity.y > 0) {
+            if (rb.velocity.y > 0) {
                 Debug.Log("goin up");
                 //animation of going up
             }
@@ -343,7 +343,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             EquipItem(prevWeapon);
         }
 
-        if(Input.GetMouseButton(0)) {
+        if (Input.GetMouseButton(0)) {
             items[itemIndex].Use();
         }
 
@@ -366,7 +366,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
         previousItemIndex = itemIndex;
 
-        if(PV.IsMine) {
+        if (PV.IsMine) {
             Hashtable hash = new Hashtable {
                 { "itemIndex", itemIndex }
             };
@@ -397,7 +397,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         FindObjectOfType<AudioManager>().Play("TagSound");
 
         if (InfoText != null) {
-            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString()+ "\nTag Cooldown: " + (int)countdown;
+            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\nTag Cooldown: " + (int)countdown;
             InfoText.gameObject.SetActive(true);
 
             if (PV.Owner.CustomProperties["team"] != null) {
@@ -406,9 +406,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         }
     }
 
+    [SerializeField] float downForce = 20;
+
     private void Movement() {
         //Extra gravity
-        rb.AddForce(Vector3.down * Time.deltaTime * 10);
+        rb.AddForce(Vector3.down * Time.deltaTime * downForce);
 
         //Find actual velocity relative to where player is looking
         Vector2 mag = FindVelRelativeToLook();      //mag = magnitude
@@ -418,7 +420,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         CounterMovement(x, y, mag);
 
         //If holding jump && ready to jump, then jump
-        if (readyToJump && jumping) Jump();
+        Jump();
 
         //Set max speed
         float maxSpeed = this.maxSpeed;
@@ -453,26 +455,43 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier);
     }
 
+    [SerializeField] float jumpGraceTime;
+    private float? lastGroundedTime;
+    private float? jumpButtonPressedTime;
+
     private void Jump() {
         if (grounded && readyToJump) {
-            readyToJump = false;
-
-            //Add jump forces
-            rb.AddForce(Vector2.up * jumpForce * 1.5f);
-            rb.AddForce(normalVector * jumpForce * 0.5f);
-            rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime);
-
-            //If jumping while falling, reset y velocity.
-            Vector3 vel = rb.velocity;
-            if (rb.velocity.y < 0.5f) {
-                rb.velocity = new Vector3(vel.x, 0, vel.z);
-            }
-            else if (rb.velocity.y > 0) { 
-                rb.velocity = new Vector3(vel.x, vel.y / 2, vel.z);
-            }
-
-            Invoke(nameof(ResetJump), jumpCooldown);
+            lastGroundedTime = Time.time;
         }
+
+        if (jumping) {
+            jumpButtonPressedTime = Time.time;
+        }
+
+        //if (grounded && readyToJump) {
+        if (readyToJump && Time.time - lastGroundedTime <= jumpGraceTime)
+            if (Time.time - jumpButtonPressedTime <= jumpGraceTime) {
+                readyToJump = false;
+
+                //Add jump forces
+                rb.AddForce(Vector2.up * jumpForce * 1.5f);
+                rb.AddForce(normalVector * jumpForce * 0.5f);
+                rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime);
+
+                //If jumping while falling, reset y velocity.
+                Vector3 vel = rb.velocity;
+                if (rb.velocity.y < 0.5f) {
+                    rb.velocity = new Vector3(vel.x, 0, vel.z);
+                }
+                else if (rb.velocity.y > 0) {
+                    rb.velocity = new Vector3(vel.x, vel.y / 2, vel.z);
+                }
+
+                Invoke(nameof(ResetJump), jumpCooldown);
+
+                lastGroundedTime = null;
+                jumpButtonPressedTime = null;
+            }
     }
 
     private void ResetJump() {
@@ -526,7 +545,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         else if (mag.y < -threshold && y == 0 || mag.y > threshold && y == 0) {
             // let rigidbody come to rest on its own after adding a force opposite to it
             if (grounded) {
-                rb.AddForce(moveSpeed * orientation.transform.forward * Time.deltaTime * -mag.y * stopMovement );
+                rb.AddForce(moveSpeed * orientation.transform.forward * Time.deltaTime * -mag.y * stopMovement);
             }
             else {
                 //do nothing
@@ -700,7 +719,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     [PunRPC]
     void RPC_GetSound(int viewID) {
         /*AudioSource source = testAudioSource;//PhotonView.Find(viewID).gameObject.GetComponent<AudioSource>();
-        FindObjectOfType<AudioManager>().PlayOthersFootsteps(source);*/ 
+        FindObjectOfType<AudioManager>().PlayOthersFootsteps(source);*/
         PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.PlayRandomFootstep();
     }
 
@@ -739,7 +758,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         Debug.Log("took damage " + damage);
         currentHealth -= damage;
 
-        if(currentHealth <= 0f) {
+        if (currentHealth <= 0f) {
             Die();
         }
     }
@@ -759,5 +778,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         if (name == nameof(maxSpeed)) maxSpeed = newValue;
         if (name == nameof(jumpForce)) jumpForce = newValue;
         if (name == nameof(slideForce)) slideForce = newValue;
+        if (name == nameof(downForce)) downForce = newValue;
     }
 }
