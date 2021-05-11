@@ -35,8 +35,13 @@ public class ProjectileBehaviour : MonoBehaviour
         ProcessCollision(collision.gameObject);
     }
 
+    private void OnTriggerEnter(Collider other) {
+        ProcessCollision(other.gameObject);
+    }
+
     void ProcessCollision(GameObject collider) {
         if (collider.layer == 8) {
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             rb.isKinematic = true;
             particle.startLifetime = timer - 1f;
             particle.Play();

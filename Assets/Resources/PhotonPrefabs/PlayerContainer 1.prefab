@@ -1790,7 +1790,7 @@ MonoBehaviour:
   stepHeight: -0.5
   stepsmooth: 0.3
   playerAudio: {fileID: 1228943051866660941}
-  downForce: 20
+  downForce: 80
   jumpGraceTime: 0.2
   countdownStart: 5
 --- !u!65 &7799819605784857070
@@ -1874,7 +1874,7 @@ SphereCollider:
   m_GameObject: {fileID: 7799819605784857078}
   m_Material: {fileID: 13400000, guid: 72daed214db69394691221e58d3fa91b, type: 2}
   m_IsTrigger: 1
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 2
   m_Radius: 1
   m_Center: {x: 0, y: 0, z: 0}
@@ -1888,7 +1888,7 @@ CapsuleCollider:
   m_Material: {fileID: 13400000, guid: 72daed214db69394691221e58d3fa91b, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.65
+  m_Radius: 0.5
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
