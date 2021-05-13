@@ -5002,9 +5002,9 @@ GameObject:
   - component: {fileID: 3377779400765046046}
   - component: {fileID: 4472689192444452524}
   - component: {fileID: 4261764007823427662}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Sphere
-  m_TagString: Untagged
+  m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

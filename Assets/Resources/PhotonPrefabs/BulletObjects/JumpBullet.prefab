@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1641179094643319632}
   - component: {fileID: 6838382805275717911}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Trail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -152,9 +152,9 @@ GameObject:
   - component: {fileID: 7876120811781357270}
   - component: {fileID: 7876120811781357269}
   - component: {fileID: 2865041156100203453}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Sphere
-  m_TagString: Untagged
+  m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -231,7 +231,7 @@ SphereCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7876120811781357267}
   m_Material: {fileID: 0}
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5

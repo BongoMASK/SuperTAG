@@ -46,7 +46,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3637745800054797976}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: Step Lower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -374,7 +374,7 @@ GameObject:
   - component: {fileID: 2910503359001989223}
   - component: {fileID: 8457189734057723067}
   - component: {fileID: 6649094519611056175}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -788,7 +788,7 @@ GameObject:
   - component: {fileID: 7250537526294022787}
   - component: {fileID: 6488921993240651483}
   - component: {fileID: 5943826593086480149}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: PlayerNameText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -999,7 +999,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4440761240862307127}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: StepUpper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1029,7 +1029,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7744826099432577696}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: Shooting Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1271,7 +1271,7 @@ GameObject:
   - component: {fileID: 3600057163984265691}
   - component: {fileID: 7912465134234995504}
   - component: {fileID: 689353682740790357}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: Glasses
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1658,7 +1658,7 @@ GameObject:
   - component: {fileID: 6941831161601014603}
   - component: {fileID: 570247111251870720}
   - component: {fileID: 6019343003750528884}
-  m_Layer: 2
+  m_Layer: 7
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -1902,7 +1902,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7799819605974004852}
   - component: {fileID: 5727631467840336287}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: Orientation
   m_TagString: PlayerOrientation
   m_Icon: {fileID: 0}
@@ -1999,7 +1999,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7799819606354182327}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2063,7 +2063,7 @@ GameObject:
   - component: {fileID: 8150702647367417163}
   - component: {fileID: 1228943051866660941}
   - component: {fileID: 4568851268490011386}
-  m_Layer: 2
+  m_Layer: 0
   m_Name: Sounds
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2554,6 +2554,16 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 6428843242870909204}
     m_Modifications:
+    - target: {fileID: 2406578259965424416, guid: 22427b5a6ccf0b546998172c170bdebf,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2819035964958652155, guid: 22427b5a6ccf0b546998172c170bdebf,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7305441439493339559, guid: 22427b5a6ccf0b546998172c170bdebf,
         type: 3}
       propertyPath: camera
@@ -2639,6 +2649,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: GoopGun
       objectReference: {fileID: 0}
+    - target: {fileID: 8403652422353451884, guid: 22427b5a6ccf0b546998172c170bdebf,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 22427b5a6ccf0b546998172c170bdebf, type: 3}
 --- !u!114 &7235711933485400552 stripped
@@ -2670,6 +2685,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Impulse Ball
+      objectReference: {fileID: 0}
+    - target: {fileID: 3810818096790170578, guid: 10342676afe577b45aa3b7faa1c32d22,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5195025230847727613, guid: 10342676afe577b45aa3b7faa1c32d22,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6323736082544792969, guid: 10342676afe577b45aa3b7faa1c32d22,
         type: 3}
@@ -2749,6 +2774,11 @@ PrefabInstance:
     - target: {fileID: 8679786804193613857, guid: 10342676afe577b45aa3b7faa1c32d22,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8858966867459296700, guid: 10342676afe577b45aa3b7faa1c32d22,
+        type: 3}
+      propertyPath: m_Layer
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

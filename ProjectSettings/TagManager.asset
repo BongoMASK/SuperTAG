@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Shootable
   - PlayerOrientation
+  - Goop
+  - Projectile
   layers:
   - Default
   - TransparentFX
@@ -14,11 +16,11 @@ TagManager:
   - Water
   - UI
   - 
-  - 
+  - Player
   - Ground
   - Lighting
   - Postprocessing
-  - 
+  - Projectile
   - 
   - 
   - 

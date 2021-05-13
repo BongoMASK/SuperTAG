@@ -20,6 +20,11 @@ public class ExplosiveJump : MonoBehaviour
             Explode();
     }
 
+    private void OnCollisionEnter(Collision collision) {
+        if(collision.gameObject.layer == 8)
+            Explode();
+    }
+
     void Explosion(GameObject other) {
         Vector3 direction = GetDirection(other.transform.position, transform.position);
         Rigidbody rb = other.GetComponent<Rigidbody>();
