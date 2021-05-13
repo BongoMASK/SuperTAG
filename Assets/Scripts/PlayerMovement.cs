@@ -158,14 +158,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         //Animations();
-        Respawn();
         Sounds();
-    }
-
-    void Respawn() {
-        if (transform.position.y <= -40f) {
-            transform.position = new Vector3(0f, 0f, 0f);
-        }
     }
 
     bool crouchSound = false;

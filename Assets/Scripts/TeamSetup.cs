@@ -65,6 +65,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         }
 
         GameOver();
+        Respawn();
 
         if (PhotonNetwork.IsMasterClient && time >= 0f) {
             scoreCountdown -= Time.deltaTime;
@@ -83,23 +84,40 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
     [PunRPC]
     void ScoreAdder(int adder) {
+        string add = "+";
+        if(adder < 0)
+            add = "-";
+
         GameObject s = Instantiate(scoreAdder);
-        s.GetComponentInChildren<TMP_Text>().text = "+" + adder;
+        s.GetComponentInChildren<TMP_Text>().text = add + Mathf.Abs(adder);
         Destroy(s, 1f);
+    }
+
+    [PunRPC]
+    void AddScore(Player player, int score) {
+        Hashtable hash = new Hashtable();
+        int currentScore = (int)player.CustomProperties["score"];
+        hash.Add("score", currentScore + score);
+        player.SetCustomProperties(hash);
+
+        PV.RPC("ScoreAdder", player, score);
     }
 
     void SetScore() {
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
-            Hashtable hash = new Hashtable();
-            if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {   
-                hash.Add("score", (int)PhotonNetwork.PlayerList[i].CustomProperties["score"] + 2);
-                PV.RPC("ScoreAdder", PhotonNetwork.PlayerList[i], 2);
+            if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {
+                AddScore(PhotonNetwork.PlayerList[i], 2);
             }
             else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
-                hash.Add("score", (int)PhotonNetwork.PlayerList[i].CustomProperties["score"] + 1);
-                PV.RPC("ScoreAdder", PhotonNetwork.PlayerList[i], 1);
+                AddScore(PhotonNetwork.PlayerList[i], 1);
             }
-            PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
+        }
+    }
+
+    void Respawn() {    //when player falls off the edge of the map
+        if (transform.position.y <= -40f) {
+            transform.position = new Vector3(0f, 0f, 0f);
+            PV.RPC("AddScore", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, -5);
         }
     }
 
@@ -140,12 +158,10 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
                             Hashtable hash = new Hashtable();
                             if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {
-                                hash.Add("score", (int)PhotonNetwork.PlayerList[i].CustomProperties["score"] + 4);
-                                PV.RPC("ScoreAdder", PhotonNetwork.PlayerList[i], 4);
+                                AddScore(PhotonNetwork.PlayerList[i], 4);
                             }
                             else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
-                                hash.Add("score", (int)PhotonNetwork.PlayerList[i].CustomProperties["score"] + 1);
-                                PV.RPC("ScoreAdder", PhotonNetwork.PlayerList[i], 1);
+                                AddScore(PhotonNetwork.PlayerList[i], 1);
                             }
                             PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
                         }
