@@ -87,12 +87,16 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     [SerializeField] const float maxHealth = 100f;
     float currentHealth = maxHealth;
 
+    Vector3 currentGravity;
+
     PlayerManager playerManager;
 
     void Awake() {
         rb = GetComponent<Rigidbody>();
+        rb.useGravity = false;
         PV = GetComponent<PhotonView>();
         renderer = GetComponent<Renderer>();
+        currentGravity = Physics.gravity;
 
         playerManager = PhotonView.Find((int)PV.InstantiationData[0]).GetComponent<PlayerManager>();
 
@@ -109,9 +113,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             Destroy(playerCam.gameObject);
             Destroy(rb);
             renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
-            /*foreach (Collider col in GetComponentsInChildren<Collider>()) {
-                col.gameObject.layer = 9;
-            }*/
             return;
         }
 
@@ -157,8 +158,13 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             canvas.SetActive(!GameManager.gameIsPaused);
         }
 
-        //Animations();
+        Gravity();
+        //Animations(); 
         Sounds();
+    }
+
+    void Gravity() {
+        rb.AddForce(currentGravity, ForceMode.Force);
     }
 
     bool crouchSound = false;
@@ -613,6 +619,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
                 grounded = true;
                 cancellingGrounded = false;
                 normalVector = normal;
+
+                currentGravity = -normal * Physics.gravity.magnitude;
+
                 CancelInvoke(nameof(StopGrounded));
             }
         }
@@ -738,6 +747,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     private void StopGrounded() {
         grounded = false;
+        currentGravity = Physics.gravity;
     }
 
     public void TakeDamage(float damage) {
