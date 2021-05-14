@@ -56,7 +56,7 @@ MonoBehaviour:
   speedy: 300
   maxAmmo: 1
   reloadWhenInactive: 1
-  reloadTime: 10
+  reloadTime: 1
   fireRate: 0
   ammoText: {fileID: 0}
   weaponText: {fileID: 0}

@@ -109,9 +109,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             Destroy(playerCam.gameObject);
             Destroy(rb);
             renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
-            foreach (Collider col in GetComponentsInChildren<Collider>()) {
+            /*foreach (Collider col in GetComponentsInChildren<Collider>()) {
                 col.gameObject.layer = 9;
-            }
+            }*/
             return;
         }
 
