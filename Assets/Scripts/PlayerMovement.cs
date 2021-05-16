@@ -132,6 +132,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             return;
         }
         Movement();
+        Gravity();
+
         //StepClimb(0.1f, 0.15f);
     }
 
@@ -158,7 +160,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             canvas.SetActive(!GameManager.gameIsPaused);
         }
 
-        Gravity();
         //Animations(); 
         Sounds();
     }

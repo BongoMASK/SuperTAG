@@ -15,6 +15,7 @@ public class ProjectileGun : Gun {
     
     //speed
     [SerializeField] float speedx, speedy;
+    [SerializeField] float raycastDistance, constantForce = 1000;
 
     //Ammo
     int currentAmmo;
@@ -64,13 +65,32 @@ public class ProjectileGun : Gun {
         if (reloadWhenInactive) Reload();
     }
 
+    Vector3 FindIdealSpeed(Vector3 pos) {
+        Vector3 result = pos - shootingPoint.transform.position;
+        if (result.x > speedx) result.x = speedx;
+        if (result.y > speedy) result.y = speedy;
+        if (result.z > speedy) result.z = speedy;
+        return result;
+    }
+
     void Shoot() {
         if (fireCountdown <= 0f && currentAmmo > 0) {
             Vector3 direction = camera.transform.forward;
-            PV.RPC("RPC_SpawnProjectile", RpcTarget.AllViaServer, shootingPoint.transform.position, direction);   
+            Physics.Raycast(shootingPoint.transform.position, direction, out RaycastHit hit, Mathf.Infinity);
+            //Vector2 speed = FindIdealSpeed(hit.transform.position);
+            Vector3 speed;
+            bool isHit = hit.transform != null;
+            if (isHit) {
+                speed = GetDirection(hit.point, shootingPoint.transform.position);
+            }
+            else {
+                speed = direction * speedx;
+                speed += Vector3.up * speedy;
+            }
 
-            //doing it to all makes multiple                                                                                        
-            //instances of the same object
+            PV.RPC("RPC_SpawnProjectile", RpcTarget.AllViaServer, shootingPoint.transform.position, speed, isHit);
+
+            //doing it to all makes multiple instances of the same object
             //create the bullet on the side from where it was shot
  
             fireCountdown = fireRate;
@@ -89,12 +109,18 @@ public class ProjectileGun : Gun {
         }
     }
 
+    Vector3 GetDirection(Vector3 destinationVector, Vector3 startVector) {
+        Vector3 direction = destinationVector - startVector;
+        direction.Normalize();
+        return direction;
+    }
+
     [PunRPC]
-    void RPC_SpawnProjectile(Vector3 shootingPoint, Vector3 cameraPoint) {      //creates bullet for others
+    void RPC_SpawnProjectile(Vector3 shootingPoint, Vector3 bulletSpeed, bool isHit) {      //creates bullet for others
         GameObject b = Instantiate(bullet, shootingPoint, Quaternion.identity);
         Rigidbody rb = b.GetComponentInChildren<Rigidbody>();
-        rb.AddForce(cameraPoint * speedx);
-        rb.AddForce(Vector2.up * speedy);
+        if(isHit) rb.AddForce(bulletSpeed * constantForce);
+        else rb.AddForce(bulletSpeed);
     }
 
     [PunRPC]

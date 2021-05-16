@@ -54,9 +54,11 @@ MonoBehaviour:
   ammoSlider: {fileID: 0}
   speedx: 5000
   speedy: 300
+  raycastDistance: 0
+  constantForce: 6000
   maxAmmo: 1
   reloadWhenInactive: 1
-  reloadTime: 1
+  reloadTime: 10
   fireRate: 0
   ammoText: {fileID: 0}
   weaponText: {fileID: 0}
