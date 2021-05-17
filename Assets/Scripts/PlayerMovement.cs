@@ -173,19 +173,20 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     void Sounds() {
         //Slide
         if (crouching && !jumping && grounded) {
-            if (Mathf.Abs(rb.velocity.x) > 3 || Mathf.Abs(rb.velocity.z) > 3) {
+            if (Mathf.Abs(rb.velocity.x) > 10 || Mathf.Abs(rb.velocity.z) > 10) {
                 crouchSound = true;
                 if (!playerAudio.GetAudioSource("Slide").isPlaying) {
                     PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
                 }
             }
-            else if (Mathf.Abs(rb.velocity.x) < 3 || Mathf.Abs(rb.velocity.z) < 3) {
+            else if (Mathf.Abs(rb.velocity.x) < 10 || Mathf.Abs(rb.velocity.z) < 10) {
                 //FindObjectOfType<AudioManager>().Play("Slide Get Up");
                 //FindObjectOfType<AudioManager>().Pause("Slide");
-
-                PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide Get Up");
-                PV.RPC("RPC_PauseSound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
-                crouchSound = false;
+                if (crouchSound == true) {
+                    PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide Get Up");
+                    PV.RPC("RPC_PauseSound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
+                    crouchSound = false;
+                }
             }
         }
         else if ((!crouching || jumping) && crouchSound == true) {
