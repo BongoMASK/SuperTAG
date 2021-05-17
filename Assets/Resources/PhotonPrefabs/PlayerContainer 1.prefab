@@ -1862,6 +1862,7 @@ MonoBehaviour:
   TimeText: {fileID: 1767563682432570753}
   WinText: {fileID: 6891243329090672449}
   PlayerNameText: {fileID: 5943826593086480149}
+  canvas: {fileID: 8766548857192223756}
   scoreAdder: {fileID: 4687913287071942489, guid: 584afe98129efbb488a7c8fca27b8b64,
     type: 3}
   time: 0

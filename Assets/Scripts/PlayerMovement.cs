@@ -165,7 +165,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     void Gravity() {
-        rb.AddForce(currentGravity, ForceMode.Force);
+        rb.AddForce(currentGravity, ForceMode.Force);   //does gravity based on slope of floor
     }
 
     bool crouchSound = false;
@@ -425,10 +425,23 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         //Set max speed
         float maxSpeed = this.maxSpeed;
 
+        //Some multipliers
+        float multiplier = 1f;
+        float multiplierV = 1f;
+
+        // Movement while sliding
+        if (grounded && crouching) multiplierV = 0f;
+
         //If sliding down a ramp, add force down so player stays grounded and also builds speed
         if (crouching && grounded && readyToJump) {
-            rb.AddForce(Vector3.down * Time.deltaTime * 3000);
-            return;
+            if (rb.velocity.magnitude > 5) {    //sliding
+                rb.AddForce(Vector3.down * Time.deltaTime * 3000);
+                return;
+            }
+            else {  //crouching
+                multiplier = 0.4f;
+                multiplierV = 1f;
+            }
         }
 
         //If speed is larger than maxspeed, cancel out the input so you don't go over max speed
@@ -437,18 +450,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         if (y > 0 && yMag > maxSpeed) y = 0;
         if (y < 0 && yMag < -maxSpeed) y = 0;*/
 
-        //Some multipliers
-        float multiplier = 1f;
-        float multiplierV = 1f;
-
         // Movement in air
         if (!grounded) {
             multiplier = 0.5f;
             multiplierV = 0.5f;
         }
-
-        // Movement while sliding
-        if (grounded && crouching) multiplierV = 0f;
 
         //Apply forces to move player
         rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
@@ -517,7 +523,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     private void CounterMovement(float x, float y, Vector2 mag) {
-        //if (!grounded || jumping) return;
 
         //Slow down sliding
         if (crouching) {

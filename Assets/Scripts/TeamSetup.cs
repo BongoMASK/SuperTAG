@@ -15,6 +15,8 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public TMP_Text WinText;
     public TMP_Text PlayerNameText;
 
+    [SerializeField] GameObject canvas;
+
     [SerializeField] GameObject scoreAdder;
 
     public float time;
@@ -26,6 +28,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     int roundNumber = 1;
 
     bool hasWon = false, isPaused = false;
+    public static bool disableHUD = true;
 
     private void Awake() {
         PV = GetComponent<PhotonView>();
@@ -55,7 +58,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         }
         else {
             time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
-        }
+        }       
     }
 
     void Update() {
@@ -80,6 +83,17 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                 checkForDennerCountdown = 10f;
             }
         }
+
+        if(Input.GetKeyDown(KeyCode.H)) {
+            DisableHUD();
+        }
+    }
+
+    void DisableHUD() {
+        disableHUD = !disableHUD;
+        canvas.GetComponent<Canvas>().enabled = disableHUD;
+        GameManager gameManager = FindObjectOfType<GameManager>();
+        gameManager.gameObject.GetComponentInChildren<Canvas>().enabled = disableHUD;
     }
 
     [PunRPC]
