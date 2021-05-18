@@ -162,6 +162,13 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
         //Animations(); 
         Sounds();
+        StopMoving();
+    }
+
+    void StopMoving() {
+        if(x == 0 && y == 0 && rb.velocity.magnitude < 1f) {
+            rb.velocity = new Vector3(0, 0, 0);
+        }
     }
 
     void Gravity() {

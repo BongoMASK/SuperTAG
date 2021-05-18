@@ -1791,7 +1791,7 @@ MonoBehaviour:
   stepsmooth: 0.3
   playerAudio: {fileID: 1228943051866660941}
   downForce: 80
-  jumpGraceTime: 0.2
+  jumpGraceTime: 0.1
   countdownStart: 5
 --- !u!65 &7799819605784857070
 BoxCollider:
