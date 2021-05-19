@@ -168,7 +168,7 @@ MonoBehaviour:
   speedy: 300
   raycastDistance: 0
   constantForce: 6000
-  maxAmmo: 3
+  maxAmmo: 2
   reloadWhenInactive: 0
   reloadTime: 3
   fireRate: 1

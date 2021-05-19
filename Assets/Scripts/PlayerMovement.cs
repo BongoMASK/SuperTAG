@@ -117,6 +117,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         playerScale = transform.localScale;
+        crouchScale = playerScale;
+        crouchScale.y = 0.5f; 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 

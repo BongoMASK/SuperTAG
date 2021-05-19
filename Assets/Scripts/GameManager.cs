@@ -50,7 +50,7 @@ public class GameManager : MonoBehaviour
     public KeyCode right { get; set; }
     public KeyCode crouch { get; set; }
     public int sensitivity { get; set; }
-    public int volume { get; set; }
+    public float volume { get; set; } 
 
     public List<InputKeys> itemKeys = new List<InputKeys>();
     public Dictionary<string, InputKeys> movementKeys = new Dictionary<string, InputKeys>();
