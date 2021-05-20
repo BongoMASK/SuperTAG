@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 1230614596544732592}
   - component: {fileID: 1230614596544732593}
   - component: {fileID: 1230614596544732590}
-  - component: {fileID: 1230614596544732591}
   m_Layer: 0
   m_Name: Cylinder
   m_TagString: Untagged
@@ -5743,201 +5742,9 @@ MonoBehaviour:
   assetGuid: 
   m_Mesh: {fileID: 0}
   m_IsSelectable: 1
-  m_SelectedFaces: 3f00000040000000410000004200000043000000440000004500000046000000470000003c0000003d0000003e0000005700000058000000590000005a0000005b0000005c0000005d0000005e0000005f000000540000005500000056000000
-  m_SelectedEdges:
-  - a: 252
-    b: 253
-  - a: 254
-    b: 252
-  - a: 253
-    b: 255
-  - a: 255
-    b: 254
-  - a: 256
-    b: 257
-  - a: 258
-    b: 256
-  - a: 257
-    b: 259
-  - a: 259
-    b: 258
-  - a: 260
-    b: 261
-  - a: 262
-    b: 260
-  - a: 261
-    b: 263
-  - a: 263
-    b: 262
-  - a: 264
-    b: 265
-  - a: 266
-    b: 264
-  - a: 265
-    b: 267
-  - a: 267
-    b: 266
-  - a: 268
-    b: 269
-  - a: 270
-    b: 268
-  - a: 269
-    b: 271
-  - a: 271
-    b: 270
-  - a: 272
-    b: 273
-  - a: 274
-    b: 272
-  - a: 273
-    b: 275
-  - a: 275
-    b: 274
-  - a: 276
-    b: 277
-  - a: 278
-    b: 276
-  - a: 277
-    b: 279
-  - a: 279
-    b: 278
-  - a: 280
-    b: 281
-  - a: 282
-    b: 280
-  - a: 281
-    b: 283
-  - a: 283
-    b: 282
-  - a: 284
-    b: 285
-  - a: 286
-    b: 284
-  - a: 285
-    b: 287
-  - a: 287
-    b: 286
-  - a: 240
-    b: 241
-  - a: 242
-    b: 240
-  - a: 241
-    b: 243
-  - a: 243
-    b: 242
-  - a: 244
-    b: 245
-  - a: 246
-    b: 244
-  - a: 245
-    b: 247
-  - a: 247
-    b: 246
-  - a: 248
-    b: 249
-  - a: 250
-    b: 248
-  - a: 249
-    b: 251
-  - a: 251
-    b: 250
-  - a: 348
-    b: 349
-  - a: 350
-    b: 348
-  - a: 349
-    b: 351
-  - a: 351
-    b: 350
-  - a: 352
-    b: 353
-  - a: 354
-    b: 352
-  - a: 353
-    b: 355
-  - a: 355
-    b: 354
-  - a: 356
-    b: 357
-  - a: 358
-    b: 356
-  - a: 357
-    b: 359
-  - a: 359
-    b: 358
-  - a: 360
-    b: 361
-  - a: 362
-    b: 360
-  - a: 361
-    b: 363
-  - a: 363
-    b: 362
-  - a: 364
-    b: 365
-  - a: 366
-    b: 364
-  - a: 365
-    b: 367
-  - a: 367
-    b: 366
-  - a: 368
-    b: 369
-  - a: 370
-    b: 368
-  - a: 369
-    b: 371
-  - a: 371
-    b: 370
-  - a: 372
-    b: 373
-  - a: 374
-    b: 372
-  - a: 373
-    b: 375
-  - a: 375
-    b: 374
-  - a: 376
-    b: 377
-  - a: 378
-    b: 376
-  - a: 377
-    b: 379
-  - a: 379
-    b: 378
-  - a: 380
-    b: 381
-  - a: 382
-    b: 380
-  - a: 381
-    b: 383
-  - a: 383
-    b: 382
-  - a: 336
-    b: 337
-  - a: 338
-    b: 336
-  - a: 337
-    b: 339
-  - a: 339
-    b: 338
-  - a: 340
-    b: 341
-  - a: 342
-    b: 340
-  - a: 341
-    b: 343
-  - a: 343
-    b: 342
-  - a: 344
-    b: 345
-  - a: 346
-    b: 344
-  - a: 345
-    b: 347
-  - a: 347
-    b: 346
-  m_SelectedVertices: fc000000fd000000fe000000ff000000000100000101000002010000030100000401000005010000060100000701000008010000090100000a0100000b0100000c0100000d0100000e0100000f010000100100001101000012010000130100001401000015010000160100001701000018010000190100001a0100001b0100001c0100001d0100001e0100001f010000f0000000f1000000f2000000f3000000f4000000f5000000f6000000f7000000f8000000f9000000fa000000fb0000005c0100005d0100005e0100005f010000600100006101000062010000630100006401000065010000660100006701000068010000690100006a0100006b0100006c0100006d0100006e0100006f010000700100007101000072010000730100007401000075010000760100007701000078010000790100007a0100007b0100007c0100007d0100007e0100007f010000500100005101000052010000530100005401000055010000560100005701000058010000590100005a0100005b010000
+  m_SelectedFaces: 
+  m_SelectedEdges: []
+  m_SelectedVertices: 
 --- !u!23 &1230614596544732593
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5957,7 +5764,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c22777d6e868e4f2fb421913386b154e, type: 2}
+  - {fileID: 2100000, guid: e25161925775e604caa279445397cdfb, type: 2}
   - {fileID: 2100000, guid: 8f96f932fe81c9346a94dd8a71e09b1a, type: 2}
   - {fileID: 2100000, guid: c63c1a5aa1299bd41b7a247d53c2019c, type: 2}
   m_StaticBatchInfo:
@@ -5988,20 +5795,6 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1230614596544732589}
-  m_Mesh: {fileID: 0}
---- !u!64 &1230614596544732591
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1230614596544732589}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 4
-  m_Convex: 0
-  m_CookingOptions: 30
   m_Mesh: {fileID: 0}
 --- !u!1 &1230614597137477496
 GameObject:
@@ -6047,7 +5840,6 @@ GameObject:
   - component: {fileID: 1230614597339082561}
   - component: {fileID: 1230614597339082558}
   - component: {fileID: 1230614597339082559}
-  - component: {fileID: 1230614597339082556}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -6304,7 +6096,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c22777d6e868e4f2fb421913386b154e, type: 2}
+  - {fileID: 2100000, guid: e25161925775e604caa279445397cdfb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6333,18 +6125,4 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1230614597339082554}
-  m_Mesh: {fileID: 0}
---- !u!64 &1230614597339082556
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1230614597339082554}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 4
-  m_Convex: 0
-  m_CookingOptions: 30
   m_Mesh: {fileID: 0}

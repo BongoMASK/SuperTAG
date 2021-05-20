@@ -119,6 +119,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         playerScale = transform.localScale;
         crouchScale = playerScale;
         crouchScale.y = 0.5f; 
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -169,12 +170,12 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     void StopMoving() {
         if(x == 0 && y == 0 && rb.velocity.magnitude < 1f) {
-            rb.velocity = new Vector3(0, 0, 0);
+            rb.velocity = new Vector3(0, rb.velocity.y, 0);
         }
     }
 
     void Gravity() {
-        rb.AddForce(currentGravity, ForceMode.Force);   //does gravity based on slope of floor
+        rb.AddForce(currentGravity, ForceMode.Acceleration);   //does gravity based on slope of floor
     }
 
     bool crouchSound = false;
@@ -182,13 +183,13 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     void Sounds() {
         //Slide
         if (crouching && !jumping && grounded) {
-            if (Mathf.Abs(rb.velocity.x) > 10 || Mathf.Abs(rb.velocity.z) > 10) {
+            if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {
                 crouchSound = true;
                 if (!playerAudio.GetAudioSource("Slide").isPlaying) {
                     PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
                 }
             }
-            else if (Mathf.Abs(rb.velocity.x) < 10 || Mathf.Abs(rb.velocity.z) < 10) {
+            else if (Mathf.Abs(rb.velocity.x) < 12 || Mathf.Abs(rb.velocity.z) < 12) {
                 //FindObjectOfType<AudioManager>().Play("Slide Get Up");
                 //FindObjectOfType<AudioManager>().Pause("Slide");
                 if (crouchSound == true) {
@@ -444,10 +445,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
         //If sliding down a ramp, add force down so player stays grounded and also builds speed
         if (crouching && grounded && readyToJump) {
-            if (rb.velocity.magnitude > 5) {    //sliding
+            if (rb.velocity.magnitude > 10) {    //sliding
                 rb.AddForce(Vector3.down * Time.deltaTime * 3000);
                 return;
             }
+            //checking v to decide slide / couch
             else {  //crouching
                 multiplier = 0.4f;
                 multiplierV = 1f;
