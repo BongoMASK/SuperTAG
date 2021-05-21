@@ -20,7 +20,7 @@ namespace Photon.Compression.Internal
     [System.Serializable]
     public class TypeCatalogue : ScriptableObject
     {
-        public static char _ = Path.DirectorySeparatorChar;
+        public static char _ = System.IO.Path.DirectorySeparatorChar;
         public static string PACKABLE_PATH = "Assets" + _ + "Photon" + _ + "PhotonUtilities" + _ + "PackObject" + _;
         public static string GENERATED_SUBFOLDER = "_GeneratedPackExtensions";
         public static string GENERATED_PATH = PACKABLE_PATH + GENERATED_SUBFOLDER + _;

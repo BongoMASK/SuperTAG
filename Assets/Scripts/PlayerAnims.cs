@@ -34,9 +34,9 @@ public class PlayerAnims : MonoBehaviour
         based on the angle do animation
         */
 
-        bool isForward = animator.GetBool("forward");
+        /*bool isForward = animator.GetBool("forward");
 
-        if (!isForward && angle > -45 && angle < 45) {
+        if (angle > -45 && angle < 45) {
             animator.SetBool("forward", true);
             Debug.Log("moving straight");
             //moving straight
@@ -59,6 +59,25 @@ public class PlayerAnims : MonoBehaviour
             animator.SetBool("backward", true);
             Debug.Log("moving back");
             //moving back
+        }
+
+        if(playerRb.velocity.magnitude < 2) {
+            animator.SetBool("forward", false);
+        }*/
+
+        FindAnim(angle, 135, -45, "forward");
+        FindAnim(angle, 225, 135, "backward");
+
+    }
+
+    void FindAnim(float angle, int upAngle, int lowAngle, string animName) {
+        bool isAnim = angle > lowAngle && angle < upAngle;
+        if(isAnim) {
+            animator.SetBool(animName, true);
+            Debug.Log(animName);
+        }
+        if(!isAnim) {
+            animator.SetBool(animName, false);
         }
     }
 

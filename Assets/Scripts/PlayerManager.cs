@@ -33,7 +33,7 @@ public class PlayerManager : MonoBehaviour
             }
         }
 
-        controller = PhotonNetwork.Instantiate(Path.Combine("PhotonPrefabs", "PlayerContainer 1"), spawnPosition, Quaternion.identity, 0, new object[] { PV.ViewID });
+        controller = PhotonNetwork.Instantiate(System.IO.Path.Combine("PhotonPrefabs", "PlayerContainer 1"), spawnPosition, Quaternion.identity, 0, new object[] { PV.ViewID });
     }
 
     public void Die() {
