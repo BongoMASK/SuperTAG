@@ -13,6 +13,7 @@ public class DebugController : MonoBehaviour
     public static DebugCommand<string, int> set_impulseBall;
     public static DebugCommand<string, int> set_goopGun;
     public static DebugCommand<string, int> set_player;
+    public static DebugCommand<string, int> set_points;
     public static DebugCommand<int> set_time;
     public static DebugCommand<float> set_game_time;
     public static DebugCommand time_pause;
@@ -66,6 +67,14 @@ public class DebugController : MonoBehaviour
             }
         });
 
+        set_points = new DebugCommand<string, int>("set_points", "Sets points of game", "set_points <value>", (b, a) => {
+            Debug.Log("Changed point " + b + " to " + a);
+            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
+            foreach (TeamSetup player in players) {
+                player.ChangeScoreValues(b, a);
+            }
+        });
+
         time_pause = new DebugCommand("time_pause", "Sets values of player", "time_pause <value>", () => {
             TeamSetup[] players = FindObjectsOfType<TeamSetup>();
             foreach (TeamSetup player in players) {
@@ -93,6 +102,7 @@ public class DebugController : MonoBehaviour
             set_player,
             set_time,
             set_game_time,
+            set_points,
             time_pause,
             restart_round,
             restart_game

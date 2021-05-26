@@ -248,7 +248,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1da39e1881b962f4f924a6c69830ddcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  jumpForce: 40
+  jumpForce: 30
   radiusOfEffect: 15
   offset: {x: 0, y: 1, z: 0}
   whatIsGround:

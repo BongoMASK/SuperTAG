@@ -8,25 +8,22 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/StartScreen.unity
     guid: 76aaec1d4fe1302458f400c2edfbd33c
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/new gg map.unity
     guid: cc237b61aa85c344b863227be422c234
   - enabled: 0
-    path: Assets/Scenes/vry gg map.unity
-    guid: 1484ce07b32b91e41b2c1be7c9efeff1
+    path: Assets/Scenes/new gg map 1.unity
+    guid: 5fc67d59524067747a6d11fc0783ff58
   - enabled: 0
-    path: Assets/Scenes/Dawn.unity
-    guid: 7969194af63eddd4e90c968be7be0adb
-  - enabled: 0
-    path: Assets/Scenes/Horizon.unity
-    guid: fbbd6bbe3bd126246a236a1b391f4e98
-  - enabled: 0
-    path: Assets/Scenes/Practice.unity
-    guid: 451ceb0785fd3f44d9340bf4b6fcb69a
+    path: Assets/Scenes/new gg map 2.unity
+    guid: 53b22f0bd6b951b478c3522c718f1a2a
+  - enabled: 1
+    path: Assets/Scenes/new gg map 3.unity
+    guid: b1f8b3a5da193f4448637f2c86fea11f
   - enabled: 0
     path: Assets/Scenes/Tutorial.unity
     guid: 7195010f754429448b8e295340de64c4
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/WinScreen.unity
     guid: cd4cab9bae3820b43b1beaed7c255f3b
   m_configObjects: {}

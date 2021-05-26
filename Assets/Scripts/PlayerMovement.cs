@@ -708,9 +708,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     void SendFeedToAll(Player player1, Player player2) {
-        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
-            PV.RPC("SpawnTagFeed", PhotonNetwork.PlayerList[i], player1, player2);
-        }
+        PV.RPC("SpawnTagFeed", RpcTarget.All, player1, player2);
     }
 
     void ChangeMyTeam(int team) {

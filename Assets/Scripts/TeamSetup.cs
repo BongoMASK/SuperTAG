@@ -19,6 +19,8 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
     [SerializeField] GameObject scoreAdder;
 
+    [SerializeField] int roundWin, roundLose, coolDownWin, coolDownLose, fallDown;
+
     public float time;
     float timer;
 
@@ -120,10 +122,10 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     void SetScore() {
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
             if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {
-                AddScore(PhotonNetwork.PlayerList[i], 2);
+                AddScore(PhotonNetwork.PlayerList[i], coolDownWin);
             }
             else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
-                AddScore(PhotonNetwork.PlayerList[i], 1);
+                AddScore(PhotonNetwork.PlayerList[i], coolDownLose);
             }
         }
     }
@@ -131,7 +133,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     void Respawn() {    //when player falls off the edge of the map
         if (transform.position.y <= -40f) {
             transform.position = new Vector3(0f, 0f, 0f);
-            PV.RPC("AddScore", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, -5);
+            PV.RPC("AddScore", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, fallDown);
         }
     }
 
@@ -172,10 +174,10 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
                             Hashtable hash = new Hashtable();
                             if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {
-                                AddScore(PhotonNetwork.PlayerList[i], 4);
+                                AddScore(PhotonNetwork.PlayerList[i], roundWin);
                             }
                             else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
-                                AddScore(PhotonNetwork.PlayerList[i], 1);
+                                AddScore(PhotonNetwork.PlayerList[i], roundLose);
                             }
                             PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
                         }
@@ -373,6 +375,22 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             TimeText.text = ((int)(float)PhotonNetwork.CurrentRoom.CustomProperties["Time"]).ToString();
             WinText.gameObject.SetActive(false);
         }
+    }
+
+    public void ChangeScoreValues(string name, int newScore) {
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        PV.RPC("ChangeScoreValuesOnAll", RpcTarget.AllBuffered, name, newScore);
+    }
+
+    [PunRPC]
+    void ChangeScoreValuesOnAll(string name, int newScore) {
+        if (name == nameof(roundLose)) roundLose = newScore;
+        if (name == nameof(roundWin)) roundWin = newScore;
+        if (name == nameof(coolDownLose)) coolDownLose = newScore;
+        if (name == nameof(coolDownWin)) coolDownWin = newScore;
+        if (name == nameof(fallDown)) fallDown = newScore;
+
     }
 
     public void ChangeTime(int newTime) {

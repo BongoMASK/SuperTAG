@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] TMP_Text roomNameText;
     [SerializeField] TMP_Text roundText;
     [SerializeField] TMP_Text coolDownText;
+    [SerializeField] TMP_Text serverHost;
 
     [SerializeField] TMP_Text[] score;
     [SerializeField] TMP_Text[] playerName;
@@ -123,7 +124,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
     void SortPlayersByScore() {
         playerList = PhotonNetwork.PlayerList;
         for (int i = 0; i < playerList.Length; i++) {
@@ -141,6 +141,7 @@ public class GameManager : MonoBehaviour
         SortPlayersByScore();
         if (Input.GetKeyDown(KeyCode.Tab)) {
             leaderBoard.SetActive(true);
+            serverHost.gameObject.SetActive(PhotonNetwork.IsMasterClient);
 
             coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
             roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
