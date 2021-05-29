@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
+using UnityEngine.UI;
 using TMPro;
 using Photon.Realtime;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using System.Collections;
 
 public class Launcher : MonoBehaviourPunCallbacks
 {
@@ -207,6 +209,8 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     public void StartRoom() {
         PhotonNetwork.LoadLevel(mapCount);
+        //LoadLevel(mapCount);
+        MenuManager.Instance.OpenMenu("loading");
     }
 
     public void StartTutorial() {
@@ -371,6 +375,23 @@ public class Launcher : MonoBehaviourPunCallbacks
         string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenePath);
 
         return sceneName;
+    }
+
+    [SerializeField] Slider slider;
+
+    void LoadLevel(int sceneIndex) {
+        StartCoroutine(LoadScene(sceneIndex));
+    }
+
+    IEnumerator LoadScene(int sceneIndex) {
+        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneIndex);
+        slider.gameObject.SetActive(true);
+        while(!operation.isDone) {
+            float progress = Mathf.Clamp01(operation.progress / 0.9f);
+            slider.value = progress;
+            yield return null;
+        }
+
     }
 
     public void Quit() {

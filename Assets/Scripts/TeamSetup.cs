@@ -86,7 +86,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.H)) {
+        if(Input.GetKeyDown(GameManager.GM.otherKeys["hideUI"].key)) {
             DisableHUD();
         }
     }
@@ -105,6 +105,9 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             add = "-";
 
         GameObject s = Instantiate(scoreAdder);
+        if(adder > coolDownLose && adder > roundLose)
+            s.GetComponentInChildren<TMP_Text>().color = new Color32(58, 117, 225, 255);
+
         s.GetComponentInChildren<TMP_Text>().text = add + Mathf.Abs(adder);
         Destroy(s, 1f);
     }

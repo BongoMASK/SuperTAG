@@ -36,4 +36,9 @@ public class MenuManager : MonoBehaviour
     public void CloseMenu(Menu menu) {
         menu.Close();
     }
+
+    public void CloseAllMenus() {
+        foreach (Menu menu in menus)
+            CloseMenu(menu);
+    }
 }

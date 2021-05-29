@@ -107,7 +107,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         if (PV.IsMine) {
             EquipItem(1);
             GetComponent<MeshRenderer>().enabled = false;
-            Destroy(glasses);
+            glasses.GetComponent<MeshRenderer>().enabled = false;
         }
         else {
             Destroy(playerCam.gameObject);
@@ -127,6 +127,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
         countdownStart = (int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"];
 
+        ChangeColour();
+
         FindObjectOfType<AudioManager>().Play("Breeze");
     }
 
@@ -136,8 +138,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         }
         Movement();
         Gravity();
-
-        //StepClimb(0.1f, 0.15f);
     }
 
     private void Update() {
@@ -179,6 +179,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     bool crouchSound = false;
+    bool hasJumped = false;
+    float currentYPos;
 
     void Sounds() {
         //Slide
@@ -186,25 +188,20 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {
                 crouchSound = true;
                 if (!playerAudio.GetAudioSource("Slide").isPlaying) {
-                    PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
+                    PlaySoundToAll("RPC_PlaySound", "Slide");
                 }
             }
             else if (Mathf.Abs(rb.velocity.x) < 12 || Mathf.Abs(rb.velocity.z) < 12) {
-                //FindObjectOfType<AudioManager>().Play("Slide Get Up");
-                //FindObjectOfType<AudioManager>().Pause("Slide");
                 if (crouchSound == true) {
-                    PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide Get Up");
-                    PV.RPC("RPC_PauseSound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
+                    PlaySoundToAll("RPC_PlaySound", "Slide Get Up");
+                    PlaySoundToAll("RPC_PauseSound", "Slide");
                     crouchSound = false;
                 }
             }
         }
         else if ((!crouching || jumping) && crouchSound == true) {
-            //FindObjectOfType<AudioManager>().Play("Slide Get Up");
-            //FindObjectOfType<AudioManager>().Pause("Slide");
-
-            PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide Get Up");
-            PV.RPC("RPC_PauseSound", RpcTarget.AllBuffered, GetComponent<PhotonView>().ViewID, "Slide");
+            PlaySoundToAll("RPC_PlaySound", "Slide Get Up");
+            PlaySoundToAll("RPC_PauseSound", "Slide");
 
             crouchSound = false;
         }
@@ -214,24 +211,32 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             if (Mathf.Abs(rb.velocity.x) > 2 || Mathf.Abs(rb.velocity.z) > 2) {
                 soundTimer -= Time.deltaTime;
                 if (soundTimer <= 0f) {
-                    //FindObjectOfType<AudioManager>().PlayRandomFootstep();
                     soundTimer = 0.35f;
                     PV.RPC("RPC_GetSound", RpcTarget.All, GetComponentInChildren<PhotonView>().ViewID);
-                    //playerAudio.PlayRandomFootstep();
                 }
             }
         }
 
         //Jump
-        if (grounded && readyToJump && jumping) {
-            PV.RPC("RPC_PlaySound", RpcTarget.AllBuffered, GetComponentInChildren<PhotonView>().ViewID, "Jump");
-            //FindObjectOfType<AudioManager>().Play("Jump");
+        if (!grounded && rb.velocity.y > 1) {
+            hasJumped = true;
+            currentYPos = transform.position.y;
+        }
+
+        if(hasJumped && grounded) {
+            if (transform.position.y + 3 < currentYPos) PV.RPC("RPC_PlaySound", RpcTarget.All, GetComponentInChildren<PhotonView>().ViewID, "Jump");
+            hasJumped = false;
         }
 
         //Breeze
-        if (!FindObjectOfType<AudioManager>().GetAudioSource("Breeze").isPlaying) {
-            FindObjectOfType<AudioManager>().Play("Breeze");
-        }
+        if (!FindObjectOfType<AudioManager>().GetAudioSource("Breeze").isPlaying) FindObjectOfType<AudioManager>().Play("Breeze");
+    }
+
+    void PlaySoundToAll(string funcName, string soundName) {
+        if (funcName == "RPC_PauseSound") playerAudio.Pause(soundName);
+        else playerAudio.Play(soundName);
+
+        PV.RPC(funcName, RpcTarget.Others, GetComponentInChildren<PhotonView>().ViewID, soundName);
     }
 
     /// <summary>
@@ -256,11 +261,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         }
 
 
-        switchPrev = GameManager.GM.movementKeys["prevWeapon"].key;
+        switchPrev = GameManager.GM.otherKeys["prevWeapon"].key;
         jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
         crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
 
-        if (Input.GetKeyDown(GameManager.GM.movementKeys["console"].key)) {
+        if (Input.GetKeyDown(GameManager.GM.otherKeys["console"].key)) {
             DebugController.showConsole = !DebugController.showConsole;
             GameManager.gameIsPaused = !GameManager.gameIsPaused;
         }
@@ -350,11 +355,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         //switch to prev weapon
-        if (Input.GetKeyDown(GameManager.GM.movementKeys["prevWeapon"].key)) {
+        if (Input.GetKeyDown(GameManager.GM.otherKeys["prevWeapon"].key)) {
             EquipItem(prevWeapon);
         }
 
-        if (Input.GetMouseButton(0)) {
+        if (Input.GetKey(GameManager.GM.otherKeys["fire"].key)) {
             items[itemIndex].Use();
         }
 
@@ -410,11 +415,23 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         if (InfoText != null) {
             InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\nTag Cooldown: " + (int)countdown;
             InfoText.gameObject.SetActive(true);
+            ChangeColour();
 
             if (PV.Owner.CustomProperties["team"] != null) {
                 GetComponent<TeamSetup>().isDennerText.text = PV.Owner.CustomProperties["TeamName"].ToString();
             }
         }
+    }
+
+    [SerializeField] TMP_Text[] colourTexts;
+    [SerializeField] Color32[] teamColour;
+
+    void ChangeColour() {
+        for (int i = 0; i < colourTexts.Length; i++) 
+            colourTexts[i].color = teamColour[(int)PV.Owner.CustomProperties["team"]];
+        
+        GameManager.GM.yourName.color = teamColour[(int)PV.Owner.CustomProperties["team"]];
+        GameManager.GM.yourScore.color = teamColour[(int)PV.Owner.CustomProperties["team"]];
     }
 
     [SerializeField] float downForce = 20;
@@ -532,6 +549,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         //Perform the rotations
         playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
         orientation.transform.rotation = Quaternion.Euler(0, desiredX, 0);
+        if (xRotation > -30 && xRotation < 25)
+            glasses.transform.localRotation = Quaternion.Euler(xRotation, 0, 0);
     }
 
     private void CounterMovement(float x, float y, Vector2 mag) {
@@ -736,18 +755,13 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     [PunRPC]
     void RPC_GetSound(int viewID) {
-        /*AudioSource source = testAudioSource;//PhotonView.Find(viewID).gameObject.GetComponent<AudioSource>();
-        FindObjectOfType<AudioManager>().PlayOthersFootsteps(source);*/
         PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.PlayRandomFootstep();
     }
 
     void DisplayTagFeed(Player player1, Player player2) {
-        //if (!PV.IsMine) return;
-        Debug.Log(player1.NickName + " tagged " + player2.NickName);
-
         GameObject t = Instantiate(tagFeed);
 
-        if (tagFeedList != null) {
+        if (tagFeedList != null) {  //checks if there is tagfeed
             t.transform.SetParent(tagFeedList);
             if (tagFeedList.childCount > 4) {
                 Destroy(tagFeedList.GetChild(0));
@@ -757,7 +771,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             Debug.Log("no tagfeed lol. view ID" + PV.ViewID);
         }
 
-        t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " tagged " + player2.NickName;
+        t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " <#FFF>tagged<#FF0000> " + player2.NickName;
         Destroy(t, 7f);
     }
 

@@ -5,19 +5,27 @@ using TMPro;
 
 public class AssignKey : MonoBehaviour {
 
-	[SerializeField] Transform[] optionPanel;
+	[SerializeField] Transform[] optionPanel;   //put buttons and item keys here
 
 	Event keyEvent;
 	TMP_Text buttonText;
 	KeyCode newKey;
 
-	KeyCode[] MouseButtons = {  KeyCode.Mouse0,
-								KeyCode.Mouse1,
-								KeyCode.Mouse2,
-								KeyCode.Mouse3,
-								KeyCode.Mouse4,
-								KeyCode.Mouse5,
-								KeyCode.Mouse6, };
+	ChangedNames[] changedNames = {
+		new ChangedNames("BackQuote", "`"),
+		new ChangedNames("LeftControl", "L Ctrl"),
+		new ChangedNames("LeftShift", "L Shift"),
+
+	};
+    readonly KeyCode[] MouseButtons = {
+		KeyCode.Mouse0,
+		KeyCode.Mouse1,
+		KeyCode.Mouse2,
+		KeyCode.Mouse3,
+		KeyCode.Mouse4,
+		KeyCode.Mouse5,
+		KeyCode.Mouse6
+	};
 
 	bool waitingForKey;
 
@@ -30,16 +38,40 @@ public class AssignKey : MonoBehaviour {
 
 				GameObject option = optionPanel[j].GetChild(i).gameObject;
 
-				if (GameManager.GM.movementKeys.ContainsKey(option.name))
-					option.GetComponentInChildren<TMP_Text>().text = GameManager.GM.movementKeys[option.name].key.ToString();
+				if (GameManager.GM.movementKeys.ContainsKey(option.name)) {
+					string name = ChangeButtonNames(GameManager.GM.movementKeys[option.name].key.ToString());
+					option.GetComponentInChildren<TMP_Text>().text = name;
+				}
 
-				else if(GameManager.GM.itemKeys[i].keyName == option.name)
-					option.GetComponentInChildren<TMP_Text>().text = GameManager.GM.itemKeys[i].key.ToString();
+				else if (GameManager.GM.otherKeys.ContainsKey(option.name)) {
+					string name = ChangeButtonNames(GameManager.GM.otherKeys[option.name].key.ToString());
+					option.GetComponentInChildren<TMP_Text>().text = name;
+				}
+
+				else if (keyNameExists(option.name)) {
+					for (int k = 0; k < GameManager.GM.itemKeys.Count; k++)
+						if (GameManager.GM.itemKeys[k].keyName == option.name)
+							option.GetComponentInChildren<TMP_Text>().text = GameManager.GM.itemKeys[k].key.ToString();
+				}
 
 				else
 					Debug.LogWarning(option.name + " does not exist.");
 			}
 		}
+	}
+
+	string ChangeButtonNames(string name) {
+		for (int i = 0; i < changedNames.Length; i++)
+			if (name == changedNames[i].unityName)
+				return changedNames[i].myName;
+		return name;
+    }
+
+	bool keyNameExists(string name) {
+		for (int k = 0; k < GameManager.GM.itemKeys.Count; k++)
+			if (GameManager.GM.itemKeys[k].keyName == name)
+				return true;
+		return false;
 	}
 
 	void OnGUI() {
@@ -57,9 +89,8 @@ public class AssignKey : MonoBehaviour {
 		}
 
 		if (keyEvent.isMouse && waitingForKey) {
-			newKey = MouseButtons[keyEvent.button]; //Assigns newKey to the key user presses
+			newKey = MouseButtons[keyEvent.button]; //Assigns newKey to the mouse user presses
 			waitingForKey = false;
-			Debug.Log(keyEvent.button);
 		}
 	}
 
@@ -81,7 +112,7 @@ public class AssignKey : MonoBehaviour {
 
 	//Used for controlling the flow of our below Coroutine
 	IEnumerator WaitForKey() {
-		while (!keyEvent.isKey)
+		while (waitingForKey) 
 			yield return null;
 	}
 
@@ -93,19 +124,27 @@ public class AssignKey : MonoBehaviour {
 	 */
 	public IEnumerator AssignTheKey(string keyName) {
 		waitingForKey = true;
+		buttonText.text = "key...";
 
 		yield return WaitForKey(); //Executes endlessly until user presses a key
 		InputKeys inputKeys;
 
 		foreach (var i in GameManager.GM.movementKeys) {
-			if(keyName == i.Key) 
-			{
+			if (keyName == i.Key) {
 				inputKeys = i.Value;
 				Assign(inputKeys);
 			}
-        }
+		}
 
-        for (int i = 0; i < GameManager.GM.itemKeys.Count; i++) {
+		//make an array of input keys to make this better
+		foreach (var i in GameManager.GM.otherKeys) {
+			if (keyName == i.Key) {
+				inputKeys = i.Value;
+				Assign(inputKeys);
+			}
+		}
+
+		for (int i = 0; i < GameManager.GM.itemKeys.Count; i++) {
 			if(GameManager.GM.itemKeys[i].keyName == keyName) {
 				inputKeys = GameManager.GM.itemKeys[i];
 				Assign(inputKeys);
@@ -117,7 +156,20 @@ public class AssignKey : MonoBehaviour {
 
 	void Assign(InputKeys inputKeys) {
 		inputKeys.key = newKey;
-		buttonText.text = inputKeys.key.ToString();
+		string name = ChangeButtonNames(inputKeys.key.ToString());
+		buttonText.text = name;
 		PlayerPrefs.SetString(inputKeys.keyName, inputKeys.key.ToString());
+		GameObject myEventSystem = GameObject.Find("EventSystem");
+		myEventSystem.GetComponent<UnityEngine.EventSystems.EventSystem>().SetSelectedGameObject(null);
 	}
+}
+
+class ChangedNames {
+	public string unityName;
+	public string myName;
+
+	public ChangedNames(string _unityName, string _myName) {
+		unityName = _unityName;
+		myName = _myName;
+    }
 }

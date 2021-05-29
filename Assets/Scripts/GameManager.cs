@@ -4,7 +4,10 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using Photon.Realtime;
 using System.Collections.Generic;
+using System.Collections;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.UI;
+using System;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,8 +16,6 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] GameObject pauseMenu;
     [SerializeField] GameObject TopScore;
-    [SerializeField] GameObject optionsMenu;
-    [SerializeField] GameObject mainPauseMenu;
 
     [SerializeField] Slider slider;
     [SerializeField] Slider volumeSlider;
@@ -28,16 +29,25 @@ public class GameManager : MonoBehaviour
     [SerializeField] TMP_Text coolDownText;
     [SerializeField] TMP_Text serverHost;
 
+    [SerializeField] TMP_Text fpsButtonText;
+    [SerializeField] TMP_Text fpsDisplayText;
+
     [SerializeField] TMP_Text[] score;
     [SerializeField] TMP_Text[] playerName;
 
-    [SerializeField] TMP_Text yourScore;
-    [SerializeField] TMP_Text yourName;
+    public TMP_Text yourScore;
+    public TMP_Text yourName;
     
     [SerializeField] TMP_Text topScore;
     [SerializeField] TMP_Text topName;
 
+    [SerializeField] TMP_Dropdown dropdown; 
+
+    [SerializeField] MenuManager menuManager;
+
     Player[] playerList;
+
+    [SerializeField] Color32[] teamColour;
 
     //Used for singleton
     public static GameManager GM;
@@ -55,11 +65,19 @@ public class GameManager : MonoBehaviour
 
     public List<InputKeys> itemKeys = new List<InputKeys>();
     public Dictionary<string, InputKeys> movementKeys = new Dictionary<string, InputKeys>();
+    public Dictionary<string, InputKeys> otherKeys = new Dictionary<string, InputKeys>();
+
+    /*StoredData sens = new StoredData("sensitivity", 50);
+    StoredData vol = new StoredData("volume", 100);
+    StoredData fps = new StoredData("fps", 0);
+    StoredData quality = new StoredData("quality", 2);*/
+
+    bool fpsCounter = true;
 
     void Awake() {
         //Singleton pattern
         if (GM == null) {
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
             GM = this;
         }
         else if (GM != this) {
@@ -72,17 +90,37 @@ public class GameManager : MonoBehaviour
         movementKeys.Add("left", new InputKeys("leftKey", "A"));
         movementKeys.Add("right", new InputKeys("rightKey", "D"));
         movementKeys.Add("crouch", new InputKeys("crouchKey", "LeftShift"));
-        movementKeys.Add("prevWeapon", new InputKeys("prevWeaponKey", "Q"));
-        movementKeys.Add("console", new InputKeys("consoleKey", "C"));
 
         itemKeys.Add(new InputKeys("item1key", "Alpha1"));
         itemKeys.Add(new InputKeys("item2key", "Alpha2"));
 
+        otherKeys.Add("prevWeapon", new InputKeys("prevWeaponKey", "Q"));
+        otherKeys.Add("console", new InputKeys("consoleKey", "BackQuote"));
+        otherKeys.Add("scoreboard", new InputKeys("scoreboardKey", "Tab"));
+        otherKeys.Add("hideUI", new InputKeys("hideUIKey", "H"));
+        otherKeys.Add("escape", new InputKeys("escapeKey", "Escape"));
+        otherKeys.Add("fire", new InputKeys("fireKey", "Mouse0"));
+
+
         //this code is for whenever things go the wrong way
-        /*for (int i = 0; i < itemKeys.Count; i++) {
+        for (int i = 0; i < itemKeys.Count; i++) {
             PlayerPrefs.SetString(itemKeys[i].keyName, itemKeys[i].defaultKeyValue.ToString());
             itemKeys[i].key = (KeyCode)Enum.Parse(typeof(KeyCode), itemKeys[i].defaultKeyValue);
-        }*/
+        }
+
+        //getting player values
+        /*sensitivity = sens.dataInt;
+        mouseSensText.text = sensitivity.ToString();
+        PlayerMovement.sensitivity = sensitivity;
+        MovementNoNetworking.sensitivity = sensitivity;
+
+        volume = vol.dataFloat;
+        AudioListener.volume = volume/100;
+        
+        fpsCounter = !ToBool(fps.dataInt);
+        ChangeFPSOn();
+
+        ChangeQuality(quality.dataInt);*/
 
         sensitivity = PlayerPrefs.GetInt("sensitivity", 50);
         mouseSensText.text = PlayerPrefs.GetInt("sensitivity", 50).ToString();
@@ -90,38 +128,52 @@ public class GameManager : MonoBehaviour
 
         PlayerMovement.sensitivity = sensitivity;
         MovementNoNetworking.sensitivity = sensitivity;
-        AudioListener.volume = volume/100;
+        AudioListener.volume = volume / 100;
+
     }
 
     private void Start() {
-        mainPauseMenu.SetActive(false);
         slider.value = sensitivity;
         volumeSlider.value = volume;
+        GetQualityNames();
+        menuManager.OpenMenu("pause");
 
-        if (PhotonNetwork.CurrentRoom != null) {
+        if (PhotonNetwork.CurrentRoom != null) 
             roomNameText.text = PhotonNetwork.CurrentRoom.Name;
-        }
-        else {
-            roomNameText.text = SceneManager.GetActiveScene().name;
-        }
+        else roomNameText.text = SceneManager.GetActiveScene().name;
+
     }
 
     private void Update() {
         pauseMenu.SetActive(gameIsPaused);
-        if (Input.GetKeyDown(KeyCode.Escape) && SceneManager.GetActiveScene().buildIndex != 0) {
+
+        if (Input.GetKeyDown(otherKeys["escape"].key) && SceneManager.GetActiveScene().buildIndex != 0)
             gameIsPaused = !gameIsPaused;
-        }
-        if (!gameIsPaused) {
-            Resume();
-        }
-        else {
-            Pause();
-        }
+
+        if (!gameIsPaused) Resume();
+        else Pause();
+
         DisplayPlayerList();
 
-        if (PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.PlayerCount > 1) {
+        if (PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.PlayerCount > 1)
             ShowTopPlayers();
+
+        if (fpsCounter) {
+            float fps = 1 / Time.unscaledDeltaTime;
+            fpsDisplayText.text = (int)fps + " FPS";
         }
+    }
+
+    void GetQualityNames() {
+        dropdown.value = QualitySettings.GetQualityLevel();
+        dropdown.options.Clear();
+        foreach(string option in QualitySettings.names)
+            dropdown.options.Add(new TMP_Dropdown.OptionData(option));
+    }
+
+    public void ChangeQuality(int value) {
+        QualitySettings.SetQualityLevel(value);
+        //quality.ChangePrefs(value);
     }
 
     void SortPlayersByScore() {
@@ -139,7 +191,7 @@ public class GameManager : MonoBehaviour
 
     private void DisplayPlayerList() {
         SortPlayersByScore();
-        if (Input.GetKeyDown(KeyCode.Tab)) {
+        if (Input.GetKeyDown(otherKeys["scoreboard"].key)) {
             leaderBoard.SetActive(true);
             serverHost.gameObject.SetActive(PhotonNetwork.IsMasterClient);
 
@@ -151,15 +203,17 @@ public class GameManager : MonoBehaviour
 
             for (int i = 0; i < playerList.Length; i++) {
                 Player player = playerList[i];
-                playerName[i].text = player.NickName + " (" + player.CustomProperties["TeamName"].ToString() + ")";
+                playerName[i].text = player.NickName;
                 score[i].text = ((int)player.CustomProperties["score"]).ToString();
+                playerName[i].color = teamColour[(int)player.CustomProperties["team"]];
+                score[i].color = teamColour[(int)player.CustomProperties["team"]];
             }
             for (int i = PhotonNetwork.PlayerList.Length; i < 6; i++) {
                 playerName[i].text = "...";
                 score[i].text = "...";
             }
         }
-        if(Input.GetKeyUp(KeyCode.Tab)) {
+        if(Input.GetKeyUp(otherKeys["scoreboard"].key)) {
             leaderBoard.SetActive(false);
         }
     }
@@ -172,6 +226,8 @@ public class GameManager : MonoBehaviour
 
         topName.text = topPlayer.NickName;
         topScore.text = ((int)topPlayer.CustomProperties["score"]).ToString();
+        topName.color = teamColour[(int)topPlayer.CustomProperties["team"]];
+        topScore.color = teamColour[(int)topPlayer.CustomProperties["team"]];
 
         yourScore.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["score"]).ToString();
 
@@ -179,16 +235,13 @@ public class GameManager : MonoBehaviour
     }
 
     public void Pause() {
-        pauseMenu.SetActive(true);
-
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = gameIsPaused;
     }
 
     public void Resume() {
-        pauseMenu.SetActive(false);
-        optionsMenu.SetActive(false);
-        mainPauseMenu.SetActive(true);
+        menuManager.CloseAllMenus();
+        menuManager.OpenMenu("pause");
 
         DebugController.showConsole = false;
         gameIsPaused = false;
@@ -201,25 +254,77 @@ public class GameManager : MonoBehaviour
 
     public void LeaveRoom() {
         PhotonNetwork.Disconnect();       //need to disconnect the player before we change scenes
+        Hashtable hash = new Hashtable();
+        hash.Add("score", 1);
+        PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
         SceneManager.LoadScene(0);
         gameIsPaused = false;
-    }
-
-    public void Options() {
-        optionsMenu.SetActive(true);
-        mainPauseMenu.SetActive(false);
     }
 
     public void ChangeMouseSens(float newSens) {
         PlayerMovement.sensitivity = newSens;
         MovementNoNetworking.sensitivity = newSens;
+        //sens.ChangePrefs((int)newSens);
         PlayerPrefs.SetInt("sensitivity", (int)newSens);
         mouseSensText.text = ((int)newSens).ToString();
     }
 
     public void ChangeVolume(float newVolume) {
         AudioListener.volume = newVolume/100;
+        //vol.ChangePrefs((int)newVolume);
         PlayerPrefs.SetInt("volume", (int)newVolume);
         volumeText.text = ((int)newVolume).ToString();
     }
+
+    public void ChangeFPSOn() {
+        fpsCounter = !fpsCounter;
+        fpsButtonText.text = fpsCounter.ToString();
+        fpsDisplayText.gameObject.SetActive(fpsCounter);
+    }
+
+    bool ToBool(int value) {
+        if (value == 0) return false;
+        else return true;
+    }
+}
+
+public class StoredData {
+    public string dataName;
+    public int dataInt;
+    public float dataFloat;
+    public string dataString;
+
+    public StoredData(string _dataName, string _data) {
+        dataString = _data;
+        dataName = _dataName;
+        PlayerPrefs.SetString(dataName, _data);
+    }
+
+    public StoredData(string _dataName, float _data) {
+        dataFloat = _data;
+        dataName = _dataName;
+        PlayerPrefs.SetFloat(dataName, _data);
+    }
+
+    public StoredData(string _dataName, int _data) {
+        dataInt = _data;
+        dataName = _dataName;
+        PlayerPrefs.SetInt(dataName, _data);
+    }
+
+    public void ChangePrefs(int _data) {
+        dataInt = _data;
+        PlayerPrefs.SetInt(dataName, _data);
+    }
+
+    public void ChangePrefs(string _data) {
+        dataString = _data;
+        PlayerPrefs.SetString(dataName, _data);
+    }
+
+    public void ChangePrefs(float _data) {
+        dataFloat = _data;
+        PlayerPrefs.SetFloat(dataName, _data);
+    }
+
 }
