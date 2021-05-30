@@ -253,10 +253,11 @@ public class GameManager : MonoBehaviour
     }
 
     public void LeaveRoom() {
-        PhotonNetwork.Disconnect();       //need to disconnect the player before we change scenes
-        Hashtable hash = new Hashtable();
+        Hashtable hash = PhotonNetwork.LocalPlayer.CustomProperties;
+        hash.Remove("score");
         hash.Add("score", 1);
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
+        PhotonNetwork.Disconnect();       //need to disconnect the player before we change scenes
         SceneManager.LoadScene(0);
         gameIsPaused = false;
     }
