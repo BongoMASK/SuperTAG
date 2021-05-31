@@ -66,7 +66,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
 
     public TMP_Text InfoText;
     private Renderer renderer;
-    AudioManager audioManager;
 
     float soundTimer = 0f;
 
@@ -83,6 +82,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     [SerializeField] float stepsmooth = 0.1f;
 
     public PlayerAudio playerAudio;
+    public AudioManager audioManager;
 
     [SerializeField] const float maxHealth = 100f;
     float currentHealth = maxHealth;
@@ -128,30 +128,25 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         countdownStart = (int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"];
 
         ChangeColour();
-
-        FindObjectOfType<AudioManager>().Play("Breeze");
     }
 
     private void FixedUpdate() {
-        if (!PV.IsMine) {
-            return;
-        }
+        if (!PV.IsMine) return;
+
         Movement();
         Gravity();
     }
 
     private void Update() {
-        if (!PV.IsMine) {
-            return;
-        }
+        if (!PV.IsMine) return;
+
+        if(audioManager == null) audioManager = FindObjectOfType<AudioManager>();
 
         if (countdown > -0.5f) { //So that it doesnt keep doing the countdown to infinity
             countdown -= Time.deltaTime;
             InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\nTag Cooldown: " + (int)countdown;
+            InfoText.gameObject.SetActive(countdown > 0);
         }
-
-        if (countdown <= 0)
-            InfoText.gameObject.SetActive(false);
 
         if (!GameManager.gameIsPaused) {
             MyInput();
@@ -159,9 +154,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             ChangeItem();
         }
 
-        if (canvas != null) {
-            canvas.SetActive(!GameManager.gameIsPaused);
-        }
+        if (canvas != null) canvas.SetActive(!GameManager.gameIsPaused);
 
         //Animations(); 
         Sounds();
@@ -169,9 +162,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     void StopMoving() {
-        if(x == 0 && y == 0 && rb.velocity.magnitude < 1f) {
+        if(x == 0 && y == 0 && rb.velocity.magnitude < 1f)
             rb.velocity = new Vector3(0, rb.velocity.y, 0);
-        }
     }
 
     void Gravity() {
@@ -229,7 +221,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         //Breeze
-        if (!FindObjectOfType<AudioManager>().GetAudioSource("Breeze").isPlaying) FindObjectOfType<AudioManager>().Play("Breeze");
+        if (!audioManager.GetAudioSource("Breeze").isPlaying) audioManager.Play("Breeze");
     }
 
     void PlaySoundToAll(string funcName, string soundName) {
@@ -248,17 +240,15 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             x = 1;     //Input.GetAxisRaw("Horizontal");
         else if (Input.GetKey(GameManager.GM.movementKeys["left"].key))
             x = -1;
-        else {
+        else
             x = 0;
-        }
 
         if (Input.GetKey(GameManager.GM.movementKeys["forward"].key))
             y = 1;
         else if (Input.GetKey(GameManager.GM.movementKeys["backward"].key))
             y = -1;
-        else {
+        else
             y = 0;
-        }
 
 
         switchPrev = GameManager.GM.otherKeys["prevWeapon"].key;
@@ -287,11 +277,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     private void StartCrouch() {
         transform.localScale = crouchScale;
         transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
-        if (rb.velocity.magnitude > 0.5f) {
-            if (grounded) {
+        if (rb.velocity.magnitude > 0.5f)
+            if (grounded)
                 rb.AddForce(orientation.transform.forward * slideForce);
-            }
-        }
     }
 
     private void StopCrouch() {
@@ -410,7 +398,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
     void ChangeOnTeamsChange() {
         countdown = countdownStart;
         renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
-        FindObjectOfType<AudioManager>().Play("TagSound");
+        audioManager.Play("TagSound");
 
         if (InfoText != null) {
             InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\nTag Cooldown: " + (int)countdown;

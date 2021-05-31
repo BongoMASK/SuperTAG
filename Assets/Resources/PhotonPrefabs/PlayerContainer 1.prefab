@@ -1688,7 +1688,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 120
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -1944,6 +1944,7 @@ MonoBehaviour:
   stepHeight: -0.5
   stepsmooth: 0.3
   playerAudio: {fileID: 1228943051866660941}
+  audioManager: {fileID: 0}
   colourTexts:
   - {fileID: 1972038612641309592}
   - {fileID: 1767563682432570753}
@@ -2027,6 +2028,7 @@ MonoBehaviour:
   TimeText: {fileID: 1767563682432570753}
   WinText: {fileID: 6891243329090672449}
   PlayerNameText: {fileID: 5943826593086480149}
+  playerMovement: {fileID: 0}
   canvas: {fileID: 8766548857192223756}
   scoreAdder: {fileID: 4687913287071942489, guid: 584afe98129efbb488a7c8fca27b8b64,
     type: 3}

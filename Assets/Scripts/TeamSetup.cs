@@ -15,6 +15,8 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public TMP_Text WinText;
     public TMP_Text PlayerNameText;
 
+    [SerializeField] PlayerMovement playerMovement;
+
     [SerializeField] GameObject canvas;
 
     [SerializeField] GameObject scoreAdder;
@@ -94,7 +96,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     void DisableHUD() {
         disableHUD = !disableHUD;
         canvas.GetComponent<Canvas>().enabled = disableHUD;
-        GameManager gameManager = FindObjectOfType<GameManager>();
+        GameManager gameManager = GameManager.GM;
         gameManager.gameObject.GetComponentInChildren<Canvas>().enabled = disableHUD;
     }
 
@@ -149,9 +151,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             ht.Add("Time", time);
             PhotonNetwork.CurrentRoom.SetCustomProperties(ht);
         }
-        else {
-            time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
-        }
+        else time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
 
         if (PhotonNetwork.CurrentRoom.PlayerCount <= 1) {
             TimeText.text = "Waiting For Players";
@@ -162,7 +162,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             if ((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] < 0f && WinText != null) {        //after round finishes 
 
                 if((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] > -0.1f) {
-                    FindObjectOfType<AudioManager>().Play("Round Timer End");
+                    playerMovement.audioManager.Play("Round Timer End");
                 }
 
                 if(PhotonNetwork.IsMasterClient) {
@@ -176,12 +176,12 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
                         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
                             Hashtable hash = new Hashtable();
-                            if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {
+                            if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0)
                                 AddScore(PhotonNetwork.PlayerList[i], roundWin);
-                            }
-                            else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
+
+                            else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) 
                                 AddScore(PhotonNetwork.PlayerList[i], roundLose);
-                            }
+
                             PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
                         }
                     }
@@ -210,20 +210,16 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                     SceneManager.LoadScene("WinScreen");
                 }
 
-                if (time <= -10) {
+                if (time <= -10) StartNewRound();
+                /*else if (time <= -9.9 && !PhotonNetwork.IsMasterClient) {
                     StartNewRound();
-                }
-                else if (time <= -9.9 && !PhotonNetwork.IsMasterClient) {
-                    StartNewRound();
-                }
+                }*/
                 //TODO: check whether it works without this.
 
                 WinText.gameObject.SetActive(true);
             }
                 
-            if (time >= 0f) {
-                MatchTimerStart();
-            }
+            if (time >= 0f) MatchTimerStart();
         }
     }
 
@@ -234,13 +230,9 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         PhotonNetwork.CurrentRoom.SetCustomProperties(hash2); 
     }
 
-    public void StartNewRound() {  //resets player positions and stuff
-        if (PhotonNetwork.IsMasterClient) {
-            time = (int)PV.Owner.CustomProperties["time"];
-        }
-        else {
-            time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
-        }
+    public void StartNewRound() {  //resets player positions and sets time back to start
+        if (PhotonNetwork.IsMasterClient) time = (int)PV.Owner.CustomProperties["time"];
+        else time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
         
         scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
 
@@ -273,21 +265,16 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     }
 
     void CheckForDenners() {
-        if (PhotonNetwork.CurrentRoom.PlayerCount <= 1 || !PhotonNetwork.IsMasterClient) {
-            return;
-        }
+        if (PhotonNetwork.CurrentRoom.PlayerCount <= 1 || !PhotonNetwork.IsMasterClient) return;
 
         int runner = 0, denner = 0;
 
         foreach (Player player in PhotonNetwork.PlayerList) {
-            if ((int)player.CustomProperties["team"] == 0) {
-                runner++;
-            }
-            else {
-                denner++;
-            }
+            if ((int)player.CustomProperties["team"] == 0) runner++;
+            else denner++;
         }
 
+        //if no runner, make random person runner
         if (runner <= 0) {
             int value = Random.Range(0, PhotonNetwork.PlayerList.Length);
             Hashtable hash2 = new Hashtable {
@@ -296,6 +283,8 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             };
             PhotonNetwork.PlayerList[value].SetCustomProperties(hash2);
         }
+
+        //if no denner make random person denner
         else if (denner <= 0) {
             int value = Random.Range(0, PhotonNetwork.PlayerList.Length);
             Hashtable hash2 = new Hashtable {
@@ -304,13 +293,14 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             };
             PhotonNetwork.PlayerList[value].SetCustomProperties(hash2);
         }
+
+        //if dennerCount > required denners, make random person denner
         else if (denner > (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]) {
             int surplus = 0;
 
             for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
-                if (surplus >= denner - (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]) {
-                    return;
-                }
+                if (surplus >= denner - (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]) return;
+
                 else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
                     Hashtable hash2 = new Hashtable {
                         { "team", 0 },
@@ -321,13 +311,14 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                 }
             }
         }
+
+        //if runnerCount is more than required, make random person denner
         else if (runner >= PhotonNetwork.CurrentRoom.PlayerCount) {
             int surplus = 0;
 
             for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
-                if (surplus >= PhotonNetwork.CurrentRoom.PlayerCount - (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]) {
-                    return;
-                }
+                if (surplus >= PhotonNetwork.CurrentRoom.PlayerCount - (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]) return;
+
                 else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
                     Hashtable hash2 = new Hashtable {
                         { "team", 1 },
@@ -360,18 +351,13 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         }
     }*/
 
-    public void LeaveRoom() {
-        PhotonNetwork.Disconnect();       //need to disconnect the player before we change scenes
-        SceneManager.LoadScene(0);
-    }
-
-    void MatchTimerStart() {    //sends timer over the network
+    void MatchTimerStart() {    //does timer for audio at last 10 secs
         hasWon = true;
         timer -= Time.deltaTime;
 
-        if (time <= 10 && time >= 0 && timer <= 0f) {
+        if (time <= 10 && timer <= 0f) {
             timer = 1f;
-            FindObjectOfType<AudioManager>().Play("Round Timer");
+            playerMovement.audioManager.Play("Round Timer");
         }
 
         if (WinText != null) {
@@ -393,7 +379,6 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         if (name == nameof(coolDownLose)) coolDownLose = newScore;
         if (name == nameof(coolDownWin)) coolDownWin = newScore;
         if (name == nameof(fallDown)) fallDown = newScore;
-
     }
 
     public void ChangeTime(int newTime) {
@@ -402,7 +387,8 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     }
 
     public void ChangeGameTime(float newTime) {
-        if (!PhotonNetwork.IsMasterClient) { Debug.Log("lol"); return; }
+        if (!PhotonNetwork.IsMasterClient) return;
+
         Hashtable hash = PV.Owner.CustomProperties;
         hash.Remove("time");
         hash.Add("time", newTime);
@@ -430,8 +416,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             Hashtable hash = new Hashtable {
                 { "score", 0 }
             };
-        PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
-
+            PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
         }
     }
 }

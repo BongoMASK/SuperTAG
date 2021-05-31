@@ -84,6 +84,7 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
 
+        //settings keys
         movementKeys.Add("jump", new InputKeys("jumpKey", "Space"));
         movementKeys.Add("forward", new InputKeys("forwardKey", "W"));
         movementKeys.Add("backward", new InputKeys("backwardKey", "S"));
@@ -142,13 +143,17 @@ public class GameManager : MonoBehaviour
             roomNameText.text = PhotonNetwork.CurrentRoom.Name;
         else roomNameText.text = SceneManager.GetActiveScene().name;
 
+        coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
+        roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
+
     }
 
     private void Update() {
-        pauseMenu.SetActive(gameIsPaused);
 
-        if (Input.GetKeyDown(otherKeys["escape"].key) && SceneManager.GetActiveScene().buildIndex != 0)
+        if (Input.GetKeyDown(otherKeys["escape"].key) && SceneManager.GetActiveScene().buildIndex != 0) {
             gameIsPaused = !gameIsPaused;
+            pauseMenu.SetActive(gameIsPaused);
+        }
 
         if (!gameIsPaused) Resume();
         else Pause();
@@ -195,8 +200,6 @@ public class GameManager : MonoBehaviour
             leaderBoard.SetActive(true);
             serverHost.gameObject.SetActive(PhotonNetwork.IsMasterClient);
 
-            coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
-            roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
             if((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= 5) {
                 roundText.text = "Final Round";
             }
@@ -245,6 +248,7 @@ public class GameManager : MonoBehaviour
 
         DebugController.showConsole = false;
         gameIsPaused = false;
+        pauseMenu.SetActive(gameIsPaused);
 
         if (SceneManager.GetActiveScene().buildIndex != 0) {
             Cursor.lockState = CursorLockMode.Locked;
