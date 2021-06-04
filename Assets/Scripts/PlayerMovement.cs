@@ -95,7 +95,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
         PV = GetComponent<PhotonView>();
-        renderer = GetComponent<Renderer>();
+        //renderer = GetComponent<Renderer>();
         currentGravity = Physics.gravity;
 
         playerManager = PhotonView.Find((int)PV.InstantiationData[0]).GetComponent<PlayerManager>();
@@ -136,6 +136,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
         Movement();
         Gravity();
     }
+
+    //divide this script into
+    //movement, UI, networking
 
     private void Update() {
         if (!PV.IsMine) return;
@@ -394,7 +397,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
             }
         }
     }
-
+    
     void ChangeOnTeamsChange() {
         countdown = countdownStart;
         renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
@@ -454,7 +457,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks, IDamageable {
                 rb.AddForce(Vector3.down * Time.deltaTime * 3000);
                 return;
             }
-            //checking v to decide slide / couch
+            //checking v to decide slide / crouch
             else {  //crouching
                 multiplier = 0.4f;
                 multiplierV = 1f;

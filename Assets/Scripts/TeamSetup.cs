@@ -1,7 +1,5 @@
 ﻿using Photon.Pun;
 using Photon.Realtime;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
@@ -30,6 +28,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     float scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
 
     int roundNumber = 1;
+    int maxRounds = 5;
 
     bool hasWon = false, isPaused = false;
     public static bool disableHUD = true;
@@ -52,6 +51,8 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         WinText.gameObject.SetActive(false);
 
         SetDenners();
+
+        maxRounds = (int)PhotonNetwork.CurrentRoom.CustomProperties["rounds"];
 
         if (PhotonNetwork.IsMasterClient) {
             time = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"];
@@ -165,13 +166,13 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                     playerMovement.audioManager.Play("Round Timer End");
                 }
 
-                if(PhotonNetwork.IsMasterClient) {
-                    SetCurrentRound(roundNumber);
-                }
+                //sets round every frame. Change this.
+                if (PhotonNetwork.IsMasterClient) SetCurrentRound(roundNumber);
 
                 if (hasWon == true) {
                     if (PhotonNetwork.IsMasterClient) {
                         //sends round number over network
+                        if (PhotonNetwork.IsMasterClient) SetCurrentRound(roundNumber);
                         roundNumber++;
 
                         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
@@ -199,22 +200,18 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                     hasWon = false;     //so that it doesnt keep adding the score
                 }
 
-                if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] <= 4) {
+                if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] <= maxRounds - 1) {
                     TimeText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] + " in " + (int)(10 + time);
                 }
                 else {
                     TimeText.text = "Final Round in " + (int)(10 + time);
                 }
 
-                if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= 6 && PhotonNetwork.IsMasterClient) {
+                if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= maxRounds + 1 && PhotonNetwork.IsMasterClient) {
                     SceneManager.LoadScene("WinScreen");
                 }
 
                 if (time <= -10) StartNewRound();
-                /*else if (time <= -9.9 && !PhotonNetwork.IsMasterClient) {
-                    StartNewRound();
-                }*/
-                //TODO: check whether it works without this.
 
                 WinText.gameObject.SetActive(true);
             }
@@ -384,6 +381,15 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public void ChangeTime(int newTime) {
         if (!PhotonNetwork.IsMasterClient) return;
         time = newTime;
+    }
+
+    public void ChangeMaxRounds(int newMaxRounds) {
+        if (!PhotonNetwork.IsMasterClient) return;
+        maxRounds = newMaxRounds;
+        Hashtable hash = PhotonNetwork.CurrentRoom.CustomProperties;
+        hash.Remove("rounds");
+        hash.Add("rounds", maxRounds);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
     }
 
     public void ChangeGameTime(float newTime) {

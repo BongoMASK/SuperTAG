@@ -73,6 +73,7 @@ public class GameManager : MonoBehaviour
     StoredData quality = new StoredData("quality", 2);*/
 
     bool fpsCounter = true;
+    float currentTime = Time.time;
 
     void Awake() {
         //Singleton pattern
@@ -163,9 +164,10 @@ public class GameManager : MonoBehaviour
         if (PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.PlayerCount > 1)
             ShowTopPlayers();
 
-        if (fpsCounter) {
+        if (fpsCounter && Time.time - currentTime > 1) {
             float fps = 1 / Time.unscaledDeltaTime;
             fpsDisplayText.text = (int)fps + " FPS";
+            currentTime = Time.time;
         }
     }
 

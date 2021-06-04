@@ -15,6 +15,7 @@ public class DebugController : MonoBehaviour
     public static DebugCommand<string, int> set_player;
     public static DebugCommand<string, int> set_points;
     public static DebugCommand<int> set_time;
+    public static DebugCommand<int> set_maxRounds;
     public static DebugCommand<float> set_game_time;
     public static DebugCommand time_pause;
     public static DebugCommand restart_round;
@@ -53,10 +54,17 @@ public class DebugController : MonoBehaviour
             }
         });
 
-        set_time = new DebugCommand<int>("set_time", "Sets values of player", "set_time <value>", (a) => {
+        set_time = new DebugCommand<int>("set_time", "Changes time of game", "set_time <value>", (a) => {
             TeamSetup[] players = FindObjectsOfType<TeamSetup>();
             foreach (TeamSetup player in players) {
                 player.ChangeTime(a);
+            }
+        });
+
+        set_maxRounds = new DebugCommand<int>("set_maxRounds", "Changes max rounds of game", "set_maxRounds <value>", (a) => {
+            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
+            foreach (TeamSetup player in players) {
+                player.ChangeMaxRounds(a);
             }
         });
 
@@ -101,6 +109,7 @@ public class DebugController : MonoBehaviour
             set_goopGun,
             set_player,
             set_time,
+            set_maxRounds,
             set_game_time,
             set_points,
             time_pause,

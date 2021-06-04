@@ -35,11 +35,13 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     int time = 120;
     int dennerCount = 1;
+    int rounds = 5;
     int mapCount = 1;
     int tagCountdown = 5;
 
     [SerializeField] TMP_Text timeText;
     [SerializeField] TMP_Text dennerCountText;
+    [SerializeField] TMP_Text roundCountText;
     [SerializeField] TMP_Text tagCountdownText;
     [SerializeField] TMP_Text mapText;
 
@@ -151,7 +153,9 @@ public class Launcher : MonoBehaviourPunCallbacks
             { "denner", dennerCount },
             { "mapCount", mapCount },
             { "tagCountdown", tagCountdown},
-            { "roundNumber", 1 }
+            { "roundNumber", 1 },
+            { "rounds", 5 },
+            { "hasStarted", false}
         };
 
         if (PhotonNetwork.IsMasterClient) {
@@ -162,8 +166,13 @@ public class Launcher : MonoBehaviourPunCallbacks
             mapCount = (int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"];
         }
 
+        //Debug.Log((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"]);
+
         MenuManager.Instance.OpenMenu("room");
         roomNameText.text = PhotonNetwork.CurrentRoom.Name;
+
+        //starts room for player if game has started already
+        //if ((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"]) StartRoom();
 
         Player[] players = PhotonNetwork.PlayerList;
 
@@ -199,17 +208,15 @@ public class Launcher : MonoBehaviourPunCallbacks
         MenuManager.Instance.OpenMenu("error");
     }
 
-    public void StartMap1() {
-        PhotonNetwork.LoadLevel(1);
-    }
-
-    public void StartMap2() {
-        PhotonNetwork.LoadLevel(2);
-    }
-
     public void StartRoom() {
+        Debug.Log("Loading map");
         PhotonNetwork.LoadLevel(mapCount);
-        //LoadLevel(mapCount);
+        if (PhotonNetwork.IsMasterClient) {
+            Hashtable hash = PhotonNetwork.CurrentRoom.CustomProperties;
+            hash.Remove("hasStarted");
+            hash.Add("hasStarted", true);
+            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        }
         MenuManager.Instance.OpenMenu("loading");
     }
 
@@ -323,6 +330,24 @@ public class Launcher : MonoBehaviourPunCallbacks
         foreach (Player player in PhotonNetwork.PlayerList) {
             player.SetCustomProperties(hash);
         }
+    }
+
+    public void SetRounds(int increment) {
+        if (rounds <= 1 && increment < 0) {
+            return;
+        }
+
+        rounds += increment;
+        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["rounds"]).ToString();
+
+        Hashtable hash = new Hashtable {
+            { "rounds", rounds }
+        };
+
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+
+        foreach (Player player in PhotonNetwork.PlayerList)
+            player.SetCustomProperties(hash);
     }
 
     public void SetCountdown(int increment) {
