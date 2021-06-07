@@ -38,10 +38,6 @@ public class PlayerAudio : MonoBehaviour
             s.source.maxDistance = 100;
             s.source.playOnAwake = false;
         }
-
-        if(!GetComponent<PhotonView>().IsMine) {
-            Destroy(audioListener);
-        }
     }
 
     public void PlayRandomFootstep() {

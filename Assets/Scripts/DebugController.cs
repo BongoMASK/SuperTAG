@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -104,7 +103,7 @@ public class DebugController : MonoBehaviour
             }
         });
 
-        commandList = new List<object> { 
+        commandList = new List<object> {    //all the commands in the console
             set_impulseBall,
             set_goopGun,
             set_player,

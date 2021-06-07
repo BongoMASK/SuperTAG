@@ -4,7 +4,6 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using Photon.Realtime;
 using System.Collections.Generic;
-using System.Collections;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.UI;
 using System;
@@ -25,9 +24,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] TMP_Text mouseSensText;
     [SerializeField] TMP_Text volumeText;
     [SerializeField] TMP_Text roomNameText;
-    [SerializeField] TMP_Text roundText;
-    [SerializeField] TMP_Text coolDownText;
     [SerializeField] TMP_Text serverHost;
+    public TMP_Text roundText;
+    public TMP_Text coolDownText;
 
     [SerializeField] TMP_Text fpsButtonText;
     [SerializeField] TMP_Text fpsDisplayText;
@@ -67,18 +66,18 @@ public class GameManager : MonoBehaviour
     public Dictionary<string, InputKeys> movementKeys = new Dictionary<string, InputKeys>();
     public Dictionary<string, InputKeys> otherKeys = new Dictionary<string, InputKeys>();
 
-    /*StoredData sens = new StoredData("sensitivity", 50);
-    StoredData vol = new StoredData("volume", 100);
-    StoredData fps = new StoredData("fps", 0);
-    StoredData quality = new StoredData("quality", 2);*/
+    //data to be stored as playerprefs
+    StoredData sens = new StoredData();
+    StoredData vol = new StoredData();
+    StoredData fps = new StoredData();
+    StoredData quality = new StoredData();
 
     bool fpsCounter = true;
-    float currentTime = Time.time;
+    float currentTime;
 
     void Awake() {
         //Singleton pattern
         if (GM == null) {
-            //DontDestroyOnLoad(gameObject);
             GM = this;
         }
         else if (GM != this) {
@@ -111,27 +110,20 @@ public class GameManager : MonoBehaviour
         }
 
         //getting player values
-        /*sensitivity = sens.dataInt;
+        sensitivity = sens.GetData("sensitivity", 50);
         mouseSensText.text = sensitivity.ToString();
         PlayerMovement.sensitivity = sensitivity;
         MovementNoNetworking.sensitivity = sensitivity;
 
-        volume = vol.dataFloat;
+        volume = vol.GetData("volume", 100);
         AudioListener.volume = volume/100;
         
-        fpsCounter = !ToBool(fps.dataInt);
+        fpsCounter = !ToBool(fps.GetData("fps", 0));
         ChangeFPSOn();
 
-        ChangeQuality(quality.dataInt);*/
+        ChangeQuality(quality.GetData("quality", 2));
 
-        sensitivity = PlayerPrefs.GetInt("sensitivity", 50);
-        mouseSensText.text = PlayerPrefs.GetInt("sensitivity", 50).ToString();
-        volume = PlayerPrefs.GetInt("volume", 100);
-
-        PlayerMovement.sensitivity = sensitivity;
-        MovementNoNetworking.sensitivity = sensitivity;
-        AudioListener.volume = volume / 100;
-
+        currentTime = Time.time;
     }
 
     private void Start() {
@@ -146,7 +138,6 @@ public class GameManager : MonoBehaviour
 
         coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
         roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
-
     }
 
     private void Update() {
@@ -172,15 +163,15 @@ public class GameManager : MonoBehaviour
     }
 
     void GetQualityNames() {
-        dropdown.value = QualitySettings.GetQualityLevel();
         dropdown.options.Clear();
         foreach(string option in QualitySettings.names)
             dropdown.options.Add(new TMP_Dropdown.OptionData(option));
+        dropdown.value = QualitySettings.GetQualityLevel(); 
     }
 
     public void ChangeQuality(int value) {
         QualitySettings.SetQualityLevel(value);
-        //quality.ChangePrefs(value);
+        quality.ChangePrefs(value);
     }
 
     void SortPlayersByScore() {
@@ -271,21 +262,21 @@ public class GameManager : MonoBehaviour
     public void ChangeMouseSens(float newSens) {
         PlayerMovement.sensitivity = newSens;
         MovementNoNetworking.sensitivity = newSens;
-        //sens.ChangePrefs((int)newSens);
-        PlayerPrefs.SetInt("sensitivity", (int)newSens);
+        sens.ChangePrefs((int)newSens);
+        //PlayerPrefs.SetInt("sensitivity", (int)newSens);
         mouseSensText.text = ((int)newSens).ToString();
     }
 
     public void ChangeVolume(float newVolume) {
         AudioListener.volume = newVolume/100;
-        //vol.ChangePrefs((int)newVolume);
-        PlayerPrefs.SetInt("volume", (int)newVolume);
+        vol.ChangePrefs((int)newVolume);
         volumeText.text = ((int)newVolume).ToString();
     }
 
     public void ChangeFPSOn() {
         fpsCounter = !fpsCounter;
         fpsButtonText.text = fpsCounter.ToString();
+        fps.ChangePrefs(ToInt(fpsCounter));
         fpsDisplayText.gameObject.SetActive(fpsCounter);
     }
 
@@ -293,44 +284,40 @@ public class GameManager : MonoBehaviour
         if (value == 0) return false;
         else return true;
     }
+
+    int ToInt(bool b) {
+        if (b) return 1;
+        return 0;
+    }
 }
 
-public class StoredData {
-    public string dataName;
-    public int dataInt;
-    public float dataFloat;
-    public string dataString;
+public class StoredData : MonoBehaviour {
+    private string dataName;
 
-    public StoredData(string _dataName, string _data) {
-        dataString = _data;
+    public string GetData(string _dataName, string _data) {
         dataName = _dataName;
-        PlayerPrefs.SetString(dataName, _data);
+        return PlayerPrefs.GetString(dataName, _data);
     }
 
-    public StoredData(string _dataName, float _data) {
-        dataFloat = _data;
+    public float GetData(string _dataName, float _data) {
         dataName = _dataName;
-        PlayerPrefs.SetFloat(dataName, _data);
+        return PlayerPrefs.GetFloat(dataName, _data);
     }
 
-    public StoredData(string _dataName, int _data) {
-        dataInt = _data;
+    public int GetData(string _dataName, int _data) {
         dataName = _dataName;
-        PlayerPrefs.SetInt(dataName, _data);
+        return PlayerPrefs.GetInt(dataName, _data);
     }
 
     public void ChangePrefs(int _data) {
-        dataInt = _data;
         PlayerPrefs.SetInt(dataName, _data);
     }
 
     public void ChangePrefs(string _data) {
-        dataString = _data;
         PlayerPrefs.SetString(dataName, _data);
     }
 
     public void ChangePrefs(float _data) {
-        dataFloat = _data;
         PlayerPrefs.SetFloat(dataName, _data);
     }
 

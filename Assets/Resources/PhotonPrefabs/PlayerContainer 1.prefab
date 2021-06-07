@@ -1076,7 +1076,7 @@ MonoBehaviour:
     m_Top: 10
     m_Bottom: 10
   m_ChildAlignment: 0
-  m_Spacing: 10
+  m_Spacing: -20
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -1783,6 +1783,7 @@ GameObject:
   - component: {fileID: 6941831161601014603}
   - component: {fileID: 570247111251870720}
   - component: {fileID: 6019343003750528884}
+  - component: {fileID: 7089103368322475046}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -1887,7 +1888,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCam: {fileID: 7799819606343102909}
   orientation: {fileID: 7799819605974004852}
-  gooped: 0
   moveSpeed: 2000
   maxSpeed: 25
   grounded: 0
@@ -1900,33 +1900,13 @@ MonoBehaviour:
   slideForce: 400
   slideCounterMovement: 0.2
   jumpForce: 280
-  items:
-  - {fileID: 7235711933485400552}
-  - {fileID: 6191872268981847321}
-  InfoText: {fileID: 7116359189560429487}
-  material:
-  - {fileID: 2100000, guid: a7fea8233c6d8204ea26ad6467def938, type: 2}
-  - {fileID: 2100000, guid: f1b107df326e11049a617a895195e2bc, type: 2}
   glasses: {fileID: 7522525579635867297}
-  canvas: {fileID: 4384632196726242189}
-  tagFeed: {fileID: 3188014219374635935, guid: 534cd5c1cd8e08f4f851720c48dcec67, type: 3}
-  tagFeedList: {fileID: 8556389502597917766}
   stepUpper: {fileID: 5087475679767288107}
   stepLower: {fileID: 331627275787366049}
   stepHeight: -0.5
   stepsmooth: 0.3
   playerAudio: {fileID: 1228943051866660941}
-  audioManager: {fileID: 0}
-  colourTexts:
-  - {fileID: 1972038612641309592}
-  - {fileID: 1767563682432570753}
-  - {fileID: 7116359189560429487}
-  - {fileID: 6891243329090672449}
-  teamColour:
-  - serializedVersion: 2
-    rgba: 4294931770
-  - serializedVersion: 2
-    rgba: 4278190335
+  playerNetworking: {fileID: 7089103368322475046}
   downForce: 80
   jumpGraceTime: 0.15
   countdownStart: 5
@@ -2000,7 +1980,7 @@ MonoBehaviour:
   TimeText: {fileID: 1767563682432570753}
   WinText: {fileID: 6891243329090672449}
   PlayerNameText: {fileID: 5943826593086480149}
-  playerMovement: {fileID: 0}
+  playerNetworking: {fileID: 7089103368322475046}
   canvas: {fileID: 8766548857192223756}
   scoreAdder: {fileID: 4687913287071942489, guid: 584afe98129efbb488a7c8fca27b8b64,
     type: 3}
@@ -2037,6 +2017,40 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7089103368322475046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7799819605784857078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d744886254b77a34899a19a3f11e3c15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  canvas: {fileID: 4384632196726242189}
+  tagFeed: {fileID: 3188014219374635935, guid: 534cd5c1cd8e08f4f851720c48dcec67, type: 3}
+  tagFeedList: {fileID: 8556389502597917766}
+  material:
+  - {fileID: 2100000, guid: a7fea8233c6d8204ea26ad6467def938, type: 2}
+  - {fileID: 2100000, guid: f1b107df326e11049a617a895195e2bc, type: 2}
+  InfoText: {fileID: 7116359189560429487}
+  items:
+  - {fileID: 7235711933485400552}
+  - {fileID: 6191872268981847321}
+  audioManager: {fileID: 0}
+  countdownStart: 5
+  colourTexts:
+  - {fileID: 1972038612641309592}
+  - {fileID: 1767563682432570753}
+  - {fileID: 7116359189560429487}
+  - {fileID: 6891243329090672449}
+  teamColour:
+  - serializedVersion: 2
+    rgba: 4294944042
+  - serializedVersion: 2
+    rgba: 4278190335
 --- !u!1 &7799819605974004853
 GameObject:
   m_ObjectHideFlags: 0
@@ -2260,7 +2274,7 @@ MonoBehaviour:
   sounds:
   - name: Jump
     clip: {fileID: 8300000, guid: 1fb1391ee223f7041ac588551dcbb0a5, type: 3}
-    volume: 1
+    volume: 0.5
     pitch: 0.85
     loop: 0
     source: {fileID: 0}
@@ -2748,7 +2762,7 @@ PrefabInstance:
         type: 3}
       propertyPath: shootingPoint
       value: 
-      objectReference: {fileID: 5301554957243140258}
+      objectReference: {fileID: 7744826099432577696}
     - target: {fileID: 7389854194857142493, guid: 22427b5a6ccf0b546998172c170bdebf,
         type: 3}
       propertyPath: m_RootOrder
@@ -2880,7 +2894,7 @@ PrefabInstance:
         type: 3}
       propertyPath: shootingPoint
       value: 
-      objectReference: {fileID: 5301554957243140258}
+      objectReference: {fileID: 7744826099432577696}
     - target: {fileID: 8679786804193613857, guid: 10342676afe577b45aa3b7faa1c32d22,
         type: 3}
       propertyPath: m_RootOrder
@@ -2943,12 +2957,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 10342676afe577b45aa3b7faa1c32d22, type: 3}
---- !u!4 &8816732435140249777 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8679786804193613857, guid: 10342676afe577b45aa3b7faa1c32d22,
-    type: 3}
-  m_PrefabInstance: {fileID: 157519831105949840}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &6191872268981847321 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6323736082544792969, guid: 10342676afe577b45aa3b7faa1c32d22,
@@ -2961,6 +2969,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cab89f5ddb5b754b8bed479fb2fd046, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &8816732435140249777 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8679786804193613857, guid: 10342676afe577b45aa3b7faa1c32d22,
+    type: 3}
+  m_PrefabInstance: {fileID: 157519831105949840}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7194248073889564249
 PrefabInstance:
   m_ObjectHideFlags: 0

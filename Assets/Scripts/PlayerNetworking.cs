@@ -6,9 +6,8 @@ using Photon.Realtime;
 using TMPro;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
-public class PlayerNetworking : MonoBehaviourPunCallbacks {
+public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
-    [SerializeField] GameObject glasses;
     [SerializeField] GameObject canvas;
     [SerializeField] GameObject tagFeed;
     [SerializeField] Transform tagFeedList;
@@ -27,22 +26,30 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks {
 
     PhotonView PV;
 
+    [HideInInspector]
     public AudioManager audioManager;
 
     float countdown = 5f;
     [SerializeField] float countdownStart = 5f;
 
+    [SerializeField] TMP_Text[] colourTexts;
+    [SerializeField] Color32[] teamColour;
+
+    PlayerManager playerManager;
+
+    [SerializeField] const float maxHealth = 100f;
+    float currentHealth = maxHealth;
+
     private void Awake() {
         PV = GetComponent<PhotonView>();
         renderer = GetComponent<Renderer>();
+        playerManager = PhotonView.Find((int)PV.InstantiationData[0]).GetComponent<PlayerManager>();
     }
 
-    // Start is called before the first frame update
     void Start() {
         if (PV.IsMine) {
             EquipItem(1);
             GetComponent<MeshRenderer>().enabled = false;
-            glasses.GetComponent<MeshRenderer>().enabled = false;
         }
         else {
             renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
@@ -59,13 +66,14 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks {
         ChangeColour();
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (!PV.IsMine) return;
 
         if (audioManager == null) 
             audioManager = FindObjectOfType<AudioManager>();
+
+        if (!GameManager.gameIsPaused) ChangeItem();
 
         if (countdown > -0.5f) { //So that it doesnt keep doing the countdown to infinity
             countdown -= Time.deltaTime;
@@ -170,9 +178,6 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks {
         }
     }
 
-    [SerializeField] TMP_Text[] colourTexts;
-    [SerializeField] Color32[] teamColour;
-
     void ChangeColour() {
         for (int i = 0; i < colourTexts.Length; i++)
             colourTexts[i].color = teamColour[(int)PV.Owner.CustomProperties["team"]];
@@ -192,8 +197,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks {
                 ChangeMyTeam(0);
                 countdown = countdownStart;
 
-                //SendFeedToAll(PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
-                PV.RPC("SpawnTagFeed", RpcTarget.All, PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
+                SendFeedToAll(PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
             }
             else if ((int)PV.Owner.CustomProperties["team"] == 0 &&
                 (int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == 1) {
@@ -204,8 +208,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks {
                 ChangeMyTeam(1);
                 countdown = countdownStart;
 
-                //SendFeedToAll(PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner, PhotonNetwork.LocalPlayer);
-                PV.RPC("SpawnTagFeed", RpcTarget.All, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner, PhotonNetwork.LocalPlayer);
+                SendFeedToAll(PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner, PhotonNetwork.LocalPlayer);
             }
         }
     }
@@ -233,23 +236,8 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks {
     }
 
     [PunRPC]
-    void RPC_PlaySound(int viewID, string name) {
-        PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.Play(name);
-    }
-
-    [PunRPC]
-    void RPC_PauseSound(int viewID, string name) {
-        PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.Pause(name);
-    }
-
-    [PunRPC]
     void SpawnTagFeed(Player player1, Player player2) {
         DisplayTagFeed(player1, player2);
-    }
-
-    [PunRPC]
-    void RPC_GetSound(int viewID) {
-        PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.PlayRandomFootstep();
     }
 
     void DisplayTagFeed(Player player1, Player player2) {
@@ -267,5 +255,25 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks {
 
         t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " <#FFF>tagged<#FF0000> " + player2.NickName;
         Destroy(t, 7f);
+    }
+
+    public void TakeDamage(float damage) {
+        PV.RPC("RPC_TakeDamage", RpcTarget.All, damage);
+    }
+
+    [PunRPC]
+    void RPC_TakeDamage(float damage) {
+        if (!PV.IsMine) return;
+
+        Debug.Log("took damage " + damage);
+        currentHealth -= damage;
+
+        if (currentHealth <= 0f) {
+            Die();
+        }
+    }
+
+    void Die() {
+        playerManager.Die();
     }
 }

@@ -33,12 +33,14 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     [SerializeField] GameObject roomManager;
 
+    //setting player properties
     int time = 120;
     int dennerCount = 1;
     int rounds = 5;
     int mapCount = 1;
     int tagCountdown = 5;
 
+    //Text fields for all the room functions
     [SerializeField] TMP_Text timeText;
     [SerializeField] TMP_Text dennerCountText;
     [SerializeField] TMP_Text roundCountText;
@@ -93,7 +95,9 @@ public class Launcher : MonoBehaviourPunCallbacks
     private void Update() {
         timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
         dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
+
         if (PhotonNetwork.CurrentRoom != null && tagCountdownText.isActiveAndEnabled) {
+            roundCountText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["rounds"]).ToString();
             tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"]).ToString();
             mapText.text = GetSceneNameByIndex((int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"]);
         }
@@ -210,6 +214,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     public void StartRoom() {
         Debug.Log("Loading map");
+        MenuManager.Instance.OpenMenu("loading");
         PhotonNetwork.LoadLevel(mapCount);
         if (PhotonNetwork.IsMasterClient) {
             Hashtable hash = PhotonNetwork.CurrentRoom.CustomProperties;
@@ -217,23 +222,22 @@ public class Launcher : MonoBehaviourPunCallbacks
             hash.Add("hasStarted", true);
             PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
         }
-        MenuManager.Instance.OpenMenu("loading");
     }
 
     public void StartTutorial() {
         SceneManager.LoadScene("Tutorial");
     }
 
-    public void StartPractice() {
-        SceneManager.LoadScene("Practice");
-    }
-
     public void LeaveRoom() {
-        PhotonNetwork.LeaveRoom();
+        PhotonNetwork.LeaveRoom(); 
         Hashtable hash = new Hashtable();
         hash.Add("score", 1);
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
         MenuManager.Instance.OpenMenu("loading");
+    }
+
+    public void StartPractice() {
+        SceneManager.LoadScene("Practice");
     }
 
     public void JoinRoom(RoomInfo info) {
@@ -338,13 +342,13 @@ public class Launcher : MonoBehaviourPunCallbacks
         }
 
         rounds += increment;
-        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["rounds"]).ToString();
 
         Hashtable hash = new Hashtable {
             { "rounds", rounds }
         };
 
         PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        roundCountText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["rounds"]).ToString();
 
         foreach (Player player in PhotonNetwork.PlayerList)
             player.SetCustomProperties(hash);
@@ -404,6 +408,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     [SerializeField] Slider slider;
 
+    //used to show loading of a level
     void LoadLevel(int sceneIndex) {
         StartCoroutine(LoadScene(sceneIndex));
     }

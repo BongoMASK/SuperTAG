@@ -7,8 +7,6 @@ public class ExplosiveJump : MonoBehaviour
     [SerializeField] float jumpForce, radiusOfEffect;
     [SerializeField] Vector3 offset = new Vector3(0, 1, 0);
 
-    [SerializeField] LayerMask whatIsGround;
-
     [SerializeField] GameObject impactField;
 
     private void Start() {

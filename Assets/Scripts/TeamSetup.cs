@@ -13,7 +13,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public TMP_Text WinText;
     public TMP_Text PlayerNameText;
 
-    [SerializeField] PlayerMovement playerMovement;
+    [SerializeField] PlayerNetworking playerNetworking;
 
     [SerializeField] GameObject canvas;
 
@@ -25,7 +25,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     float timer;
 
     float checkForDennerCountdown = 10f;
-    float scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
+    float scoreCountdown;
 
     int roundNumber = 1;
     int maxRounds = 5;
@@ -53,7 +53,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         SetDenners();
 
         maxRounds = (int)PhotonNetwork.CurrentRoom.CustomProperties["rounds"];
-
+ 
         if (PhotonNetwork.IsMasterClient) {
             time = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"];
             Hashtable ht = new Hashtable {
@@ -63,7 +63,10 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         }
         else {
             time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
-        }       
+        }
+
+        scoreCountdown = time / 6;
+        GameManager.GM.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
     }
 
     void Update() {
@@ -82,10 +85,9 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                 scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6; 
             }
 
-            checkForDennerCountdown -= Time.deltaTime;
-            if (checkForDennerCountdown <= 0f && PhotonNetwork.IsMasterClient) {
+            if (Time.time - checkForDennerCountdown > 10) {     //checks for denners every 10 seconds
                 CheckForDenners();
-                checkForDennerCountdown = 10f;
+                checkForDennerCountdown = Time.time;
             }
         }
 
@@ -97,8 +99,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     void DisableHUD() {
         disableHUD = !disableHUD;
         canvas.GetComponent<Canvas>().enabled = disableHUD;
-        GameManager gameManager = GameManager.GM;
-        gameManager.gameObject.GetComponentInChildren<Canvas>().enabled = disableHUD;
+        GameManager.GM.GetComponentInChildren<Canvas>().enabled = disableHUD;
     }
 
     [PunRPC]
@@ -157,17 +158,14 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         if (PhotonNetwork.CurrentRoom.PlayerCount <= 1) {
             TimeText.text = "Waiting For Players";
             time = (int)PV.Owner.CustomProperties["time"];
-            scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
+            scoreCountdown = time / 6;
         }
         else {
             if ((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] < 0f && WinText != null) {        //after round finishes 
 
-                if((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] > -0.1f) {
-                    playerMovement.audioManager.Play("Round Timer End");
+                if ((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] > -0.1f) {
+                    playerNetworking.audioManager.Play("Round Timer End");
                 }
-
-                //sets round every frame. Change this.
-                if (PhotonNetwork.IsMasterClient) SetCurrentRound(roundNumber);
 
                 if (hasWon == true) {
                     if (PhotonNetwork.IsMasterClient) {
@@ -190,6 +188,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                         //this statement is required, when master client leaves server.
                         roundNumber = (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
                     }
+                    GameManager.GM.roundText.text = "Round " + roundNumber;
 
                     if ((int)PhotonNetwork.LocalPlayer.CustomProperties["team"] == 0) {
                         WinText.text = "You WIN!";
@@ -200,16 +199,14 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                     hasWon = false;     //so that it doesnt keep adding the score
                 }
 
-                if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] <= maxRounds - 1) {
-                    TimeText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] + " in " + (int)(10 + time);
-                }
-                else {
-                    TimeText.text = "Final Round in " + (int)(10 + time);
-                }
+                //Rounds checking
+                if (roundNumber <= maxRounds - 1)
+                    TimeText.text = "Round " + roundNumber + " in " + (int)(10 + time);
 
-                if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= maxRounds + 1 && PhotonNetwork.IsMasterClient) {
-                    SceneManager.LoadScene("WinScreen");
-                }
+                else
+                    TimeText.text = "Final Round in " + (int)(10 + time);
+
+                if (roundNumber >= maxRounds + 1 && PhotonNetwork.IsMasterClient) SceneManager.LoadScene("WinScreen");
 
                 if (time <= -10) StartNewRound();
 
@@ -354,7 +351,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
         if (time <= 10 && timer <= 0f) {
             timer = 1f;
-            playerMovement.audioManager.Play("Round Timer");
+            playerNetworking.audioManager.Play("Round Timer");
         }
 
         if (WinText != null) {
@@ -390,16 +387,23 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         hash.Remove("rounds");
         hash.Add("rounds", maxRounds);
         PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+
+        scoreCountdown = time / 6;
+        GameManager.GM.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
+        GameManager.GM.roundText.text = "Round " + roundNumber;
     }
 
     public void ChangeGameTime(float newTime) {
         if (!PhotonNetwork.IsMasterClient) return;
 
+        Debug.Log((int)PV.Owner.CustomProperties["time"]);
         Hashtable hash = PV.Owner.CustomProperties;
         hash.Remove("time");
         hash.Add("time", newTime);
         PV.Owner.SetCustomProperties(hash);
-        Debug.Log((int)PV.Owner.CustomProperties["time"]);
+
+        scoreCountdown = time / 6;
+        GameManager.GM.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
     }
 
     public void PauseMatch() {
@@ -417,6 +421,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         time = 1f;
         StartNewRound();
         roundNumber = 0;
+        GameManager.GM.roundText.text = "Round " + roundNumber;
 
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
             Hashtable hash = new Hashtable {
