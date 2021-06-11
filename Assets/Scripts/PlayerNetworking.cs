@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
@@ -16,7 +14,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
     private Renderer renderer;
     [SerializeField] Material[] material;
 
-    public TMP_Text InfoText;
+    [SerializeField] TMP_Text InfoText;
 
     //items
     [SerializeField] Item[] items;
@@ -63,6 +61,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
         countdownStart = (int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"];
 
+        SetDenners();
         ChangeColour();
     }
 
@@ -146,6 +145,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps) {
+        //when something happens to other players
         if (!PV.IsMine && targetPlayer == PV.Owner) {
             if (changedProps.ContainsKey("itemIndex")) {
                 EquipItem((int)changedProps["itemIndex"]);
@@ -155,6 +155,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
             }
         }
 
+        //when something happens to you
         if (PV.IsMine && targetPlayer == PhotonNetwork.LocalPlayer) {
             if (changedProps.ContainsKey("team")) {
                 ChangeOnTeamsChange();
@@ -178,6 +179,31 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
     }
 
+    void SetDenners() {
+        if (!PhotonNetwork.IsMasterClient) {
+            return;
+        }
+
+        int value = Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount - (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]);
+
+        for (int i = 0; i < PhotonNetwork.CurrentRoom.PlayerCount; i++) {
+            Hashtable hash2 = new Hashtable {
+                { "team", 0 },
+                { "TeamName", PlayerInfo.Instance.allTeams[0] }
+            };
+            PhotonNetwork.PlayerList[i].SetCustomProperties(hash2);
+        }
+
+        for (int i = 0; i < (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]; i++) {
+            Hashtable hash2 = new Hashtable {
+                { "team", 1 },
+                { "TeamName", PlayerInfo.Instance.allTeams[1] }
+            };
+            PhotonNetwork.PlayerList[value + i].SetCustomProperties(hash2);
+        }
+    }
+
+    //changes colour of texts as per team / den
     void ChangeColour() {
         for (int i = 0; i < colourTexts.Length; i++)
             colourTexts[i].color = teamColour[(int)PV.Owner.CustomProperties["team"]];

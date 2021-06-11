@@ -1,15 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Photon.Pun;
 
-public class Message 
-{
+public class Message : MonoBehaviourPunCallbacks { 
     public GameObject messageBox;
-    string message;
 
-    public Message(string _message) {
-        message = _message;
-        messageBox.GetComponentInChildren<TMP_Text>().text = message;
+    public static void message(string _message) {
+        GameObject m = Instantiate(Resources.Load("PhotonPrefabs/Message", typeof(GameObject))) as GameObject;
+        m.GetComponentInChildren<TMP_Text>().text = _message;
+        Destroy(m, 5);
+    }
+
+    public static void messageToAll(string _message, PhotonView PV, RpcTarget rpcTarget) {
+        PV.RPC("message", rpcTarget, _message);
     }
 }

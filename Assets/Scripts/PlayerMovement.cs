@@ -4,8 +4,10 @@ using Photon.Pun;
 public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     //Assingables
-    public Transform playerCam;
-    public Transform orientation;
+    [Header("Assignables")]
+    [SerializeField] Transform playerCam;
+    [SerializeField] Transform orientation;
+    [SerializeField] GameObject glasses;
 
     //Multiplier
     float goopMultiplier = 2.5f;
@@ -20,26 +22,32 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     private readonly float sensMultiplier = 1f;
 
     //Movement
-    public float moveSpeed = 4500;
-    public float maxSpeed = 20;
-    public bool grounded;
-    public LayerMask whatIsGround;
+    [Header("Move Speeds")]
+    [SerializeField] float moveSpeed = 4500;
+    [SerializeField] float maxSpeed = 20;
+    [SerializeField] bool grounded;
+    [SerializeField] LayerMask whatIsGround;
 
-    public float counterMovement = 0.175f;
-    public float stopMovement = 0.3f;
+    [SerializeField] float counterMovement = 0.175f;
+    [SerializeField] float stopMovement = 0.3f;
     private float threshold = 0.01f;
-    public float maxSlopeAngle = 35f;
+    [SerializeField] float maxSlopeAngle = 35f;
 
     //Crouch & Slide
     private Vector3 crouchScale = new Vector3(1, 0.5f, 1);
     private Vector3 playerScale;
-    public float slideForce = 400;
-    public float slideCounterMovement = 0.2f;
+    [SerializeField] float slideForce = 400;
+    [SerializeField] float slideCounterMovement = 0.2f;
 
     //Jumping
     private bool readyToJump = true;
     private float jumpCooldown = 0.25f;
-    public float jumpForce = 550f;
+    [SerializeField] float jumpForce = 550f;
+    [SerializeField] float jumpGraceTime;
+    private float? lastGroundedTime;
+    private float? jumpButtonPressedTime;
+
+    [SerializeField] float downForce = 20;
 
     //Input
     float x, y;
@@ -54,14 +62,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     float soundTimer = 0f;
 
-    [SerializeField] GameObject glasses;
-
-    //step climb objects
-    [SerializeField] GameObject stepUpper;
-    [SerializeField] GameObject stepLower;
-    [SerializeField] float stepHeight = 0.3f;
-    [SerializeField] float stepsmooth = 0.1f;
-
+    [Header("Script References")]
     public PlayerAudio playerAudio;
     [SerializeField] PlayerNetworking playerNetworking;
 
@@ -72,8 +73,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         rb.useGravity = false;
         PV = GetComponent<PhotonView>();
         currentGravity = Physics.gravity;
-
-        stepUpper.transform.position = new Vector3(stepUpper.transform.position.x, stepHeight, stepUpper.transform.position.z);
     }
 
     void Start() {
@@ -207,6 +206,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         if (Input.GetKeyDown(GameManager.GM.otherKeys["console"].key)) {
             DebugController.showConsole = !DebugController.showConsole;
             GameManager.gameIsPaused = !GameManager.gameIsPaused;
+            GameManager.GM.pauseMenu.SetActive(GameManager.gameIsPaused);
         }
 
         //Crouching
@@ -266,8 +266,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
     }
 
-    [SerializeField] float downForce = 20;
-
     private void Movement() {
         //Extra gravity
         rb.AddForce(Vector3.down * Time.deltaTime * downForce);
@@ -311,10 +309,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
         rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier);
     }
-
-    [SerializeField] float jumpGraceTime;
-    private float? lastGroundedTime;
-    private float? jumpButtonPressedTime;
 
     private void Jump() {
         if (grounded && readyToJump) {
@@ -420,22 +414,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
     }
 
-    void StepClimb(float raycastLength, float raycastLength2) {
-        CreateStepClimbDirections(orientation.transform.forward, raycastLength, raycastLength2);
-        CreateStepClimbDirections(new Vector3(1.5f, 0, 1), raycastLength, raycastLength2);
-        CreateStepClimbDirections(new Vector3(-1.5f, 0, 1), raycastLength, raycastLength2);
-    }
-
-    void CreateStepClimbDirections(Vector3 direction, float raycastLength, float raycastLength2) {
-        RaycastHit lower;
-        if (Physics.Raycast(stepLower.transform.position, transform.TransformDirection(direction), out lower, raycastLength)) {
-            RaycastHit upper;
-            if (!Physics.Raycast(stepUpper.transform.position, transform.TransformDirection(direction), out upper, raycastLength2)) {
-                rb.position -= new Vector3(0f, -stepsmooth, 0f);
-            }
-        }
-    }
-
     /// <summary>
     /// Find the velocity relative to where the player is looking
     /// Useful for vectors calculations regarding movement and limiting movement
@@ -493,9 +471,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
     }
 
-    float countdown = 5f;
-    public float countdownStart = 5f;
-
     private void OnTriggerEnter(Collider other) {
         //goop gun effects
         if (other.CompareTag("Goop")) {
@@ -543,5 +518,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         if (name == nameof(jumpForce)) jumpForce = newValue;
         if (name == nameof(slideForce)) slideForce = newValue;
         if (name == nameof(downForce)) downForce = newValue;
+
+        Message.message("Changed " + name + " to: " + newValue);
     }
 }

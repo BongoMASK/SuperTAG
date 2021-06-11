@@ -68,6 +68,8 @@ public abstract class Gun : Item {
         if (name == nameof(reloadTime)) reloadTime = newValue;
         if (name == nameof(fireRate)) fireRate = newValue;
         if (name == nameof(reloadWhenInactive)) reloadWhenInactive = IntToBool(newValue);
+
+        Message.message("Changed " + weaponName + "'s " + name + " to: " + newValue);
     }
 
     bool IntToBool(int value) {

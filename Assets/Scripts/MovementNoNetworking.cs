@@ -10,6 +10,10 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
     //Other
     private Rigidbody rb;
 
+    //Multiplier
+    float goopMultiplier = 2.5f;
+    bool gooped = false;
+
     //Rotation and look
     private float xRotation;
     public static float sensitivity = 50;
@@ -137,30 +141,43 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
     /// Find user input. Should put this in its own class but im lazy
     /// </summary>
     private void MyInput() {
-        if (Input.GetKey(GameManager.GM.right))
-            x = 1;     //Input.GetAxisRaw("Horizontal");
-        else if (Input.GetKey(GameManager.GM.left))
-            x = -1;
-        else {
-            x = 0;
-        }
 
-        if (Input.GetKey(GameManager.GM.forward))
-            y = 1;     //Input.GetAxisRaw("Horizontal");
-        else if (Input.GetKey(GameManager.GM.backward))
+        if (Input.GetKey(GameManager.GM.movementKeys["right"].key))
+            x = 1;     //Input.GetAxisRaw("Horizontal");
+        else if (Input.GetKey(GameManager.GM.movementKeys["left"].key))
+            x = -1;
+        else
+            x = 0;
+
+        if (Input.GetKey(GameManager.GM.movementKeys["forward"].key))
+            y = 1;
+        else if (Input.GetKey(GameManager.GM.movementKeys["backward"].key))
             y = -1;
-        else {
+        else
             y = 0;
+
+
+        jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
+        crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
+
+        if (Input.GetKeyDown(GameManager.GM.otherKeys["console"].key)) {
+            DebugController.showConsole = !DebugController.showConsole;
+            GameManager.gameIsPaused = !GameManager.gameIsPaused;
+            GameManager.GM.pauseMenu.SetActive(GameManager.gameIsPaused);
         }
-        //y = Input.GetAxisRaw("Vertical");
-        jumping = Input.GetKey(GameManager.GM.jump);  //Input.GetButton("Jump");
-        crouching = Input.GetKey(GameManager.GM.crouch);
 
         //Crouching
-        if (Input.GetKeyDown(GameManager.GM.crouch))
-            StartCrouch();
-        if (Input.GetKeyUp(GameManager.GM.crouch))
-            StopCrouch();
+        if (!gooped) {
+            if (Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key))
+                StartCrouch();
+            if (Input.GetKeyUp(GameManager.GM.movementKeys["crouch"].key))
+                StopCrouch();
+        }
+
+        if (gooped) {
+            jumping = false;
+            crouching = false;
+        }
     }
 
     private void StartCrouch() {

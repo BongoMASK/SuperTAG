@@ -1,19 +1,19 @@
-﻿using UnityEngine;
-using Photon.Pun;
-using UnityEngine.SceneManagement;
-using TMPro;
-using Photon.Realtime;
+﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using Photon.Pun;
+using Photon.Realtime;
+using TMPro;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.UI;
-using System;
 
 public class GameManager : MonoBehaviour
 {
     public static bool gameIsPaused = false;
     public static float mouseSens = 50f;
 
-    [SerializeField] GameObject pauseMenu;
+    public GameObject pauseMenu;
     [SerializeField] GameObject TopScore;
 
     [SerializeField] Slider slider;
@@ -51,14 +51,6 @@ public class GameManager : MonoBehaviour
     //Used for singleton
     public static GameManager GM;
 
-    //Create Keycodes that will be associated with each of our commands.
-    //These can be accessed by any other script in our game
-    public KeyCode jump { get; set; }
-    public KeyCode forward { get; set; }
-    public KeyCode backward { get; set; }
-    public KeyCode left { get; set; }
-    public KeyCode right { get; set; }
-    public KeyCode crouch { get; set; }
     public int sensitivity { get; set; }
     public float volume { get; set; } 
 
@@ -136,7 +128,7 @@ public class GameManager : MonoBehaviour
             roomNameText.text = PhotonNetwork.CurrentRoom.Name;
         else roomNameText.text = SceneManager.GetActiveScene().name;
 
-        coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 6;
+        coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 5;
         roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
     }
 
@@ -291,7 +283,7 @@ public class GameManager : MonoBehaviour
     }
 }
 
-public class StoredData : MonoBehaviour {
+public class StoredData {
     private string dataName;
 
     public string GetData(string _dataName, string _data) {

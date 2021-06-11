@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,6 +17,10 @@ public class Path {
             centre + (Vector2.right+Vector2.down)*.5f,
             centre + Vector2.right
         };
+    }
+
+    internal static string Combine() {
+        throw new NotImplementedException();
     }
 
     public Vector2 this[int i] {
