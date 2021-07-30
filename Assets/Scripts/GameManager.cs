@@ -82,7 +82,8 @@ public class GameManager : MonoBehaviour
         movementKeys.Add("backward", new InputKeys("backwardKey", "S"));
         movementKeys.Add("left", new InputKeys("leftKey", "A"));
         movementKeys.Add("right", new InputKeys("rightKey", "D"));
-        movementKeys.Add("crouch", new InputKeys("crouchKey", "LeftShift"));
+        movementKeys.Add("crouch", new InputKeys("crouchKey", "LeftControl"));
+        movementKeys.Add("slide", new InputKeys("slideKey", "LeftShift"));
 
         itemKeys.Add(new InputKeys("item1key", "Alpha1"));
         itemKeys.Add(new InputKeys("item2key", "Alpha2"));

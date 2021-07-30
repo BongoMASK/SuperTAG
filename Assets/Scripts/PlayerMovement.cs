@@ -51,7 +51,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     //Input
     float x, y;
-    bool jumping, sprinting, crouching;
+    bool jumping, sprinting, slide, crouching;
 
     //Sliding
     private Vector3 normalVector = Vector3.up;
@@ -125,7 +125,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     void Sounds() {
         //Slide
-        if (crouching && !jumping && grounded) {
+        if (slide && !jumping && grounded) {
             if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {
                 crouchSound = true;
                 if (!playerAudio.GetAudioSource("Slide").isPlaying) {
@@ -140,7 +140,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
                 }
             }
         }
-        else if ((!crouching || jumping) && crouchSound == true) {
+        else if ((!slide || jumping) && crouchSound == true) {
             PlaySoundToAll("RPC_PlaySound", "Slide Get Up");
             PlaySoundToAll("RPC_PauseSound", "Slide");
 
@@ -148,7 +148,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         //Footsteps
-        if (grounded && !crouching) {
+        if (grounded && !slide) {
             if (Mathf.Abs(rb.velocity.x) > 2 || Mathf.Abs(rb.velocity.z) > 2) {
                 soundTimer -= Time.deltaTime;
                 if (soundTimer <= 0f) {
@@ -201,6 +201,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
 
         jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
+        slide = Input.GetKey(GameManager.GM.movementKeys["slide"].key);
         crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
 
         if (Input.GetKeyDown(GameManager.GM.otherKeys["console"].key)) {
@@ -209,31 +210,44 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             GameManager.GM.pauseMenu.SetActive(GameManager.gameIsPaused);
         }
 
-        //Crouching
+        // Sliding
         if (!gooped) {
-            if (Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key))
+            if (Input.GetKeyDown(GameManager.GM.movementKeys["slide"].key))
                 StartCrouch();
-            if (Input.GetKeyUp(GameManager.GM.movementKeys["crouch"].key))
+            if (Input.GetKeyUp(GameManager.GM.movementKeys["slide"].key))
                 StopCrouch();
+        }
+
+        if (Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key)) {
+            ChangePlayerHeight(crouchScale);
+            maxSpeed = 5;
+        }
+        if (Input.GetKeyUp(GameManager.GM.movementKeys["crouch"].key)) {
+            ChangePlayerHeight(playerScale);
+            maxSpeed = 20;
         }
 
         if (gooped) {
             jumping = false;
-            crouching = false;
+            slide = false;
         }
     }
 
     private void StartCrouch() {
-        transform.localScale = crouchScale;
-        transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
+        //ChangePlayerHeight(crouchScale);
+        //transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
         if (rb.velocity.magnitude > 0.5f)
             if (grounded)
                 rb.AddForce(orientation.transform.forward * slideForce);
     }
 
     private void StopCrouch() {
-        transform.position = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
-        transform.localScale = playerScale;
+        //transform.position = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
+        //ChangePlayerHeight(playerScale);
+    }
+
+    void ChangePlayerHeight(Vector3 scale) {
+        transform.localScale = scale;
     }
 
     void Animations() {
@@ -284,19 +298,12 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         float multiplierV = 1f;
 
         // Movement while sliding
-        if (grounded && crouching) multiplierV = 0f;
+        if (grounded && slide) multiplierV = 0f;
 
         //If sliding down a ramp, add force down so player stays grounded and also builds speed
-        if (crouching && grounded && readyToJump) {
-            if (rb.velocity.magnitude > 10) {    //sliding
-                rb.AddForce(Vector3.down * Time.deltaTime * 3000);
-                return;
-            }
-            //checking v to decide slide / crouch
-            else {  //crouching
-                multiplier = 0.4f;
-                multiplierV = 1f;
-            }
+        if (slide && grounded && readyToJump) {
+            rb.AddForce(Vector3.down * Time.deltaTime * 3000);
+            return;
         }
 
         // Movement in air
@@ -372,7 +379,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     private void CounterMovement(float x, float y, Vector2 mag) {
 
         //Slow down sliding
-        if (crouching) {
+        if (slide) {
             rb.AddForce(moveSpeed * Time.deltaTime * -rb.velocity.normalized * slideCounterMovement);
             return;
         }
