@@ -64,6 +64,8 @@ public class ProjectileBehaviour : MonoBehaviour
             transform.localEulerAngles = new Vector3(0, 0, 0);
             sphereCollider.enabled = false;
             area.enabled = true;
+
+            Debug.Log("gooped");
         }
     }
 

@@ -59,7 +59,7 @@ GameObject:
   - component: {fileID: 1716401723353292736}
   m_Layer: 0
   m_Name: AreaOfEffect(Cylinder)
-  m_TagString: Untagged
+  m_TagString: Goop
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10566,7 +10566,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6094b9c90ac4b3346a4da3f4c5169137, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  area: {fileID: 8223933452328202386}
+  area: {fileID: 1716401723353292736}
   sphereCollider: {fileID: 4996163600388802579}
   particle: {fileID: 4472689192444452524}
   particle2: {fileID: 4042197561780617967}

@@ -504,6 +504,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         if (other.CompareTag("Goop")) {
             maxSpeed = goopMultiplier;
             gooped = true;
+            Debug.Log(gooped);
         }
     }
 
@@ -511,6 +512,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         if (collision.CompareTag("Goop")) {
             maxSpeed = 20;
             gooped = false;
+            if(!userInput.slide) ChangePlayerHeight(playerScale);
         }
     }
 
