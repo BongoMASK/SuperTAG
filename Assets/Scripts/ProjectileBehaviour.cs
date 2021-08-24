@@ -6,7 +6,7 @@ public class ProjectileBehaviour : MonoBehaviour
 {
     Rigidbody rb;
 
-    [SerializeField] BoxCollider area;
+    [SerializeField] Collider area; 
     [SerializeField] Collider sphereCollider;  
     [SerializeField] ParticleSystem particle;
     [SerializeField] ParticleSystem particle2;
@@ -64,14 +64,13 @@ public class ProjectileBehaviour : MonoBehaviour
             transform.localEulerAngles = new Vector3(0, 0, 0);
             sphereCollider.enabled = false;
             area.enabled = true;
-            area.size = areaOfEffect;
         }
     }
 
     void Timer() {
         timer -= Time.deltaTime;
         if(timer <= 0.5) { 
-            area.size = new Vector3(0, 0, 0);
+            area.gameObject.transform.localScale = new Vector3(0, 0, 0);
             area.gameObject.transform.position = otherPosition;
         }
     }
