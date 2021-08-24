@@ -6,8 +6,8 @@ public class ProjectileBehaviour : MonoBehaviour
 {
     Rigidbody rb;
 
-    [SerializeField] BoxCollider area;
-    [SerializeField] Collider sphereCollider;
+    [SerializeField] Collider area;
+    [SerializeField] Collider sphereCollider;  
     [SerializeField] ParticleSystem particle;
     [SerializeField] ParticleSystem particle2;
 

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 using Photon.Pun;
 
 public class PlayerMovement : MonoBehaviourPunCallbacks {
@@ -33,13 +34,13 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     private float threshold = 0.01f;
     [SerializeField] float maxSlopeAngle = 35f;
 
-    //Crouch & Slide
+    //Crouch & slide
     private Vector3 crouchScale = new Vector3(1, 0.5f, 1);
     private Vector3 playerScale;
     [SerializeField] float slideForce = 400;
     [SerializeField] float slideCounterMovement = 0.2f;
 
-    //Jumping
+    //jumping
     private bool readyToJump = true;
     private float jumpCooldown = 0.25f;
     [SerializeField] float jumpForce = 550f;
@@ -50,8 +51,17 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     [SerializeField] float downForce = 20;
 
     //Input
-    float x, y;
-    bool jumping, sprinting, slide, crouching;
+    struct UserInput {
+        public int x, y;
+        public bool jumping, sprinting, slide, crouching;
+        public bool pressed;
+
+        public bool IsPressed() {
+            return x == 0 && y == 0;
+        }
+    }
+
+    UserInput userInput;
 
     //Sliding
     private Vector3 normalVector = Vector3.up;
@@ -69,6 +79,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     Vector3 currentGravity;
 
     void Awake() {
+        if (SceneManager.GetActiveScene().name == "Tutorial")
+            PhotonNetwork.OfflineMode = true;
+        else
+            PhotonNetwork.OfflineMode = false;
+
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
         PV = GetComponent<PhotonView>();
@@ -76,18 +91,23 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     void Start() {
-        if (!PV.IsMine) {
+        playerScale = transform.localScale;
+        crouchScale = playerScale;
+        crouchScale.y = 0.5f;
+
+        if (PhotonNetwork.OfflineMode) {
+            glasses.GetComponent<MeshRenderer>().enabled = false;
+            return;
+        }
+        if (PV.IsMine) {
+            glasses.GetComponent<MeshRenderer>().enabled = false;
+        }
+        else {
+            Debug.Log("lmaooo");
             Destroy(playerCam.gameObject);
             Destroy(rb);
             return;
         }
-        else {
-            glasses.GetComponent<MeshRenderer>().enabled = false;
-        }
-
-        playerScale = transform.localScale;
-        crouchScale = playerScale;
-        crouchScale.y = 0.5f; 
     }
 
     private void FixedUpdate() {
@@ -111,8 +131,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     void StopMoving() {
-        if(x == 0 && y == 0 && rb.velocity.magnitude < 1f)
-            rb.velocity = new Vector3(0, rb.velocity.y, 0);
+        if (userInput.x == 0 && userInput.y == 0 && rb.velocity.magnitude < 0.3f)
+            rb.velocity = Vector3.zero;
     }
 
     void Gravity() {
@@ -124,8 +144,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     float currentYPos;
 
     void Sounds() {
-        //Slide
-        if (slide && !jumping && grounded) {
+        //slide
+        if (userInput.slide && !userInput.jumping && grounded) {
             if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {
                 crouchSound = true;
                 if (!playerAudio.GetAudioSource("Slide").isPlaying) {
@@ -140,7 +160,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
                 }
             }
         }
-        else if ((!slide || jumping) && crouchSound == true) {
+        else if ((!userInput.slide || userInput.jumping) && crouchSound == true) {
             PlaySoundToAll("RPC_PlaySound", "Slide Get Up");
             PlaySoundToAll("RPC_PauseSound", "Slide");
 
@@ -148,7 +168,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         //Footsteps
-        if (grounded && !slide) {
+        if (grounded && !userInput.slide) {
             if (Mathf.Abs(rb.velocity.x) > 2 || Mathf.Abs(rb.velocity.z) > 2) {
                 soundTimer -= Time.deltaTime;
                 if (soundTimer <= 0f) {
@@ -164,7 +184,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             currentYPos = transform.position.y;
         }
 
-        if(hasJumped && grounded) {
+        if (hasJumped && grounded) {
             if (transform.position.y + 3 < currentYPos) PV.RPC("RPC_PlaySound", RpcTarget.All, GetComponentInChildren<PhotonView>().ViewID, "Jump");
             hasJumped = false;
         }
@@ -180,29 +200,25 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         PV.RPC(funcName, RpcTarget.Others, GetComponentInChildren<PhotonView>().ViewID, soundName);
     }
 
-    /// <summary>
-    /// Find user input. Should put this in its own class but im lazy
-    /// </summary>
     private void MyInput() {
 
         if (Input.GetKey(GameManager.GM.movementKeys["right"].key))
-            x = 1;     //Input.GetAxisRaw("Horizontal");
+            userInput.x = 1;     //Input.GetAxisRaw("Horizontal");
         else if (Input.GetKey(GameManager.GM.movementKeys["left"].key))
-            x = -1;
+            userInput.x = -1;
         else
-            x = 0;
+            userInput.x = 0;
 
         if (Input.GetKey(GameManager.GM.movementKeys["forward"].key))
-            y = 1;
+            userInput.y = 1;
         else if (Input.GetKey(GameManager.GM.movementKeys["backward"].key))
-            y = -1;
+            userInput.y = -1;
         else
-            y = 0;
+            userInput.y = 0;
 
-
-        jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
-        slide = Input.GetKey(GameManager.GM.movementKeys["slide"].key);
-        crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
+        userInput.jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
+        userInput.slide = Input.GetKey(GameManager.GM.movementKeys["slide"].key);
+        userInput.crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
 
         if (Input.GetKeyDown(GameManager.GM.otherKeys["console"].key)) {
             DebugController.showConsole = !DebugController.showConsole;
@@ -228,22 +244,22 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         if (gooped) {
-            jumping = false;
-            slide = false;
+            userInput.jumping = false;
+            userInput.slide = false;
         }
     }
 
     private void StartCrouch() {
-        //ChangePlayerHeight(crouchScale);
-        //transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
+        ChangePlayerHeight(crouchScale);
+        transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
         if (rb.velocity.magnitude > 0.5f)
             if (grounded)
                 rb.AddForce(orientation.transform.forward * slideForce);
     }
 
     private void StopCrouch() {
-        //transform.position = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
-        //ChangePlayerHeight(playerScale);
+        transform.position = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
+        ChangePlayerHeight(playerScale);
     }
 
     void ChangePlayerHeight(Vector3 scale) {
@@ -251,7 +267,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     void Animations() {
-        if (readyToJump && jumping && grounded) {
+        if (readyToJump && userInput.jumping && grounded) {
             Debug.Log("jumped");
             //jump animation
         }
@@ -281,27 +297,27 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     private void Movement() {
-        //Extra gravity
+        // Extra gravity
         rb.AddForce(Vector3.down * Time.deltaTime * downForce);
 
-        //Find actual velocity relative to where player is looking
+        // Find actual velocity relative to where player is looking
         Vector2 mag = FindVelRelativeToLook();      //mag = magnitude
 
-        //Counteract sliding and sloppy movement
-        CounterMovement(x, y, mag);
+        // Counteract sliding and sloppy movement
+        CounterMovement(userInput.x, userInput.y, mag);
 
-        //If holding jump && ready to jump, then jump
+        // If holding jump && ready to jump, then jump
         Jump();
 
-        //Some multipliers
+        // Some multipliers
         float multiplier = 1f;
         float multiplierV = 1f;
 
         // Movement while sliding
-        if (grounded && slide) multiplierV = 0f;
+        if (grounded && userInput.slide) multiplierV = 0f;
 
-        //If sliding down a ramp, add force down so player stays grounded and also builds speed
-        if (slide && grounded && readyToJump) {
+        // If sliding down a ramp, add force down so player stays grounded and also builds speed
+        if (userInput.slide && grounded && readyToJump) {
             rb.AddForce(Vector3.down * Time.deltaTime * 3000);
             return;
         }
@@ -313,8 +329,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         //Apply forces to move player
-        rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
-        rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier);
+        rb.AddForce(orientation.transform.forward * userInput.y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
+        rb.AddForce(orientation.transform.right * userInput.x * moveSpeed * Time.deltaTime * multiplier);
     }
 
     private void Jump() {
@@ -322,7 +338,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             lastGroundedTime = Time.time;
         }
 
-        if (jumping) {
+        if (userInput.jumping) {
             jumpButtonPressedTime = Time.time;
         }
 
@@ -334,9 +350,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
                 //Add jump forces
                 rb.AddForce(Vector2.up * jumpForce * 1.5f);
                 rb.AddForce(normalVector * jumpForce * 0.5f);
-                rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime);
+                rb.AddForce(orientation.transform.forward * userInput.y * moveSpeed * Time.deltaTime);
 
-                //If jumping while falling, reset y velocity.
+                //If userInput.jumping while falling, reset userInput.y velocity.
                 Vector3 vel = rb.velocity;
                 if (rb.velocity.y < 0.5f) {
                     rb.velocity = new Vector3(vel.x, 0, vel.z);
@@ -350,6 +366,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
                 lastGroundedTime = null;
                 jumpButtonPressedTime = null;
             }
+
+        // This is a bad way to fix the bug, but i have no idea whats causing it
+        if (userInput.IsPressed() && userInput.jumping)
+            rb.velocity = new Vector3(0, rb.velocity.y, 0);
+
     }
 
     private void ResetJump() {
@@ -379,16 +400,16 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     private void CounterMovement(float x, float y, Vector2 mag) {
 
         //Slow down sliding
-        if (slide) {
+        if (userInput.slide) {
             rb.AddForce(moveSpeed * Time.deltaTime * -rb.velocity.normalized * slideCounterMovement);
             return;
         }
 
         //Counter movement
-        if (mag.x < -threshold && x > 0.05f || mag.x > threshold && x < -0.05f) {
+        if (mag.x < -threshold && userInput.x > 0.05f || mag.x > threshold && userInput.x < -0.05f) {
             rb.AddForce(moveSpeed * orientation.transform.right * Time.deltaTime * -mag.x * counterMovement);
         }
-        else if (mag.x < -threshold && x == 0 || mag.x > threshold && x == 0) {
+        else if (mag.x < -threshold && userInput.x== 0 || mag.x > threshold && userInput.x == 0) {
             // let rigidbody come to rest on its own after adding a force opposite to it
             if (grounded) {
                 rb.AddForce(moveSpeed * orientation.transform.right * Time.deltaTime * -mag.x * stopMovement);
@@ -398,10 +419,10 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             }
         }
 
-        if (mag.y < -threshold && y > 0.05f || mag.y > threshold && y < -0.05f) {
+        if (mag.y < -threshold && userInput.y > 0.05f || mag.y > threshold && userInput.y < -0.05f) {
             rb.AddForce(moveSpeed * orientation.transform.forward * Time.deltaTime * -mag.y * counterMovement);
         }
-        else if (mag.y < -threshold && y == 0 || mag.y > threshold && y == 0) {
+        else if (mag.y < -threshold && userInput.y == 0 || mag.y > threshold && userInput.y == 0) {
             // let rigidbody come to rest on its own after adding a force opposite to it
             if (grounded) {
                 rb.AddForce(moveSpeed * orientation.transform.forward * Time.deltaTime * -mag.y * stopMovement);
@@ -411,9 +432,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             }
         }
 
-        //Limit diagonal running. This will also cause a full stop if sliding fast and un-crouching, so not optimal.
+        //Limit diagonal running. This will also cause a full stop if sliding fast and un-userInput.crouching, so not optimal.
         if (Mathf.Sqrt(Mathf.Pow(rb.velocity.x, 2) + Mathf.Pow(rb.velocity.z, 2)) > maxSpeed) {
-            if (grounded || jumping) {
+            if (grounded || userInput.jumping) {
                 float fallspeed = rb.velocity.y;
                 Vector3 n = rb.velocity.normalized * maxSpeed;
                 rb.velocity = new Vector3(n.x, fallspeed, n.z);

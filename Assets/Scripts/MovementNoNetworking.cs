@@ -1,164 +1,188 @@
 ﻿using UnityEngine;
-using Photon.Pun;
 
-public class MovementNoNetworking : MonoBehaviourPunCallbacks {
+public class MovementNoNetworking : MonoBehaviour {
 
     //Assingables
-    public Transform playerCam;
-    public Transform orientation;
-
-    //Other
-    private Rigidbody rb;
+    [Header("Assignables")]
+    [SerializeField] Transform playerCam;
+    [SerializeField] Transform orientation;
 
     //Multiplier
     float goopMultiplier = 2.5f;
     bool gooped = false;
 
+    //Other
+    private Rigidbody rb;
+
     //Rotation and look
     private float xRotation;
     public static float sensitivity = 50;
-    private float sensMultiplier = 1f;
+    private readonly float sensMultiplier = 1f;
 
     //Movement
-    public float moveSpeed = 4500;
-    public float maxSpeed = 20;
-    public bool grounded;
-    public LayerMask whatIsGround;
+    [Header("Move Speeds")]
+    [SerializeField] float moveSpeed = 4500;
+    [SerializeField] float maxSpeed = 20;
+    [SerializeField] bool grounded;
+    [SerializeField] LayerMask whatIsGround;
 
-    public float counterMovement = 0.175f;
-    public float stopMovement = 0.3f;
+    [SerializeField] float counterMovement = 0.175f;
+    [SerializeField] float stopMovement = 0.3f;
     private float threshold = 0.01f;
-    public float maxSlopeAngle = 35f;
+    [SerializeField] float maxSlopeAngle = 35f;
 
-    //Crouch & Slide
+    //Crouch & slide
     private Vector3 crouchScale = new Vector3(1, 0.5f, 1);
     private Vector3 playerScale;
-    public float slideForce = 400;
-    public float slideCounterMovement = 0.2f;
+    [SerializeField] float slideForce = 400;
+    [SerializeField] float slideCounterMovement = 0.2f;
 
-    //Jumping
+    //jumping
     private bool readyToJump = true;
     private float jumpCooldown = 0.25f;
-    public float jumpForce = 550f;
+    [SerializeField] float jumpForce = 550f;
+    [SerializeField] float jumpGraceTime;
+    private float? lastGroundedTime;
+    private float? jumpButtonPressedTime;
+
+    [SerializeField] float downForce = 20;
 
     //Input
-    float x, y;
-    bool jumping, sprinting, crouching, mouseDown;
+    struct UserInput {
+        public float x, y;
+        public bool jumping, sprinting, slide, crouching;
+    }
+
+    UserInput userInput;
 
     //Sliding
     private Vector3 normalVector = Vector3.up;
     private Vector3 wallNormalVector;
 
-    //Items
-    [SerializeField] Item[] items;
+    float soundTimer = 0f;
 
-    int itemIndex;
-    int previousItemIndex = -1;
+    [Header("Script References")]
+    public PlayerAudio playerAudio;
+    [SerializeField] PlayerNetworking playerNetworking;
+
+    Vector3 currentGravity;
 
     void Awake() {
         rb = GetComponent<Rigidbody>();
+        rb.useGravity = false;
+        currentGravity = Physics.gravity;
     }
 
     void Start() {
-
         playerScale = transform.localScale;
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        crouchScale = playerScale;
+        crouchScale.y = 0.5f;
     }
 
     private void FixedUpdate() {
         Movement();
+        Gravity();
     }
 
     private void Update() {
-        if (countdown > -0.5f)   //So that it doesnt keep doing the countdown to infinity
-            countdown -= Time.deltaTime;
-
         if (!GameManager.gameIsPaused) {
             MyInput();
             Look();
-            ChangeItem();
         }
 
-        Respawn();
+        //Animations(); 
         Sounds();
+        StopMoving();
+    }
+
+    void StopMoving() {
+        if (userInput.x == 0 && userInput.y == 0 && rb.velocity.magnitude < 1f)
+            rb.velocity = new Vector3(0, rb.velocity.y, 0);
+    }
+
+    void Gravity() {
+        rb.AddForce(currentGravity, ForceMode.Acceleration);   //does gravity based on slope of floor
     }
 
     bool crouchSound = false;
+    bool hasJumped = false;
+    float currentYPos;
 
     void Sounds() {
-        //Slide
-        if (crouching && !jumping && grounded) {
-            if (Mathf.Abs(rb.velocity.x) > 3 || Mathf.Abs(rb.velocity.z) > 3) {
+        //userInput.slide
+        if (userInput.slide && !userInput.jumping && grounded) {
+            if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {
                 crouchSound = true;
-                if (!FindObjectOfType<AudioManager>().GetAudioSource("Slide").isPlaying) {
-                    FindObjectOfType<AudioManager>().Play("Slide");
+                if (!playerAudio.GetAudioSource("Slide").isPlaying) {
+                    PlaySoundToAll("RPC_PlaySound", "Slide");
                 }
             }
-            else if (Mathf.Abs(rb.velocity.x) < 3 || Mathf.Abs(rb.velocity.z) < 3) {
-                FindObjectOfType<AudioManager>().Play("Slide Get Up");
-                FindObjectOfType<AudioManager>().Pause("Slide");
-
-                crouchSound = false;
+            else if (Mathf.Abs(rb.velocity.x) < 12 || Mathf.Abs(rb.velocity.z) < 12) {
+                if (crouchSound == true) {
+                    PlaySoundToAll("RPC_PlaySound", "Slide Get Up");
+                    PlaySoundToAll("RPC_PauseSound", "Slide");
+                    crouchSound = false;
+                }
             }
         }
-        else if ((!crouching || jumping) && crouchSound == true) {
-            FindObjectOfType<AudioManager>().Play("Slide Get Up");
-            FindObjectOfType<AudioManager>().Pause("Slide");
+        else if ((!userInput.slide || userInput.jumping) && crouchSound == true) {
+            PlaySoundToAll("RPC_PlaySound", "Slide Get Up");
+            PlaySoundToAll("RPC_PauseSound", "Slide");
 
             crouchSound = false;
         }
 
         //Footsteps
-        if (grounded && !crouching) {
+        if (grounded && !userInput.slide) {
             if (Mathf.Abs(rb.velocity.x) > 2 || Mathf.Abs(rb.velocity.z) > 2) {
                 soundTimer -= Time.deltaTime;
                 if (soundTimer <= 0f) {
-                    FindObjectOfType<AudioManager>().PlayRandomFootstep();
                     soundTimer = 0.35f;
                 }
             }
         }
 
         //Jump
-        if (grounded && readyToJump && jumping) {
-            FindObjectOfType<AudioManager>().Play("Jump");
+        if (!grounded && rb.velocity.y > 1) {
+            hasJumped = true;
+            currentYPos = transform.position.y;
+        }
+
+        if (hasJumped && grounded) {
+            if (transform.position.y + 3 < currentYPos) 
+                //PV.RPC("RPC_PlaySound", RpcTarget.All, GetComponentInChildren<PhotonView>().ViewID, "Jump");
+            hasJumped = false;
         }
 
         //Breeze
-        if (!FindObjectOfType<AudioManager>().GetAudioSource("Breeze").isPlaying) {
-            FindObjectOfType<AudioManager>().Play("Breeze");
-        }
+        if (!playerNetworking.audioManager.GetAudioSource("Breeze").isPlaying) playerNetworking.audioManager.Play("Breeze");
     }
 
-    void Respawn() {
-        if (transform.position.y <= -40f) {
-            transform.position = new Vector3(-35, 0f, 50);
-        }
+    void PlaySoundToAll(string funcName, string soundName) {
+        if (funcName == "RPC_PauseSound") playerAudio.Pause(soundName);
+        else playerAudio.Play(soundName);
     }
 
-    /// <summary>
-    /// Find user input. Should put this in its own class but im lazy
-    /// </summary>
     private void MyInput() {
 
         if (Input.GetKey(GameManager.GM.movementKeys["right"].key))
-            x = 1;     //Input.GetAxisRaw("Horizontal");
+            userInput.x = 1;     //Input.GetAxisRaw("Horizontal");
         else if (Input.GetKey(GameManager.GM.movementKeys["left"].key))
-            x = -1;
+            userInput.x = -1;
         else
-            x = 0;
+            userInput.x = 0;
 
         if (Input.GetKey(GameManager.GM.movementKeys["forward"].key))
-            y = 1;
+            userInput.y = 1;
         else if (Input.GetKey(GameManager.GM.movementKeys["backward"].key))
-            y = -1;
+            userInput.y = -1;
         else
-            y = 0;
+            userInput.y = 0;
 
 
-        jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
-        crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
+        userInput.jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
+        userInput.slide = Input.GetKey(GameManager.GM.movementKeys["slide"].key);
+        userInput.crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
 
         if (Input.GetKeyDown(GameManager.GM.otherKeys["console"].key)) {
             DebugController.showConsole = !DebugController.showConsole;
@@ -166,107 +190,101 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
             GameManager.GM.pauseMenu.SetActive(GameManager.gameIsPaused);
         }
 
-        //Crouching
+        // Sliding
         if (!gooped) {
-            if (Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key))
+            if (Input.GetKeyDown(GameManager.GM.movementKeys["slide"].key))
                 StartCrouch();
-            if (Input.GetKeyUp(GameManager.GM.movementKeys["crouch"].key))
+            if (Input.GetKeyUp(GameManager.GM.movementKeys["slide"].key))
                 StopCrouch();
         }
 
+        if (Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key)) {
+            ChangePlayerHeight(crouchScale);
+            maxSpeed = 5;
+        }
+        if (Input.GetKeyUp(GameManager.GM.movementKeys["crouch"].key)) {
+            ChangePlayerHeight(playerScale);
+            maxSpeed = 20;
+        }
+
         if (gooped) {
-            jumping = false;
-            crouching = false;
+            userInput.jumping = false;
+            userInput.slide = false;
         }
     }
 
     private void StartCrouch() {
-        transform.localScale = crouchScale;
+        ChangePlayerHeight(crouchScale);
         transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
-        if (rb.velocity.magnitude > 0.5f) {
-            if (grounded) {
+        if (rb.velocity.magnitude > 0.5f)
+            if (grounded)
                 rb.AddForce(orientation.transform.forward * slideForce);
-            }
-        }
     }
 
     private void StopCrouch() {
         transform.position = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
-        transform.localScale = playerScale;
+        ChangePlayerHeight(playerScale);
     }
 
-    void ChangeItem() {
-        for (int i = 0; i < items.Length; i++) {
-            if (Input.GetKeyDown((i + 1).ToString())) {
-                EquipItem(i);
-                break;
-            }
+    void ChangePlayerHeight(Vector3 scale) {
+        transform.localScale = scale;
+    }
+
+    void Animations() {
+        if (readyToJump && userInput.jumping && grounded) {
+            Debug.Log("jumped");
+            //jump animation
         }
 
-        if (Input.GetAxisRaw("Mouse ScrollWheel") > 0f) {
-            if (itemIndex >= items.Length - 1) {
-                EquipItem(0);
+        else if (grounded) {
+            //if (rb.velocity.magnitude > 1f) {
+            Debug.Log("walkin");
+            //do walk animations
+            //}
+            //else {
+            Debug.Log("Idle");
+            //do idle animation
+            //}
+        }
+
+        else {
+            //in air animation
+            if (rb.velocity.y > 0) {
+                Debug.Log("goin up");
+                //animation of going up
             }
             else {
-                EquipItem(itemIndex + 1);
+                Debug.Log("comin down");
+                //animation of coming down
             }
         }
-        else if (Input.GetAxisRaw("Mouse ScrollWheel") < 0f) {
-            if (itemIndex <= 0) {
-                EquipItem(items.Length - 1);
-            }
-            EquipItem(itemIndex - 1);
-        }
-    }
-
-    void EquipItem(int _index) {
-        if (_index == previousItemIndex) {
-            return;
-        }
-        itemIndex = _index;
-
-        if (items.Length > 0) {
-            items[itemIndex].itemGameObject.SetActive(true);
-        }
-
-        if (previousItemIndex != -1 && items.Length > 0) {
-            items[previousItemIndex].itemGameObject.SetActive(false);
-        }
-
-        previousItemIndex = itemIndex;
     }
 
     private void Movement() {
         //Extra gravity
-        rb.AddForce(Vector3.down * Time.deltaTime * 10);
+        rb.AddForce(Vector3.down * Time.deltaTime * downForce);
 
         //Find actual velocity relative to where player is looking
         Vector2 mag = FindVelRelativeToLook();      //mag = magnitude
-        float xMag = mag.x, yMag = mag.y;
 
         //Counteract sliding and sloppy movement
-        CounterMovement(x, y, mag);
+        CounterMovement(userInput.x, userInput.y, mag);
 
         //If holding jump && ready to jump, then jump
-        if (readyToJump && jumping) Jump();
+        Jump();
 
-        //Set max speed
-        float maxSpeed = this.maxSpeed;
+        //Some multipliers
+        float multiplier = 1f;
+        float multiplierV = 1f;
+
+        // Movement while sliding
+        if (grounded && userInput.slide) multiplierV = 0f;
 
         //If sliding down a ramp, add force down so player stays grounded and also builds speed
-        if (crouching && grounded && readyToJump) {
+        if (userInput.slide && grounded && readyToJump) {
             rb.AddForce(Vector3.down * Time.deltaTime * 3000);
             return;
         }
-
-        //If speed is larger than maxspeed, cancel out the input so you don't go over max speed
-        /*if (x > 0 && xMag > maxSpeed) x = 0;
-        if (x < 0 && xMag < -maxSpeed) x = 0;
-        if (y > 0 && yMag > maxSpeed) y = 0;
-        if (y < 0 && yMag < -maxSpeed) y = 0;*/
-
-        //Some multipliers
-        float multiplier = 1f, multiplierV = 1f;
 
         // Movement in air
         if (!grounded) {
@@ -274,34 +292,44 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
             multiplierV = 0.5f;
         }
 
-        // Movement while sliding
-        if (grounded && crouching) multiplierV = 0f;
-
         //Apply forces to move player
-        rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
-        rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier);
+        rb.AddForce(orientation.transform.forward * userInput.y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
+        rb.AddForce(orientation.transform.right * userInput.x * moveSpeed * Time.deltaTime * multiplier);
     }
 
     private void Jump() {
         if (grounded && readyToJump) {
-            readyToJump = false;
-
-            //Add jump forces
-            rb.AddForce(Vector2.up * jumpForce * 1.5f);
-            rb.AddForce(normalVector * jumpForce * 0.5f);
-            rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime);
-
-            //If jumping while falling, reset y velocity.
-            Vector3 vel = rb.velocity;
-            if (rb.velocity.y < 0.5f) {
-                rb.velocity = new Vector3(vel.x, 0, vel.z);
-            }
-            else if (rb.velocity.y > 0) {
-                rb.velocity = new Vector3(vel.x, vel.y / 2, vel.z);
-            }
-
-            Invoke(nameof(ResetJump), jumpCooldown);
+            lastGroundedTime = Time.time;
         }
+
+        if (userInput.jumping) {
+            jumpButtonPressedTime = Time.time;
+        }
+
+        //if (grounded && readyToJump) {
+        if (readyToJump && Time.time - lastGroundedTime <= jumpGraceTime)
+            if (Time.time - jumpButtonPressedTime <= jumpGraceTime) {
+                readyToJump = false;
+
+                //Add jump forces
+                rb.AddForce(Vector2.up * jumpForce * 1.5f);
+                rb.AddForce(normalVector * jumpForce * 0.5f);
+                rb.AddForce(orientation.transform.forward * userInput.y * moveSpeed * Time.deltaTime);
+
+                //If userInput.jumping while falling, reset userInput.y velocity.
+                Vector3 vel = rb.velocity;
+                if (rb.velocity.y < 0.5f) {
+                    rb.velocity = new Vector3(vel.x, 0, vel.z);
+                }
+                else if (rb.velocity.y > 0) {
+                    rb.velocity = new Vector3(vel.x, vel.y / 2, vel.z);
+                }
+
+                Invoke(nameof(ResetJump), jumpCooldown);
+
+                lastGroundedTime = null;
+                jumpButtonPressedTime = null;
+            }
     }
 
     private void ResetJump() {
@@ -323,23 +351,22 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
 
         //Perform the rotations
         playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
-        orientation.transform.localRotation = Quaternion.Euler(0, desiredX, 0);
+        orientation.transform.rotation = Quaternion.Euler(0, desiredX, 0);
     }
 
     private void CounterMovement(float x, float y, Vector2 mag) {
-        //if (!grounded || jumping) return;
 
         //Slow down sliding
-        if (crouching) {
+        if (userInput.slide) {
             rb.AddForce(moveSpeed * Time.deltaTime * -rb.velocity.normalized * slideCounterMovement);
             return;
         }
 
         //Counter movement
-        if (mag.x < -threshold && x > 0.05f || mag.x > threshold && x < -0.05f) {
+        if (mag.x < -threshold && userInput.x > 0.05f || mag.x > threshold && userInput.x < -0.05f) {
             rb.AddForce(moveSpeed * orientation.transform.right * Time.deltaTime * -mag.x * counterMovement);
         }
-        else if (mag.x < -threshold && x == 0 || mag.x > threshold && x == 0) {
+        else if (mag.x < -threshold && userInput.x == 0 || mag.x > threshold && userInput.x == 0) {
             // let rigidbody come to rest on its own after adding a force opposite to it
             if (grounded) {
                 rb.AddForce(moveSpeed * orientation.transform.right * Time.deltaTime * -mag.x * stopMovement);
@@ -349,10 +376,10 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
             }
         }
 
-        if (mag.y < -threshold && y > 0.05f || mag.y > threshold && y < -0.05f) {
+        if (mag.y < -threshold && userInput.y > 0.05f || mag.y > threshold && userInput.y < -0.05f) {
             rb.AddForce(moveSpeed * orientation.transform.forward * Time.deltaTime * -mag.y * counterMovement);
         }
-        else if (mag.y < -threshold && y == 0 || mag.y > threshold && y == 0) {
+        else if (mag.y < -threshold && userInput.y == 0 || mag.y > threshold && userInput.y == 0) {
             // let rigidbody come to rest on its own after adding a force opposite to it
             if (grounded) {
                 rb.AddForce(moveSpeed * orientation.transform.forward * Time.deltaTime * -mag.y * stopMovement);
@@ -362,11 +389,13 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
             }
         }
 
-        //Limit diagonal running. This will also cause a full stop if sliding fast and un-crouching, so not optimal.
+        //Limit diagonal running. This will also cause a full stop if sliding fast and un-userInput.crouching, so not optimal.
         if (Mathf.Sqrt(Mathf.Pow(rb.velocity.x, 2) + Mathf.Pow(rb.velocity.z, 2)) > maxSpeed) {
-            float fallspeed = rb.velocity.y;
-            Vector3 n = rb.velocity.normalized * maxSpeed;
-            rb.velocity = new Vector3(n.x, fallspeed, n.z);
+            if (grounded || userInput.jumping) {
+                float fallspeed = rb.velocity.y;
+                Vector3 n = rb.velocity.normalized * maxSpeed;
+                rb.velocity = new Vector3(n.x, fallspeed, n.z);
+            }
         }
     }
 
@@ -412,6 +441,9 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
                 grounded = true;
                 cancellingGrounded = false;
                 normalVector = normal;
+
+                currentGravity = -normal * Physics.gravity.magnitude;
+
                 CancelInvoke(nameof(StopGrounded));
             }
         }
@@ -424,12 +456,23 @@ public class MovementNoNetworking : MonoBehaviourPunCallbacks {
         }
     }
 
-    float countdown = 5f;
-    public float countdownStart = 5f;
-    private float soundTimer = 0f;
+    private void OnTriggerEnter(Collider other) {
+        //goop gun effects
+        if (other.CompareTag("Goop")) {
+            maxSpeed = goopMultiplier;
+            gooped = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider collision) {
+        if (collision.CompareTag("Goop")) {
+            maxSpeed = 20;
+            gooped = false;
+        }
+    }
 
     private void StopGrounded() {
         grounded = false;
+        currentGravity = Physics.gravity;
     }
-
 }

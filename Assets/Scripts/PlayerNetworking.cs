@@ -3,6 +3,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using UnityEngine.SceneManagement;
 
 public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
@@ -39,9 +40,16 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
     float currentHealth = maxHealth;
 
     private void Awake() {
+        if (SceneManager.GetActiveScene().name == "Tutorial")
+            PhotonNetwork.OfflineMode = true;
+        else
+            PhotonNetwork.OfflineMode = false;
+
         PV = GetComponent<PhotonView>();
         renderer = GetComponent<Renderer>();
         playerManager = PhotonView.Find((int)PV.InstantiationData[0]).GetComponent<PlayerManager>();
+
+        EnableText();
     }
 
     void Start() {
@@ -81,6 +89,12 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         if (canvas != null) canvas.SetActive(!GameManager.gameIsPaused);
+
+    }
+
+    void EnableText() {
+        InfoText.gameObject.SetActive(!PhotonNetwork.OfflineMode);
+        countdown = -5f;
     }
 
     void ChangeItem() {
@@ -116,7 +130,6 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         if (Input.GetKey(GameManager.GM.otherKeys["fire"].key)) {
             items[itemIndex].Use();
         }
-
     }
 
     void EquipItem(int _index) {

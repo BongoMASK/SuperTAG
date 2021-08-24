@@ -38,7 +38,14 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public static bool disableHUD = true;
 
     private void Awake() {
+        if (SceneManager.GetActiveScene().name == "Tutorial")
+            PhotonNetwork.OfflineMode = true;
+        else
+            PhotonNetwork.OfflineMode = false;
+
         PV = GetComponent<PhotonView>();
+
+        EnableText();
     }
 
     void Start() {
@@ -80,8 +87,10 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             return;
         }
 
-        GameOver();
-        Respawn();
+        if (!PhotonNetwork.OfflineMode) {
+            GameOver();
+        }
+            Respawn();
 
         if (Input.GetKeyDown(GameManager.GM.otherKeys["hideUI"].key)) {
             DisableHUD();
@@ -109,6 +118,13 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             countDownSlider.minValue = scoreCountdownDivider * scoreCountdown;
             SetScore();
         }
+    }
+
+    void EnableText() {
+        isDennerText.enabled = !PhotonNetwork.OfflineMode;
+        WinText.enabled = !PhotonNetwork.OfflineMode;
+        TimeText.enabled = !PhotonNetwork.OfflineMode;
+        countDownSlider.gameObject.SetActive(!PhotonNetwork.OfflineMode);
     }
 
     void DisableHUD() {

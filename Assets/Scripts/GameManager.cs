@@ -125,12 +125,14 @@ public class GameManager : MonoBehaviour
         GetQualityNames();
         menuManager.OpenMenu("pause");
 
-        if (PhotonNetwork.CurrentRoom != null) 
-            roomNameText.text = PhotonNetwork.CurrentRoom.Name;
-        else roomNameText.text = SceneManager.GetActiveScene().name;
+        if (!PhotonNetwork.OfflineMode) {
+            if (PhotonNetwork.CurrentRoom != null)
+                roomNameText.text = PhotonNetwork.CurrentRoom.Name;
+            else roomNameText.text = SceneManager.GetActiveScene().name;
 
-        coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 5;
-        roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
+            coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 5;
+            roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
+        }
     }
 
     private void Update() {
@@ -313,5 +315,4 @@ public class StoredData {
     public void ChangePrefs(float _data) {
         PlayerPrefs.SetFloat(dataName, _data);
     }
-
 }
