@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Construct.unity
     guid: b1f8b3a5da193f4448637f2c86fea11f
   - enabled: 1
+    path: Assets/Scenes/Construct (LITE) 2.unity
+    guid: 50f8829e701eaa442ae4d5ff29170699
+  - enabled: 0
     path: Assets/Scenes/Construct (LITE).unity
     guid: cc237b61aa85c344b863227be422c234
   - enabled: 0

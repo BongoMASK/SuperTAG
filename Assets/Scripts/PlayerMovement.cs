@@ -78,11 +78,17 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     Vector3 currentGravity;
 
+    bool isOnline = true;
+
     void Awake() {
-        if (SceneManager.GetActiveScene().name == "Tutorial")
+        if (SceneManager.GetActiveScene().name == "Tutorial") {
             PhotonNetwork.OfflineMode = true;
-        else
+            isOnline = false;
+        }
+        else {
             PhotonNetwork.OfflineMode = false;
+            isOnline = true;
+        }
 
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
@@ -95,7 +101,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         crouchScale = playerScale;
         crouchScale.y = 0.5f;
 
-        if (PhotonNetwork.OfflineMode) {
+        if (!isOnline) {
             glasses.GetComponent<MeshRenderer>().enabled = false;
             return;
         }
@@ -111,14 +117,14 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     private void FixedUpdate() {
-        if (!PV.IsMine) return;
+        if (!PV.IsMine && isOnline) return;
 
         Movement();
         Gravity();
     }
 
     private void Update() {
-        if (!PV.IsMine) return;
+        if (!PV.IsMine && isOnline) return;
 
         if (!GameManager.gameIsPaused) {
             MyInput();

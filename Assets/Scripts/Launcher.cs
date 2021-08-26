@@ -428,3 +428,16 @@ public class Launcher : MonoBehaviourPunCallbacks
         Application.Quit();
     }
 }
+
+[System.Serializable]
+public class Tip {
+
+    [TextArea(3, 10)]
+    public string[] tips; 
+
+    public string GetRandomTip() {
+        string currentClip;
+        currentClip = tips[Random.Range(0, tips.Length)];
+        return currentClip;
+    }
+};

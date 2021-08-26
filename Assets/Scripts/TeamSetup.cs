@@ -37,11 +37,17 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     bool hasWon = false, isPaused = false;
     public static bool disableHUD = true;
 
+    bool isOnline = true;
+
     private void Awake() {
-        if (SceneManager.GetActiveScene().name == "Tutorial")
+        if (SceneManager.GetActiveScene().name == "Tutorial") {
             PhotonNetwork.OfflineMode = true;
-        else
+            isOnline = false;
+        }
+        else {
             PhotonNetwork.OfflineMode = false;
+            isOnline = true;
+        }
 
         PV = GetComponent<PhotonView>();
 
@@ -49,7 +55,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     }
 
     void Start() {
-        if (!PV.IsMine) {
+        if (!PV.IsMine && isOnline) {
             PlayerNameText.text = PV.Owner.NickName;
             return;
         }
@@ -83,27 +89,24 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     }
 
     void Update() {
-        if (!PV.IsMine) {
+        if (!PV.IsMine && isOnline)
             return;
-        }
 
-        if (!PhotonNetwork.OfflineMode) {
+        if (isOnline)
             GameOver();
-        }
-            Respawn();
+ 
+        Respawn();
 
-        if (Input.GetKeyDown(GameManager.GM.otherKeys["hideUI"].key)) {
+        if (Input.GetKeyDown(GameManager.GM.otherKeys["hideUI"].key)) 
             DisableHUD();
-        }
 
         if (Time.time - checkForDennerCountdown > 10) {     //checks for denners every 10 seconds
             CheckForDenners();
             checkForDennerCountdown = Time.time;
         }
 
-        if (time > 0) {
+        if (time > 0)
             ScoreCountdown();
-        }
     }
 
     int scoreCountdownDivider;
