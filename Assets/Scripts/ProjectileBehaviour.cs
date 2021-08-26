@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ProjectileBehaviour : MonoBehaviour
 {
@@ -33,22 +31,12 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision) {
         Vector3 normal = collision.contacts[0].normal;
-        //Debug.Log(normal);
         if (normal.y <= 0.2) {
-            rb.velocity /= 3;
+            rb.velocity *= 3;
             return;
         }
         ProcessCollision(collision.gameObject);
     }
-
-    /*private void OnCollisionStay(Collision collision) {
-        for (int i = 0; i < collision.contactCount; i++) {
-            Vector3 normal = collision.contacts[0].normal;
-            if ((normal.y) <= 0.2) return;
-            ProcessCollision(collision.gameObject);
-            return;
-        }
-    }*/
 
     private void OnTriggerEnter(Collider other) {
         ProcessCollision(other.gameObject);
