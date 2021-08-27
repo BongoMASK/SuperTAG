@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-public class MenuManager : MonoBehaviour {
+public class MenuManager : MonoBehaviour
+{
     public Tip gameTips;
 
     public static MenuManager Instance;
@@ -18,15 +19,24 @@ public class MenuManager : MonoBehaviour {
     }
 
     public void OpenMenu(string menuName) {
+<<<<<<< HEAD
         for (int i = 0; i < menus.Length; i++) {
             if (menus[i].menuName == menuName) {
+=======
+        if(menuName == "loading")
+            tipText.text = gameTips.GetRandomTip();
+
+        for(int i = 0; i < menus.Length; i++) {
+            if(menus[i].menuName == menuName) {
+>>>>>>> parent of 02ab150 (update to tips)
                 menus[i].Open();
             }
-            else if (menus[i].open) {
+            else if(menus[i].open) {
                 CloseMenu(menus[i]);
             }
         }
 
+<<<<<<< HEAD
         if (tipText == null) 
             return;
 
@@ -40,6 +50,8 @@ public class MenuManager : MonoBehaviour {
         }
     }
 
+=======
+>>>>>>> parent of 02ab150 (update to tips)
     public void OpenMenu(Menu menu) {
         for (int i = 0; i < menus.Length; i++) {
             if (menus[i].open) {
