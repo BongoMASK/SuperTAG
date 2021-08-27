@@ -10052,6 +10052,10 @@ MonoBehaviour:
       so to achieve high velocity.
     - Performing outside jumps is risky but gives you a good advantage over the other
       players if done well.
+    - The delete button for this game doesn't work. So don't you dare...
+    - Play with friends on Discord for the best experience!
+    - If you can't join a server your friend has hosted, ask him to disconnect and
+      host it again.
   tipText: {fileID: 59893022}
   menus:
   - {fileID: 163460148}
@@ -10062,6 +10066,9 @@ MonoBehaviour:
   - {fileID: 308215176}
   - {fileID: 1611015488}
   - {fileID: 716961167}
+  tipMenus:
+  - {fileID: 163460148}
+  - {fileID: 382836854}
 --- !u!1 &1565306721
 GameObject:
   m_ObjectHideFlags: 0

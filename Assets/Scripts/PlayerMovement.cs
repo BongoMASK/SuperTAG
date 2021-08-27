@@ -510,7 +510,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         if (other.CompareTag("Goop")) {
             maxSpeed = goopMultiplier;
             gooped = true;
-            Debug.Log(gooped);
         }
     }
 

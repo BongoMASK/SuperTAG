@@ -128,7 +128,8 @@ public class GameManager : MonoBehaviour
         if (!PhotonNetwork.OfflineMode) {
             if (PhotonNetwork.CurrentRoom != null)
                 roomNameText.text = PhotonNetwork.CurrentRoom.Name;
-            else roomNameText.text = SceneManager.GetActiveScene().name;
+            else 
+                roomNameText.text = SceneManager.GetActiveScene().name;
 
             coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 5;
             roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];

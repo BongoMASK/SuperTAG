@@ -22,7 +22,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void Start() {
         timer = destroyAfter;
-        Destroy(gameObject.transform.parent.gameObject, destroyAfter);
+        //Destroy(gameObject.transform.parent.gameObject, destroyAfter);
     }
 
     private void Update() {
@@ -35,7 +35,7 @@ public class ProjectileBehaviour : MonoBehaviour
             rb.velocity *= 3;
             return;
         }
-        ProcessCollision(collision.gameObject);
+        //ProcessCollision(collision.gameObject);
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -52,8 +52,6 @@ public class ProjectileBehaviour : MonoBehaviour
             transform.localEulerAngles = new Vector3(0, 0, 0);
             sphereCollider.enabled = false;
             area.enabled = true;
-
-            Debug.Log("gooped");
         }
     }
 

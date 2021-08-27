@@ -10,6 +10,7 @@ public class MenuManager : MonoBehaviour {
 
     [SerializeField] TMP_Text tipText;
     [SerializeField] Menu[] menus;
+    [SerializeField] Menu[] tipMenus;
 
     private void Awake() {
         Instance = this;
@@ -17,15 +18,6 @@ public class MenuManager : MonoBehaviour {
     }
 
     public void OpenMenu(string menuName) {
-        if (menuName == "loading" || menuName == "title") {
-            tipText.gameObject.SetActive(true);
-            tipText.text = gameTips.GetRandomTip();
-        }
-
-        else {
-            tipText.gameObject.SetActive(false);
-        }
-
         for (int i = 0; i < menus.Length; i++) {
             if (menus[i].menuName == menuName) {
                 menus[i].Open();
@@ -34,10 +26,11 @@ public class MenuManager : MonoBehaviour {
                 CloseMenu(menus[i]);
             }
         }
-    }
 
-    public void OpenMenu(Menu menu) {
-        if (menu) {
+        if (tipText == null) 
+            return;
+
+        if (menuName == "loading" || menuName == "title") {
             tipText.gameObject.SetActive(true);
             tipText.text = gameTips.GetRandomTip();
         }
@@ -45,13 +38,21 @@ public class MenuManager : MonoBehaviour {
         else {
             tipText.gameObject.SetActive(false);
         }
+    }
 
+    public void OpenMenu(Menu menu) {
         for (int i = 0; i < menus.Length; i++) {
             if (menus[i].open) {
                 CloseMenu(menus[i]);
             }
         }
         menu.Open();
+
+        if (tipText == null)
+            return;
+
+        tipText.gameObject.SetActive(CheckIfTipScreen(menu));
+        tipText.text = gameTips.GetRandomTip();
     }
 
     public void CloseMenu(Menu menu) {
@@ -61,5 +62,13 @@ public class MenuManager : MonoBehaviour {
     public void CloseAllMenus() {
         foreach (Menu menu in menus)
             CloseMenu(menu);
+    }
+
+    bool CheckIfTipScreen(Menu menu) {
+        for (int i = 0; i < tipMenus.Length; i++)
+            if (menu == tipMenus[i])
+                return true;
+
+        return false;
     }
 }
