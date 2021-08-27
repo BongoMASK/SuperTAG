@@ -9,24 +9,20 @@ public class EffectMovement : MonoBehaviour {
 
     [SerializeField] Rigidbody rb;
     [SerializeField] Transform target;
-    [SerializeField] Vector3 constantForce;
+    [SerializeField] float constForce;
 
     Vector3 direction;
-
     Vector3 startingPos;
     void Start() {
         startingPos = transform.position;
         direction = transform.position - target.position;
 
         // Set speed
-        rb.AddForce(constantForce);
-    }
-
-    void Update() {
-
+        rb.AddForce(direction * constForce);
     }
 
     private void OnCollisionEnter(Collision collision) {
-        rb.velocity *= 3;
+        if (rb.velocity.magnitude < 5000)
+            rb.velocity *= 3;
     }
 }

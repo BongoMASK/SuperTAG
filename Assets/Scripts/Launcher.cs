@@ -421,7 +421,6 @@ public class Launcher : MonoBehaviourPunCallbacks
             slider.value = progress;
             yield return null;
         }
-
     }
 
     public void Quit() {
@@ -436,8 +435,8 @@ public class Tip {
     public string[] tips; 
 
     public string GetRandomTip() {
-        string currentClip;
-        currentClip = tips[Random.Range(0, tips.Length)];
-        return currentClip;
+        string currentTip;
+        currentTip = tips[Random.Range(0, tips.Length)];
+        return currentTip;
     }
 };

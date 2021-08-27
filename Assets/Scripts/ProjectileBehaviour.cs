@@ -12,7 +12,6 @@ public class ProjectileBehaviour : MonoBehaviour
     [SerializeField] ParticleSystem particle2;
 
     [SerializeField] float destroyAfter = 10f;
-    [SerializeField] Vector3 areaOfEffect = new Vector3(8, 7, 8);
     [SerializeField] Vector3 otherPosition = new Vector3(0, -100, 0);
 
     float timer;
@@ -35,7 +34,7 @@ public class ProjectileBehaviour : MonoBehaviour
         Vector3 normal = collision.contacts[0].normal;
         //Debug.Log(normal);
         if (normal.y <= 0.2) {
-            rb.velocity /= 3;
+            rb.velocity *= 3;
             return;
         }
         //ProcessCollision(collision.gameObject);

@@ -127,6 +127,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 8008731679502362448}
+  target: {fileID: 0}
+  constForce: 0
 --- !u!1 &3264092455782936047
 GameObject:
   m_ObjectHideFlags: 0
@@ -178,7 +180,7 @@ TrailRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 1347c82a7c3e38340bff7e6f8f5da8c5, type: 2}
+  - {fileID: 2100000, guid: 83f27b81af79e6548baf415bb0355ba0, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
