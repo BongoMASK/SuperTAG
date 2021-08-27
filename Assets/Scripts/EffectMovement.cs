@@ -8,10 +8,18 @@ public class EffectMovement : MonoBehaviour {
     }
 
     [SerializeField] Rigidbody rb;
+    [SerializeField] Transform target;
+    [SerializeField] Vector3 constantForce;
+
+    Vector3 direction;
 
     Vector3 startingPos;
     void Start() {
         startingPos = transform.position;
+        direction = transform.position - target.position;
+
+        // Set speed
+        rb.AddForce(constantForce);
     }
 
     void Update() {
