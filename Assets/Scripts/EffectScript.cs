@@ -25,6 +25,8 @@ public class EffectScript : MonoBehaviour
 
     void ThrowBalls() {
         GameObject ball = Instantiate(effectBall, transform.position, Quaternion.identity);
+        Rigidbody ballRb = ball.GetComponent<Rigidbody>();
+        ballRb.constraints = RigidbodyConstraints.FreezePositionZ;
     }
 
 }

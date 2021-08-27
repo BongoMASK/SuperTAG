@@ -23,7 +23,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void Start() {
         timer = destroyAfter;
-        //Destroy(gameObject.transform.parent.gameObject, destroyAfter);
+        Destroy(gameObject.transform.parent.gameObject, destroyAfter);
     }
 
     private void Update() {
@@ -32,22 +32,12 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision) {
         Vector3 normal = collision.contacts[0].normal;
-        //Debug.Log(normal);
         if (normal.y <= 0.2) {
-            rb.velocity *= 3;
+            rb.velocity /= 3;
             return;
         }
-        //ProcessCollision(collision.gameObject);
+        ProcessCollision(collision.gameObject);
     }
-
-    /*private void OnCollisionStay(Collision collision) {
-        for (int i = 0; i < collision.contactCount; i++) {
-            Vector3 normal = collision.contacts[0].normal;
-            if ((normal.y) <= 0.2) return;
-            ProcessCollision(collision.gameObject);
-            return;
-        }
-    }*/
 
     private void OnTriggerEnter(Collider other) {
         ProcessCollision(other.gameObject);
