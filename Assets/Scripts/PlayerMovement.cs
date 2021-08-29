@@ -39,6 +39,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     private Vector3 playerScale;
     [SerializeField] float slideForce = 400;
     [SerializeField] float slideCounterMovement = 0.2f;
+    [SerializeField] Vector3 crouchCamPos;
+    Vector3 playerCamPos = new Vector3(0, 2, 0);
 
     //jumping
     private bool readyToJump = true;
@@ -58,6 +60,16 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
         public bool IsPressed() {
             return x == 0 && y == 0;
+        }
+
+        public bool isShiftJumping(bool grounded, Rigidbody rb, float maxSpeed) {
+            if (grounded && slide && jumping)
+                return true;
+
+            if (!grounded && jumping && rb.velocity.magnitude > maxSpeed)
+                return true;
+
+            return false;
         }
     }
 
@@ -256,7 +268,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     private void StartCrouch() {
-        ChangePlayerHeight(crouchScale);
+        ChangePlayerHeight(crouchScale, crouchCamPos);
         transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
         if (rb.velocity.magnitude > 0.5f)
             if (grounded)
@@ -265,11 +277,12 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     private void StopCrouch() {
         transform.position = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
-        ChangePlayerHeight(playerScale);
+        ChangePlayerHeight(playerScale, ;
     }
 
-    void ChangePlayerHeight(Vector3 scale) {
+    void ChangePlayerHeight(Vector3 scale, Vector3 camPos) {
         transform.localScale = scale;
+        playerCam.position = camPos;
     }
 
     void Animations() {
@@ -437,6 +450,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
                 //do nothing
             }
         }
+
+        if (userInput.isShiftJumping(grounded, rb, maxSpeed))
+            return;
 
         //Limit diagonal running. This will also cause a full stop if sliding fast and un-userInput.crouching, so not optimal.
         if (Mathf.Sqrt(Mathf.Pow(rb.velocity.x, 2) + Mathf.Pow(rb.velocity.z, 2)) > maxSpeed) {

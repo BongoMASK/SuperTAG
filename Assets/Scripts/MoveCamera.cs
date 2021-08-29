@@ -7,6 +7,11 @@ public class MoveCamera : MonoBehaviour {
 
     [SerializeField] bool isRotation = false;
 
+    private void Awake() {
+        if (isRotation)
+            transform.position = player.transform.position + new Vector3(0, offset, 0);
+    }
+
     void Update() {
         if (player != null) {
             if (!isRotation)
