@@ -67,6 +67,7 @@ public class GameManager : MonoBehaviour
     StoredData fps = new StoredData();
     StoredData quality = new StoredData();
     StoredData bloom = new StoredData();
+    StoredData decor = new StoredData();
 
     bool fpsCounter = true;
     float currentTime;
@@ -76,6 +77,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] TMP_Text bloomIteration;
     [SerializeField] TMP_Text bloomButtonText;
     Bloom bloomSettings;
+
+    [SerializeField] GameObject decorations;
+    [SerializeField] TMP_Text decorButtonText;
 
     void Awake() {
         //Singleton pattern
@@ -129,6 +133,7 @@ public class GameManager : MonoBehaviour
         ChangeQuality(quality.GetData("quality", 2));
 
         bloomSettings.active = ToBool(bloom.GetData("bloom", ToInt(bloomSettings.active)));
+        decorations.SetActive(ToBool(decor.GetData("decor", ToInt(decorations.activeSelf))));
 
         currentTime = Time.time;
     }
@@ -136,8 +141,8 @@ public class GameManager : MonoBehaviour
     private void Start() {
         slider.value = sensitivity;
         volumeSlider.value = volume;
-        bloomSlider.value = bloomSettings.skipIterations.value;
-
+        decorButtonText.text = decorations.activeSelf.ToString();
+        bloomButtonText.text = bloomSettings.active.ToString();
         bloomIteration.text = bloomSettings.skipIterations.value.ToString();
 
         GetQualityNames();
@@ -290,6 +295,15 @@ public class GameManager : MonoBehaviour
         bloomSettings.active = !bloomSettings.active;
         bloom.ChangePrefs(ToInt(bloomSettings.active));
         bloomButtonText.text = bloomSettings.active.ToString();
+    }
+
+    public void ShowDecorations() {
+        if (decorations == null)
+            return;
+
+        decorations.SetActive(!decorations.activeSelf);
+        decorButtonText.text = decorations.activeSelf.ToString();
+        decor.ChangePrefs(ToInt(decorations.activeSelf));
     }
 
     public void ChangeVolume(float newVolume) {

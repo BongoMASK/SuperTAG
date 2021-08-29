@@ -39,8 +39,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     private Vector3 playerScale;
     [SerializeField] float slideForce = 400;
     [SerializeField] float slideCounterMovement = 0.2f;
-    [SerializeField] Vector3 crouchCamPos;
-    Vector3 playerCamPos = new Vector3(0, 2, 0);
+    [SerializeField] float crouchCamPos = -2;
+    [SerializeField] MoveCamera moveCamera;
 
     //jumping
     private bool readyToJump = true;
@@ -53,7 +53,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     [SerializeField] float downForce = 20;
 
     //Input
-    struct UserInput {
+    protected struct UserInput {
         public int x, y;
         public bool jumping, sprinting, slide, crouching;
         public bool pressed;
@@ -73,7 +73,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
     }
 
-    UserInput userInput;
+    protected UserInput userInput;
 
     //Sliding
     private Vector3 normalVector = Vector3.up;
@@ -208,7 +208,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
 
         //Breeze
-        if (!playerNetworking.audioManager.GetAudioSource("Breeze").isPlaying) playerNetworking.audioManager.Play("Breeze");
+        if (!playerNetworking.audioManager.GetAudioSource("Breeze").isPlaying) 
+            playerNetworking.audioManager.Play("Breeze");
     }
 
     void PlaySoundToAll(string funcName, string soundName) {
@@ -268,7 +269,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     private void StartCrouch() {
-        ChangePlayerHeight(crouchScale, crouchCamPos);
+        ChangePlayerHeight(crouchScale);
         transform.position = new Vector3(transform.position.x, transform.position.y - 0.5f, transform.position.z);
         if (rb.velocity.magnitude > 0.5f)
             if (grounded)
@@ -277,12 +278,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     private void StopCrouch() {
         transform.position = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
-        ChangePlayerHeight(playerScale, ;
+        ChangePlayerHeight(playerScale);
     }
 
-    void ChangePlayerHeight(Vector3 scale, Vector3 camPos) {
+    void ChangePlayerHeight(Vector3 scale) {
         transform.localScale = scale;
-        playerCam.position = camPos;
     }
 
     void Animations() {
