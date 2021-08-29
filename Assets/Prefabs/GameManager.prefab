@@ -5614,7 +5614,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 6
   m_WholeNumbers: 1
-  m_Value: 6
+  m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -17350,7 +17350,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 6805604241392652267}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: ChangeBloomSettings
+        m_MethodName: ChangeVolume
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

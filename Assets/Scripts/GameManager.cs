@@ -143,6 +143,7 @@ public class GameManager : MonoBehaviour
         volumeSlider.value = volume;
         decorButtonText.text = decorations.activeSelf.ToString();
         bloomButtonText.text = bloomSettings.active.ToString();
+        bloomSettings.skipIterations.value = 0;
         bloomIteration.text = bloomSettings.skipIterations.value.ToString();
 
         GetQualityNames();
