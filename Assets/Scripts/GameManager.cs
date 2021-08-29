@@ -7,6 +7,8 @@ using Photon.Realtime;
 using TMPro;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.UI;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,6 +20,7 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] Slider slider;
     [SerializeField] Slider volumeSlider;
+    [SerializeField] Slider bloomSlider;
 
     [SerializeField] GameObject leaderBoard;
 
@@ -63,9 +66,16 @@ public class GameManager : MonoBehaviour
     StoredData vol = new StoredData();
     StoredData fps = new StoredData();
     StoredData quality = new StoredData();
+    StoredData bloom = new StoredData();
 
     bool fpsCounter = true;
     float currentTime;
+
+    //Post Processing
+    [SerializeField] Volume PPvolume;
+    [SerializeField] TMP_Text bloomIteration;
+    [SerializeField] TMP_Text bloomButtonText;
+    Bloom bloomSettings;
 
     void Awake() {
         //Singleton pattern
@@ -75,6 +85,8 @@ public class GameManager : MonoBehaviour
         else if (GM != this) {
             Destroy(gameObject);
         }
+
+        PPvolume.profile.TryGet(out bloomSettings);
 
         //settings keys
         movementKeys.Add("jump", new InputKeys("jumpKey", "Space"));
@@ -116,12 +128,18 @@ public class GameManager : MonoBehaviour
 
         ChangeQuality(quality.GetData("quality", 2));
 
+        bloomSettings.active = ToBool(bloom.GetData("bloom", ToInt(bloomSettings.active)));
+
         currentTime = Time.time;
     }
 
     private void Start() {
         slider.value = sensitivity;
         volumeSlider.value = volume;
+        bloomSlider.value = bloomSettings.skipIterations.value;
+
+        bloomIteration.text = bloomSettings.skipIterations.value.ToString();
+
         GetQualityNames();
         menuManager.OpenMenu("pause");
 
@@ -261,6 +279,17 @@ public class GameManager : MonoBehaviour
         sens.ChangePrefs((int)newSens);
         //PlayerPrefs.SetInt("sensitivity", (int)newSens);
         mouseSensText.text = ((int)newSens).ToString();
+    }
+
+    public void ChangeBloomSettings(float newBloom) {
+        bloomSettings.skipIterations.value = (int)newBloom;
+        bloomIteration.text = newBloom.ToString();
+    }
+
+    public void BloomOnOff() {
+        bloomSettings.active = !bloomSettings.active;
+        bloom.ChangePrefs(ToInt(bloomSettings.active));
+        bloomButtonText.text = bloomSettings.active.ToString();
     }
 
     public void ChangeVolume(float newVolume) {
