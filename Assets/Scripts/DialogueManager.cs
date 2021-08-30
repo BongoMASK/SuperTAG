@@ -22,8 +22,6 @@ public class DialogueManager : MonoBehaviour
     }
 
     public void StartDialogue(Dialogue dialogue) {
-        Debug.Log("Starting conversation with " + dialogue.name);
-
         nameText.text = dialogue.name;
 
         sentences.Clear();
@@ -44,7 +42,6 @@ public class DialogueManager : MonoBehaviour
         string sentence = sentences.Dequeue();
         StopAllCoroutines();
         StartCoroutine(TypeSentence(sentence));
-        Debug.Log(sentence);
     }
 
     IEnumerator TypeSentence(string sentence) {
@@ -53,14 +50,10 @@ public class DialogueManager : MonoBehaviour
             dialogueText.text += letter;
             yield return null;
         }
-
-        // enable press enter text
     }
 
     void EndDialogue() {
-        Debug.Log("End of convo");
-        // set panel to off
-
+        gameObject.SetActive(false);
     }
 }
 

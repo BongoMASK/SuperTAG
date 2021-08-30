@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-
+    
 public class MovementNoNetworking : MonoBehaviour {
 
     //Assingables
@@ -36,6 +36,8 @@ public class MovementNoNetworking : MonoBehaviour {
     private Vector3 playerScale;
     [SerializeField] float slideForce = 400;
     [SerializeField] float slideCounterMovement = 0.2f;
+    [SerializeField] float crouchCamPos = -2;
+    [SerializeField] MoveCamera moveCamera;
 
     //jumping
     private bool readyToJump = true;
@@ -48,12 +50,27 @@ public class MovementNoNetworking : MonoBehaviour {
     [SerializeField] float downForce = 20;
 
     //Input
-    struct UserInput {
-        public float x, y;
+    protected struct UserInput {
+        public int x, y;
         public bool jumping, sprinting, slide, crouching;
+        public bool pressed;
+
+        public bool IsPressed() {
+            return x == 0 && y == 0;
+        }
+
+        public bool isShiftJumping(bool grounded, Rigidbody rb, float maxSpeed) {
+            if (grounded && slide && jumping)
+                return true;
+
+            if (!grounded && jumping && rb.velocity.magnitude > maxSpeed)
+                return true;
+
+            return false;
+        }
     }
 
-    UserInput userInput;
+    protected UserInput userInput;
 
     //Sliding
     private Vector3 normalVector = Vector3.up;
@@ -63,7 +80,6 @@ public class MovementNoNetworking : MonoBehaviour {
 
     [Header("Script References")]
     public PlayerAudio playerAudio;
-    [SerializeField] PlayerNetworking playerNetworking;
 
     Vector3 currentGravity;
 
@@ -77,6 +93,8 @@ public class MovementNoNetworking : MonoBehaviour {
         playerScale = transform.localScale;
         crouchScale = playerScale;
         crouchScale.y = 0.5f;
+        return;
+        
     }
 
     private void FixedUpdate() {
@@ -93,11 +111,12 @@ public class MovementNoNetworking : MonoBehaviour {
         //Animations(); 
         Sounds();
         StopMoving();
+        Respawn();
     }
 
     void StopMoving() {
-        if (userInput.x == 0 && userInput.y == 0 && rb.velocity.magnitude < 1f)
-            rb.velocity = new Vector3(0, rb.velocity.y, 0);
+        if (userInput.x == 0 && userInput.y == 0 && rb.velocity.magnitude < 0.3f)
+            rb.velocity = Vector3.zero;
     }
 
     void Gravity() {
@@ -109,25 +128,28 @@ public class MovementNoNetworking : MonoBehaviour {
     float currentYPos;
 
     void Sounds() {
-        //userInput.slide
+        //slide
+        if (userInput.crouching)
+            return;
+
         if (userInput.slide && !userInput.jumping && grounded) {
             if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {
                 crouchSound = true;
                 if (!playerAudio.GetAudioSource("Slide").isPlaying) {
-                    PlaySoundToAll("RPC_PlaySound", "Slide");
+                    PlaySound("Slide");
                 }
             }
             else if (Mathf.Abs(rb.velocity.x) < 12 || Mathf.Abs(rb.velocity.z) < 12) {
                 if (crouchSound == true) {
-                    PlaySoundToAll("RPC_PlaySound", "Slide Get Up");
-                    PlaySoundToAll("RPC_PauseSound", "Slide");
+                    PlaySound("Slide Get Up");
+                    PauseSound("Slide");
                     crouchSound = false;
                 }
             }
         }
         else if ((!userInput.slide || userInput.jumping) && crouchSound == true) {
-            PlaySoundToAll("RPC_PlaySound", "Slide Get Up");
-            PlaySoundToAll("RPC_PauseSound", "Slide");
+            PlaySound("Slide Get Up");
+            PauseSound("Slide");
 
             crouchSound = false;
         }
@@ -138,6 +160,7 @@ public class MovementNoNetworking : MonoBehaviour {
                 soundTimer -= Time.deltaTime;
                 if (soundTimer <= 0f) {
                     soundTimer = 0.35f;
+                    GetSound();
                 }
             }
         }
@@ -149,18 +172,15 @@ public class MovementNoNetworking : MonoBehaviour {
         }
 
         if (hasJumped && grounded) {
-            if (transform.position.y + 3 < currentYPos) 
-                //PV.RPC("RPC_PlaySound", RpcTarget.All, GetComponentInChildren<PhotonView>().ViewID, "Jump");
+            if (transform.position.y + 3 < currentYPos)
+                PlaySound("Jump");
             hasJumped = false;
         }
-
-        //Breeze
-        if (!playerNetworking.audioManager.GetAudioSource("Breeze").isPlaying) playerNetworking.audioManager.Play("Breeze");
     }
 
-    void PlaySoundToAll(string funcName, string soundName) {
-        if (funcName == "RPC_PauseSound") playerAudio.Pause(soundName);
-        else playerAudio.Play(soundName);
+    void Respawn() {    //when player falls off the edge of the map
+        if (transform.position.y <= -40f) 
+            transform.position = new Vector3(0f, 0f, 0f);
     }
 
     private void MyInput() {
@@ -178,7 +198,6 @@ public class MovementNoNetworking : MonoBehaviour {
             userInput.y = -1;
         else
             userInput.y = 0;
-
 
         userInput.jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
         userInput.slide = Input.GetKey(GameManager.GM.movementKeys["slide"].key);
@@ -261,26 +280,26 @@ public class MovementNoNetworking : MonoBehaviour {
     }
 
     private void Movement() {
-        //Extra gravity
+        // Extra gravity
         rb.AddForce(Vector3.down * Time.deltaTime * downForce);
 
-        //Find actual velocity relative to where player is looking
+        // Find actual velocity relative to where player is looking
         Vector2 mag = FindVelRelativeToLook();      //mag = magnitude
 
-        //Counteract sliding and sloppy movement
-        CounterMovement(userInput.x, userInput.y, mag);
+        // Counteract sliding and sloppy movement
+        CounterMovement(mag);
 
-        //If holding jump && ready to jump, then jump
+        // If holding jump && ready to jump, then jump
         Jump();
 
-        //Some multipliers
+        // Some multipliers
         float multiplier = 1f;
         float multiplierV = 1f;
 
         // Movement while sliding
         if (grounded && userInput.slide) multiplierV = 0f;
 
-        //If sliding down a ramp, add force down so player stays grounded and also builds speed
+        // If sliding down a ramp, add force down so player stays grounded and also builds speed
         if (userInput.slide && grounded && readyToJump) {
             rb.AddForce(Vector3.down * Time.deltaTime * 3000);
             return;
@@ -330,6 +349,11 @@ public class MovementNoNetworking : MonoBehaviour {
                 lastGroundedTime = null;
                 jumpButtonPressedTime = null;
             }
+
+        // This is a bad way to fix the bug, but i have no idea whats causing it
+        if (userInput.IsPressed() && userInput.jumping)
+            rb.velocity = new Vector3(0, rb.velocity.y, 0);
+
     }
 
     private void ResetJump() {
@@ -354,7 +378,7 @@ public class MovementNoNetworking : MonoBehaviour {
         orientation.transform.rotation = Quaternion.Euler(0, desiredX, 0);
     }
 
-    private void CounterMovement(float x, float y, Vector2 mag) {
+    private void CounterMovement(Vector2 mag) {
 
         //Slow down sliding
         if (userInput.slide) {
@@ -388,6 +412,9 @@ public class MovementNoNetworking : MonoBehaviour {
                 //do nothing
             }
         }
+
+        if (userInput.isShiftJumping(grounded, rb, maxSpeed))
+            return;
 
         //Limit diagonal running. This will also cause a full stop if sliding fast and un-userInput.crouching, so not optimal.
         if (Mathf.Sqrt(Mathf.Pow(rb.velocity.x, 2) + Mathf.Pow(rb.velocity.z, 2)) > maxSpeed) {
@@ -468,7 +495,20 @@ public class MovementNoNetworking : MonoBehaviour {
         if (collision.CompareTag("Goop")) {
             maxSpeed = 20;
             gooped = false;
+            if (!userInput.slide) ChangePlayerHeight(playerScale);
         }
+    }
+
+    void PlaySound(string name) {
+        playerAudio.Play(name);
+    }
+
+    void PauseSound(string name) {
+        playerAudio.Pause(name);
+    }
+
+    void GetSound() {
+        playerAudio.PlayRandomFootstep();
     }
 
     private void StopGrounded() {

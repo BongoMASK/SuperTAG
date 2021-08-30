@@ -111,6 +111,8 @@ public class GameManager : MonoBehaviour
         otherKeys.Add("escape", new InputKeys("escapeKey", "Escape"));
         otherKeys.Add("fire", new InputKeys("fireKey", "Mouse0"));
 
+        if (SceneManager.GetActiveScene().name == "Tutorial")
+            PhotonNetwork.OfflineMode = true;
 
         //this code is for whenever things go the wrong way
         for (int i = 0; i < itemKeys.Count; i++) {

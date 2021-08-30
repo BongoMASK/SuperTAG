@@ -121,7 +121,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             glasses.GetComponent<MeshRenderer>().enabled = false;
         }
         else {
-            Debug.Log("lmaooo");
             Destroy(playerCam.gameObject);
             Destroy(rb);
             return;
@@ -323,7 +322,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         Vector2 mag = FindVelRelativeToLook();      //mag = magnitude
 
         // Counteract sliding and sloppy movement
-        CounterMovement(userInput.x, userInput.y, mag);
+        CounterMovement(mag);
 
         // If holding jump && ready to jump, then jump
         Jump();
@@ -416,7 +415,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
             glasses.transform.localRotation = Quaternion.Euler(xRotation, 0, 0);
     }
 
-    private void CounterMovement(float x, float y, Vector2 mag) {
+    private void CounterMovement(Vector2 mag) {
 
         //Slow down sliding
         if (userInput.slide) {
