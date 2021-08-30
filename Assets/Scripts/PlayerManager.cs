@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Photon.Pun;
-using System.IO;
 
 public class PlayerManager : MonoBehaviour
 {
@@ -32,6 +29,9 @@ public class PlayerManager : MonoBehaviour
                 spawnPosition = spawnPositions[i].position;
             }
         }
+
+        if (controller != null)
+            return;
 
         controller = PhotonNetwork.Instantiate(System.IO.Path.Combine("PhotonPrefabs", "PlayerContainer 1"), spawnPosition, Quaternion.identity, 0, new object[] { PV.ViewID });
     }

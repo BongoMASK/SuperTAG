@@ -161,6 +161,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     float currentYPos;
 
     void Sounds() {
+        if (userInput.crouching)
+            return;
+
         //slide
         if (userInput.slide && !userInput.jumping && grounded) {
             if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {

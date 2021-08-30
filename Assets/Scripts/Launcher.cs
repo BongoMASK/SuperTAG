@@ -376,7 +376,7 @@ public class Launcher : MonoBehaviourPunCallbacks
         if (mapCount <= 1 && increment < 0) {
             return;
         }
-        if (mapCount >= SceneManager.sceneCountInBuildSettings - 4 && increment > 0) {
+        if (mapCount >= SceneManager.sceneCountInBuildSettings - 3 && increment > 0) {
             return;
         }
 

@@ -48,23 +48,22 @@ MonoBehaviour:
   itemInfo: {fileID: 11400000, guid: 9912185814e81bb46b8d6318c42636b4, type: 2}
   itemGameObject: {fileID: 5195025230847727613}
   weaponName: Impulse Ball
-  bullet: {fileID: 7876120812476563209, guid: 4d93ea94e15655649b4d32346ceec64d, type: 3}
   shootingPoint: {fileID: 0}
-  camera: {fileID: 0}
-  ammoSlider: {fileID: 0}
-  speedx: 5000
-  speedy: 300
-  raycastDistance: 0
-  constantForce: 6000
-  maxAmmo: 1
+  maxAmmo: 2
   reloadWhenInactive: 1
-  reloadTime: 10
-  fireRate: 0
+  reloadTime: 7
+  fireRate: 1
+  ammoSlider: {fileID: 0}
   ammoText: {fileID: 0}
   weaponText: {fileID: 0}
   weaponColor:
     serializedVersion: 2
     rgba: 4291035497
+  bullet: {fileID: 7876120812476563209, guid: 4d93ea94e15655649b4d32346ceec64d, type: 3}
+  camera: {fileID: 0}
+  speedx: 5000
+  speedy: 300
+  constantForce: 6000
 --- !u!114 &5571256790442948052
 MonoBehaviour:
   m_ObjectHideFlags: 0

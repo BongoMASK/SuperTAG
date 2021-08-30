@@ -160,6 +160,9 @@ public class GameManager : MonoBehaviour
             coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 5;
             roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
         }
+
+        if(SceneManager.GetActiveScene().name == "vry gg map")
+            Message.message("as the server host, type 'set_impulseBall reloadTime 3' in the console to change aspects of the game.", 10);
     }
 
     private void Update() {

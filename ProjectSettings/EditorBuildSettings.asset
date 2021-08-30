@@ -8,12 +8,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/StartScreen.unity
     guid: 76aaec1d4fe1302458f400c2edfbd33c
-  - enabled: 0
-    path: Assets/Scenes/Construct(prev).unity
-    guid: b1f8b3a5da193f4448637f2c86fea11f
   - enabled: 1
     path: Assets/Scenes/Construct.unity
     guid: 50f8829e701eaa442ae4d5ff29170699
+  - enabled: 1
+    path: Assets/Scenes/vry gg map.unity
+    guid: 1484ce07b32b91e41b2c1be7c9efeff1
+  - enabled: 0
+    path: Assets/Scenes/Construct(prev).unity
+    guid: b1f8b3a5da193f4448637f2c86fea11f
   - enabled: 0
     path: Assets/Scenes/Construct (LITE).unity
     guid: cc237b61aa85c344b863227be422c234

@@ -128,10 +128,10 @@ public class MovementNoNetworking : MonoBehaviour {
     float currentYPos;
 
     void Sounds() {
-        //slide
         if (userInput.crouching)
             return;
 
+        //slide
         if (userInput.slide && !userInput.jumping && grounded) {
             if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {
                 crouchSound = true;
