@@ -8,6 +8,8 @@ TagManager:
   - PlayerOrientation
   - Goop
   - Projectile
+  - Chat
+  - Feed
   layers:
   - Default
   - TransparentFX

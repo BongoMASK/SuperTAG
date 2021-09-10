@@ -49,6 +49,8 @@ public class MovementNoNetworking : MonoBehaviour {
 
     [SerializeField] float downForce = 20;
 
+    Vector3 startPos;
+
     //Input
     protected struct UserInput {
         public int x, y;
@@ -93,8 +95,8 @@ public class MovementNoNetworking : MonoBehaviour {
         playerScale = transform.localScale;
         crouchScale = playerScale;
         crouchScale.y = 0.5f;
-        return;
-        
+
+        startPos = transform.position;        
     }
 
     private void FixedUpdate() {
@@ -179,8 +181,8 @@ public class MovementNoNetworking : MonoBehaviour {
     }
 
     void Respawn() {    //when player falls off the edge of the map
-        if (transform.position.y <= -40f) 
-            transform.position = new Vector3(0f, 0f, 0f);
+        if (transform.position.y <= startPos.y - 40f)
+            transform.position = startPos;
     }
 
     private void MyInput() {
@@ -297,7 +299,8 @@ public class MovementNoNetworking : MonoBehaviour {
         float multiplierV = 1f;
 
         // Movement while sliding
-        if (grounded && userInput.slide) multiplierV = 0f;
+        if (grounded && userInput.slide)
+            multiplierV = 0f;
 
         // If sliding down a ramp, add force down so player stays grounded and also builds speed
         if (userInput.slide && grounded && readyToJump) {

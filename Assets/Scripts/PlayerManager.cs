@@ -6,19 +6,22 @@ public class PlayerManager : MonoBehaviour
     PhotonView PV;
 
     GameObject controller;
+    //[SerializeField] GameObject canvas;
 
     private void Awake() {
         PV = GetComponent<PhotonView>();
     }
 
-    void Start()
-    {
-        if(PV.IsMine) {
+    private void Start() {
+        //if (PhotonNetwork.IsMasterClient)
             CreateController();
-        }
     }
 
-    void CreateController() {
+    public void CreateController() {
+        if (!PV.IsMine)
+            return;
+
+        //canvas.SetActive(false);
         Vector3 spawnPosition;
 
         spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
@@ -34,6 +37,7 @@ public class PlayerManager : MonoBehaviour
             return;
 
         controller = PhotonNetwork.Instantiate(System.IO.Path.Combine("PhotonPrefabs", "PlayerContainer 1"), spawnPosition, Quaternion.identity, 0, new object[] { PV.ViewID });
+
     }
 
     public void Die() {

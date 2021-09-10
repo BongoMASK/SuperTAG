@@ -107,9 +107,11 @@ public class GameManager : MonoBehaviour
         otherKeys.Add("prevWeapon", new InputKeys("prevWeaponKey", "Q"));
         otherKeys.Add("console", new InputKeys("consoleKey", "BackQuote"));
         otherKeys.Add("scoreboard", new InputKeys("scoreboardKey", "Tab"));
-        otherKeys.Add("hideUI", new InputKeys("hideUIKey", "H"));
+        otherKeys.Add("hideUI", new InputKeys("hideUIKey", "End"));
         otherKeys.Add("escape", new InputKeys("escapeKey", "Escape"));
         otherKeys.Add("fire", new InputKeys("fireKey", "Mouse0"));
+        otherKeys.Add("chat", new InputKeys("chatKey", "Y"));
+        otherKeys.Add("enter", new InputKeys("enterKey", "Return"));
 
         if (SceneManager.GetActiveScene().name == "Tutorial")
             PhotonNetwork.OfflineMode = true;
@@ -163,6 +165,9 @@ public class GameManager : MonoBehaviour
 
         if(SceneManager.GetActiveScene().name == "vry gg map")
             Message.message("as the server host, type 'set_impulseBall reloadTime 3' in the console to change aspects of the game.", 10);
+
+        if (!PhotonNetwork.IsMasterClient)
+            BugCatcher.instance.Disconnect();
     }
 
     private void Update() {

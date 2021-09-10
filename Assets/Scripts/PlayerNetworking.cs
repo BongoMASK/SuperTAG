@@ -37,6 +37,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
     PlayerManager playerManager;
 
     [SerializeField] const float maxHealth = 100f;
+    [SerializeField] int fallDown = -3;
     float currentHealth = maxHealth;
 
     private void Awake() {
@@ -48,8 +49,6 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         PV = GetComponent<PhotonView>();
         renderer = GetComponent<Renderer>();
         playerManager = PhotonView.Find((int)PV.InstantiationData[0]).GetComponent<PlayerManager>();
-
-        EnableText();
     }
 
     void Start() {
@@ -60,6 +59,10 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         else {
             renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
             return;
+
+            Destroy(tagFeedList.gameObject);
+            tagFeedList = GameObject.FindGameObjectWithTag("Feed").GetComponent<Transform>();
+
         }
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -75,12 +78,14 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
     void Update()
     {
-        if (!PV.IsMine) return;
+        if (!PV.IsMine)
+            return;
 
         if (audioManager == null) 
             audioManager = FindObjectOfType<AudioManager>();
 
-        if (!GameManager.gameIsPaused) ChangeItem();
+        if (!GameManager.gameIsPaused) 
+            ChangeItem();
 
         if (countdown > -0.5f) { //So that it doesnt keep doing the countdown to infinity
             countdown -= Time.deltaTime;
@@ -90,11 +95,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
         if (canvas != null) canvas.SetActive(!GameManager.gameIsPaused);
 
-    }
-
-    void EnableText() {
-        InfoText.gameObject.SetActive(!PhotonNetwork.OfflineMode);
-        countdown = -5f;
+        Respawn();
     }
 
     void ChangeItem() {
@@ -106,42 +107,37 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         if (Input.GetAxisRaw("Mouse ScrollWheel") > 0f) {
-            if (itemIndex >= items.Length - 1) {
+            if (itemIndex >= items.Length - 1) 
                 EquipItem(0);
-            }
-            else {
+
+            else 
                 EquipItem(itemIndex + 1);
-            }
         }
         else if (Input.GetAxisRaw("Mouse ScrollWheel") < 0f) {
-            if (itemIndex <= 0) {
+            if (itemIndex <= 0) 
                 EquipItem(items.Length - 1);
-            }
-            else {
+
+            else
                 EquipItem(itemIndex - 1);
-            }
         }
 
         //switch to prev weapon
-        if (Input.GetKeyDown(GameManager.GM.otherKeys["prevWeapon"].key)) {
+        if (Input.GetKeyDown(GameManager.GM.otherKeys["prevWeapon"].key)) 
             EquipItem(prevWeapon);
-        }
 
-        if (Input.GetKey(GameManager.GM.otherKeys["fire"].key)) {
+        if (Input.GetKey(GameManager.GM.otherKeys["fire"].key))
             items[itemIndex].Use();
-        }
     }
 
     void EquipItem(int _index) {
-        if (_index == previousItemIndex) {
+        if (_index == previousItemIndex) 
             return;
-        }
+        
         prevWeapon = itemIndex;
         itemIndex = _index;
 
-        if (items.Length > 0) {
+        if (items.Length > 0)
             items[itemIndex].itemGameObject.SetActive(true);
-        }
 
         if (previousItemIndex != -1 && items.Length > 0) {
             items[previousItemIndex].itemGameObject.SetActive(false);
@@ -176,13 +172,25 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
     }
 
+    void Respawn() {    //when player falls off the edge of the map
+        if (transform.position.y <= -40f) {
+            transform.position = new Vector3(0f, 0f, 0f);
+            PV.RPC("AddScore", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, fallDown);
+
+        }
+    }
+
     void ChangeOnTeamsChange() {
         countdown = countdownStart;
         renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
         audioManager.Play("TagSound");
 
+        string denrun = "Chase after other Runners to Tag them";
+        if ((int)PV.Owner.CustomProperties["team"] == 0)
+            denrun = "Run from the Denner for as long as possible";
+
         if (InfoText != null) {
-            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\nTag Cooldown: " + (int)countdown;
+            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\n" + denrun + "\nTag Cooldown: " + (int)countdown;
             InfoText.gameObject.SetActive(true);
             ChangeColour();
 
@@ -226,28 +234,24 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     private void OnTriggerEnter(Collider other) {
-        if (other.gameObject.CompareTag("Player") && countdown <= 0f) {
-            if ((int)PV.Owner.CustomProperties["team"] == 1 &&
-            (int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == 0) {
+        if (other.gameObject.CompareTag("Player") && countdown <= 0f)
+            TagOtherPlayer(other, 1, 0);
+    }
 
+    void TagOtherPlayer(Collider other, int team1, int team2) {
+        //if (PV.ViewID == PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).ViewID)
+          //  return;
+
+        if ((int)PV.Owner.CustomProperties["team"] == team1) {
+            if ((int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == team2) {
                 // calling function to master client because only the master client can change the custom properties of other players
-                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, 1);
+                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, team1);
 
-                ChangeMyTeam(0);
+                ChangeMyTeam(team2);
                 countdown = countdownStart;
 
                 SendFeedToAll(PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
-            }
-            else if ((int)PV.Owner.CustomProperties["team"] == 0 &&
-                (int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == 1) {
-
-                // calling function to master client because only the master client can change the custom properties of other players
-                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, 0);
-
-                ChangeMyTeam(1);
-                countdown = countdownStart;
-
-                SendFeedToAll(PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner, PhotonNetwork.LocalPlayer);
+                Debug.Log(PV.ViewID + " tagged " + PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).ViewID);
             }
         }
     }
@@ -293,7 +297,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " <#FFF>tagged<#FF0000> " + player2.NickName;
-        Destroy(t, 7f);
+        Destroy(t, 10f);
     }
 
     public void TakeDamage(float damage) {

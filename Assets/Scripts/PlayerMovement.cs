@@ -40,7 +40,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     [SerializeField] float slideForce = 400;
     [SerializeField] float slideCounterMovement = 0.2f;
     [SerializeField] float crouchCamPos = -2;
-    [SerializeField] MoveCamera moveCamera;
+
+    [HideInInspector]
+    public bool lockInput = false;
 
     //jumping
     private bool readyToJump = true;
@@ -90,18 +92,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     Vector3 currentGravity;
 
-    bool isOnline = true;
-
     void Awake() {
-        if (SceneManager.GetActiveScene().name == "Tutorial") {
-            PhotonNetwork.OfflineMode = true;
-            isOnline = false;
-        }
-        else {
-            PhotonNetwork.OfflineMode = false;
-            isOnline = true;
-        }
-
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
         PV = GetComponent<PhotonView>();
@@ -113,10 +104,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         crouchScale = playerScale;
         crouchScale.y = 0.5f;
 
-        if (!isOnline) {
-            glasses.GetComponent<MeshRenderer>().enabled = false;
-            return;
-        }
         if (PV.IsMine) {
             glasses.GetComponent<MeshRenderer>().enabled = false;
         }
@@ -128,14 +115,16 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     private void FixedUpdate() {
-        if (!PV.IsMine && isOnline) return;
+        if (!PV.IsMine) 
+            return;
 
         Movement();
         Gravity();
     }
 
     private void Update() {
-        if (!PV.IsMine && isOnline) return;
+        if (!PV.IsMine) 
+            return;
 
         if (!GameManager.gameIsPaused) {
             MyInput();
@@ -222,6 +211,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     }
 
     private void MyInput() {
+        if (lockInput == true)
+            return;
 
         if (Input.GetKey(GameManager.GM.movementKeys["right"].key))
             userInput.x = 1;     //Input.GetAxisRaw("Horizontal");
@@ -523,6 +514,11 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
         }
     }
 
+    private void StopGrounded() {
+        grounded = false;
+        currentGravity = Physics.gravity;
+    }
+
     private void OnTriggerEnter(Collider other) {
         //goop gun effects
         if (other.CompareTag("Goop")) {
@@ -552,11 +548,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     [PunRPC]
     void RPC_GetSound(int viewID) {
         PhotonView.Find(viewID).gameObject.GetComponent<PlayerMovement>().playerAudio.PlayRandomFootstep();
-    }
-
-    private void StopGrounded() {
-        grounded = false;
-        currentGravity = Physics.gravity;
     }
 
     public void ChangeValues(string name, int newValue) {

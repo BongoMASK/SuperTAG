@@ -46,8 +46,12 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] TMP_Text roundCountText;
     [SerializeField] TMP_Text tagCountdownText;
     [SerializeField] TMP_Text mapText;
+    [SerializeField] TMP_Text versionText;
 
     private List<GameObject> _listings = new List<GameObject>();
+
+    int hasPlayed = 0;
+    [SerializeField] string url = "https://b0ngo.itch.io/supertag";
 
     private void Awake() {
         Instance = this;
@@ -55,10 +59,15 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     void Start()
     {
+        hasPlayed = PlayerPrefs.GetInt("hasPlayed", 0);
+        if (hasPlayed == 0)
+            StartTutorial();
+
         PhotonNetwork.OfflineMode = false;
 
         Debug.Log("connecting to Master");
-        PhotonNetwork.ConnectUsingSettings();
+        PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion = Application.version;
+        versionText.text = "v" + PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion;
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -90,6 +99,8 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         PhotonNetwork.NickName = PlayerPrefs.GetString("playerName", "Player " + Random.Range(0, 1000).ToString("0000"));
         playerNameText.text = PlayerPrefs.GetString("playerName", "Player " + Random.Range(0, 1000).ToString("0000"));
+
+        StartCoroutine(BugCatcher.instance.GetDataFromWebpage(url));
     }
 
     private void Update() {
@@ -112,6 +123,10 @@ public class Launcher : MonoBehaviourPunCallbacks
     public override void OnJoinedLobby() {
         MenuManager.Instance.OpenMenu("title");
         Debug.Log("joined lobby");
+        if (!string.IsNullOrEmpty(BugCatcher.instance.roomName)) {
+            MenuManager.Instance.OpenMenu("loading");
+            PhotonNetwork.JoinRoom(BugCatcher.instance.roomName);
+        }
     }
 
     public void CreateRoom() {
@@ -122,6 +137,8 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         options.MaxPlayers = 6;
         options.BroadcastPropsChangeToAll = true;
+
+        // TODO: make the players set the room settings offline or in game
 
         PhotonNetwork.CreateRoom(roomNameInputField.text);
         MenuManager.Instance.OpenMenu("loading");
@@ -215,6 +232,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     public void StartRoom() {
         Debug.Log("Loading map");
         MenuManager.Instance.OpenMenu("loading");
+        
         PhotonNetwork.LoadLevel(mapCount);
         if (PhotonNetwork.IsMasterClient) {
             Hashtable hash = PhotonNetwork.CurrentRoom.CustomProperties;
@@ -225,6 +243,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     public void StartTutorial() {
+        PlayerPrefs.SetInt("hasPlayed", 1);
         SceneManager.LoadScene("Tutorial");
     }
 
@@ -245,6 +264,14 @@ public class Launcher : MonoBehaviourPunCallbacks
         MenuManager.Instance.OpenMenu("loading");
     }
 
+    [SerializeField] TMP_InputField roomNameField;
+    public void JoinRoom() {
+        if (roomNameField.text == null)
+            return;
+        PhotonNetwork.JoinRoom(roomNameField.text);
+        MenuManager.Instance.OpenMenu("loading");
+    }
+
     public override void OnLeftRoom() {
         MenuManager.Instance.OpenMenu("title");
     }
@@ -255,17 +282,25 @@ public class Launcher : MonoBehaviourPunCallbacks
         MenuManager.Instance.OpenMenu("error");
     }
 
+    [SerializeField] TMP_Text noRooms;
     public override void OnRoomListUpdate(List<RoomInfo> roomList) {    //12:47
+
         foreach(RoomInfo info in roomList) {
             //removed from list
-            if(info.RemovedFromList) {
+            if (info.Name.StartsWith("PRIVATE_"))
+                continue;
+
+            else if (info.PlayerCount > 6)
+                continue;
+
+            else if (info.RemovedFromList) {
                 int index = _listings.FindIndex(a => a.GetComponent<RoomListItem>().info.Name == info.Name);
-                if(index != -1) {   //indicates if index is found
+                if (index != -1) {   //indicates if index is found
                     Destroy(_listings[index].gameObject);
                     _listings.RemoveAt(index);
                 }
             }
-            
+
             //added to list
             else {
                 for (int i = 0; i < roomList.Count; i++) {
@@ -288,6 +323,7 @@ public class Launcher : MonoBehaviourPunCallbacks
                 }
             }
         }
+        noRooms.gameObject.SetActive(_listings.Count <= 0);
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer) {
@@ -436,7 +472,7 @@ public class Tip {
 
     public string GetRandomTip() {
         string currentTip;
-        currentTip = tips[Random.Range(0, tips.Length)];
+        currentTip = tips[Random.Range(0, tips.Length - 1)];
         return currentTip;
     }
 };

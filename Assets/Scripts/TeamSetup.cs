@@ -22,7 +22,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
     [SerializeField] GameObject scoreAdder;
 
-    [SerializeField] int roundWin, roundLose, coolDownWin, coolDownLose, fallDown;
+    [SerializeField] int roundWin, roundLose, coolDownWin, coolDownLose;
 
     public float time;
     float timer;
@@ -95,8 +95,6 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         if (isOnline)
             GameOver();
  
-        Respawn();
-
         if (Input.GetKeyDown(GameManager.GM.otherKeys["hideUI"].key)) 
             DisableHUD();
 
@@ -172,13 +170,6 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
                 AddScore(PhotonNetwork.PlayerList[i], coolDownLose);
             }
-        }
-    }
-
-    void Respawn() {    //when player falls off the edge of the map
-        if (transform.position.y <= -40f) {
-            transform.position = new Vector3(0f, 0f, 0f);
-            PV.RPC("AddScore", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, fallDown);
         }
     }
 
@@ -359,7 +350,6 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                 }
             }
         }
-        Debug.Log("Denner: " + (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]);
     }
 
     /*public override void OnPlayerLeftRoom(Player otherPlayer) {
@@ -406,10 +396,12 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     [PunRPC]
     void ChangeScoreValuesOnAll(string name, int newScore) {
         if (name == nameof(roundLose)) roundLose = newScore;
-        if (name == nameof(roundWin)) roundWin = newScore;
-        if (name == nameof(coolDownLose)) coolDownLose = newScore;
-        if (name == nameof(coolDownWin)) coolDownWin = newScore;
-        if (name == nameof(fallDown)) fallDown = newScore;
+        else if (name == nameof(roundWin)) roundWin = newScore;
+        else if (name == nameof(coolDownLose)) coolDownLose = newScore;
+        else if (name == nameof(coolDownWin)) coolDownWin = newScore;
+
+        else 
+            return;
 
         Message.message("Changed " + name + " to: " + newScore);
     }
