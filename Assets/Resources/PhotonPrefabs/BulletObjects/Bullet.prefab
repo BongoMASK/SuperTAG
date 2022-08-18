@@ -10571,7 +10571,6 @@ MonoBehaviour:
   particle: {fileID: 4472689192444452524}
   particle2: {fileID: 4042197561780617967}
   destroyAfter: 11
-  areaOfEffect: {x: 8, y: 6, z: 8}
   otherPosition: {x: 0, y: -100, z: 0}
 --- !u!198 &4472689192444452524
 ParticleSystem:

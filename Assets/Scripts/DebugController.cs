@@ -142,8 +142,17 @@ public class DebugController : MonoBehaviour
 
         GUI.Box(new Rect(0, y, Screen.width, 60), "");
         GUI.backgroundColor = new Color(0, 0, 0, 0);
-        input = GUI.TextField(new Rect(10f, y+ 5f, Screen.width - 20f, 100f), input, consoleStyle);   
-        
+        input = GUI.TextField(new Rect(10f, y+ 5f, Screen.width - 20f, 100f), input, consoleStyle);
+
+        // TODO: make enter work while inside textbox
+        // TODO: add a helper tool to autoComplete
+
+        if (Input.GetKeyDown(KeyCode.Return)) {
+            if (showConsole) {
+                HandleInput();
+                input = "";
+            }
+        }
     }
 
     void HandleInput() {

@@ -8,12 +8,21 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/StartScreen.unity
     guid: 76aaec1d4fe1302458f400c2edfbd33c
+  - enabled: 0
+    path: Assets/Scenes/Graybox.unity
+    guid: 0e14411a7dcff6f4c89c34554ade4328
+  - enabled: 1
+    path: Assets/Scenes/New Map CTF.unity
+    guid: e4ffd94e0e5e472439c3deba8743c705
   - enabled: 1
     path: Assets/Scenes/Construct.unity
     guid: 50f8829e701eaa442ae4d5ff29170699
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/vry gg map.unity
     guid: 1484ce07b32b91e41b2c1be7c9efeff1
+  - enabled: 0
+    path: Assets/Scenes/brickyard.unity
+    guid: 630830ff9ff4fce4eae71983090d6c92
   - enabled: 0
     path: Assets/Scenes/Construct(prev).unity
     guid: b1f8b3a5da193f4448637f2c86fea11f

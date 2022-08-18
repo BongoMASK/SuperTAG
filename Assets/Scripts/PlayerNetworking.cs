@@ -40,6 +40,9 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
     [SerializeField] int fallDown = -3;
     float currentHealth = maxHealth;
 
+    [SerializeField] Transform pointer;
+    [SerializeField] Transform orientation;
+
     private void Awake() {
         if (SceneManager.GetActiveScene().name == "Tutorial")
             PhotonNetwork.OfflineMode = true;
@@ -57,6 +60,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
             GetComponent<MeshRenderer>().enabled = false;
         }
         else {
+            Destroy(pointer);
             renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
             return;
 
@@ -76,15 +80,16 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         ChangeColour();
     }
 
-    void Update()
-    {
+    void Update() {
         if (!PV.IsMine)
             return;
 
-        if (audioManager == null) 
+        FindClosestPlayer();
+
+        if (audioManager == null)
             audioManager = FindObjectOfType<AudioManager>();
 
-        if (!GameManager.gameIsPaused) 
+        if (!GameManager.gameIsPaused)
             ChangeItem();
 
         if (countdown > -0.5f) { //So that it doesnt keep doing the countdown to infinity
@@ -98,6 +103,26 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         Respawn();
     }
 
+    void FindClosestPlayer() {
+        PlayerNetworking[] playerNetworkings = FindObjectsOfType<PlayerNetworking>();
+
+        Vector3 closest = playerNetworkings[0].transform.position;
+        float minDist = 99999;
+        foreach(PlayerNetworking p in playerNetworkings) {
+            if (p == this)
+                continue;
+            float dist = Vector3.Distance(transform.position, p.transform.position);
+            if (dist < minDist) {
+                minDist = dist;
+                closest = p.transform.position;
+            }
+        }
+
+        Vector3 vec = transform.position - closest;
+        float angle = Vector3.SignedAngle(orientation.transform.forward, vec, Vector3.up);
+        pointer.eulerAngles = new Vector3(0, 0, -angle);
+    }
+
     void ChangeItem() {
         for (int i = 0; i < items.Length; i++) {
             if (Input.GetKeyDown(GameManager.GM.itemKeys[i].key)) {
@@ -107,14 +132,14 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         if (Input.GetAxisRaw("Mouse ScrollWheel") > 0f) {
-            if (itemIndex >= items.Length - 1) 
+            if (itemIndex >= items.Length - 1)
                 EquipItem(0);
 
-            else 
+            else
                 EquipItem(itemIndex + 1);
         }
         else if (Input.GetAxisRaw("Mouse ScrollWheel") < 0f) {
-            if (itemIndex <= 0) 
+            if (itemIndex <= 0)
                 EquipItem(items.Length - 1);
 
             else
@@ -122,7 +147,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         //switch to prev weapon
-        if (Input.GetKeyDown(GameManager.GM.otherKeys["prevWeapon"].key)) 
+        if (Input.GetKeyDown(GameManager.GM.otherKeys["prevWeapon"].key))
             EquipItem(prevWeapon);
 
         if (Input.GetKey(GameManager.GM.otherKeys["fire"].key))
@@ -130,9 +155,9 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
     }
 
     void EquipItem(int _index) {
-        if (_index == previousItemIndex) 
+        if (_index == previousItemIndex)
             return;
-        
+
         prevWeapon = itemIndex;
         itemIndex = _index;
 
@@ -240,7 +265,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
     void TagOtherPlayer(Collider other, int team1, int team2) {
         //if (PV.ViewID == PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).ViewID)
-          //  return;
+        //  return;
 
         if ((int)PV.Owner.CustomProperties["team"] == team1) {
             if ((int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == team2) {

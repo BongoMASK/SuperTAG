@@ -184,5 +184,4 @@ public class Movement : MonoBehaviour
 
         return new Vector2(xMag, yMag);
     }
-
 }

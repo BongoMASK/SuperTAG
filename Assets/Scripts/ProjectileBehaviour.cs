@@ -33,7 +33,8 @@ public class ProjectileBehaviour : MonoBehaviour
     private void OnCollisionEnter(Collision collision) {
         Vector3 normal = collision.contacts[0].normal;
         if (normal.y <= 0.2) {
-            rb.velocity /= 3;
+            // rb.velocity /= 3;
+            rb.velocity = new Vector3(0, -10, 0);
             return;
         }
         ProcessCollision(collision.gameObject);

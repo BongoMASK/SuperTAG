@@ -9,6 +9,7 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using ExitGames.Client.Photon;
 
 public class GameManager : MonoBehaviour
 {
@@ -28,6 +29,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] TMP_Text volumeText;
     [SerializeField] TMP_Text roomNameText;
     [SerializeField] TMP_Text serverHost;
+    [SerializeField] TMP_Text ping;
     public TMP_Text roundText;
     public TMP_Text coolDownText;
 
@@ -220,6 +222,7 @@ public class GameManager : MonoBehaviour
     private void DisplayPlayerList() {
         SortPlayersByScore();
         if (Input.GetKeyDown(otherKeys["scoreboard"].key)) {
+            ping.text = PhotonNetwork.GetPing() + "ms";
             leaderBoard.SetActive(true);
             serverHost.gameObject.SetActive(PhotonNetwork.IsMasterClient);
 

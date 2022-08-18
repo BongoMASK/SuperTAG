@@ -248,12 +248,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1da39e1881b962f4f924a6c69830ddcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  jumpForce: 30
+  jumpForce: 40
   radiusOfEffect: 15
   offset: {x: 0, y: 1, z: 0}
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 512
   impactField: {fileID: 91652252422298143, guid: 63fc25871df01fa46a937bb5cbe7bcab,
     type: 3}
 --- !u!54 &2865041156100203453
