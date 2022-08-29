@@ -27,9 +27,9 @@ public class MoveCamera : MonoBehaviour {
     }
 
     void ChangeOffset() {
-        if (Input.GetKeyDown(GameManager.GM.movementKeys["slide"].key) || Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key))
+        if (Input.GetKeyDown(GameManager.instance.movementKeys["slide"].key) || Input.GetKeyDown(GameManager.instance.movementKeys["crouch"].key))
             offset = crouchOffset;
-        if (Input.GetKeyUp(GameManager.GM.movementKeys["slide"].key) || Input.GetKeyUp(GameManager.GM.movementKeys["crouch"].key))
+        if (Input.GetKeyUp(GameManager.instance.movementKeys["slide"].key) || Input.GetKeyUp(GameManager.instance.movementKeys["crouch"].key))
             offset = regularOffset;
     }
 }

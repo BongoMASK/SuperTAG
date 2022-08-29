@@ -161,9 +161,9 @@ MonoBehaviour:
   itemGameObject: {fileID: 2406578259965424416}
   weaponName: Goop Gun
   shootingPoint: {fileID: 0}
-  maxAmmo: 2
+  _maxAmmo: 2
   reloadWhenInactive: 1
-  reloadTime: 5
+  reloadTime: 9999
   fireRate: 1
   ammoSlider: {fileID: 0}
   ammoText: {fileID: 0}
@@ -173,9 +173,9 @@ MonoBehaviour:
     rgba: 4280408855
   bullet: {fileID: 4996163600598882643, guid: b03aec2c08eb1ac419ecc7a57e5cb135, type: 3}
   camera: {fileID: 0}
-  speedx: 5000
+  speedx: 12000
   speedy: 300
-  constantForce: 6000
+  constantForce: 8000
 --- !u!114 &3223528811293184941
 MonoBehaviour:
   m_ObjectHideFlags: 0

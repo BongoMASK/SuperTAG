@@ -1,6 +1,7 @@
 using Photon.Pun;
 using UnityEngine;
 using TMPro;
+using System.Collections;
 
 public class Chatting : MonoBehaviourPunCallbacks {
     [SerializeField] PhotonView PV;
@@ -10,7 +11,6 @@ public class Chatting : MonoBehaviourPunCallbacks {
 
     [SerializeField] int maxChats = 5;
 
-    int chatCount = 0;
     bool isChatting = false;
 
     private void Start() {
@@ -21,10 +21,15 @@ public class Chatting : MonoBehaviourPunCallbacks {
     }
 
     void Update() {
+        if (!PV.IsMine)
+            return;
         if (chatBox == null)
             return;
 
-        if (Input.GetKey(GameManager.GM.otherKeys["chat"].key) && !isChatting) {
+        if (GameManager.instance.gameIsPaused)
+            return;
+
+        if (Input.GetKey(GameManager.instance.otherKeys["chat"].key) && !isChatting) {
             // Open Chat
             isChatting = true;
             chatBox.gameObject.SetActive(true);
@@ -36,9 +41,9 @@ public class Chatting : MonoBehaviourPunCallbacks {
             playerMovement.lockInput = true;
         }
 
-        if (Input.GetKeyDown(GameManager.GM.otherKeys["enter"].key)) {
+        if (Input.GetKeyDown(GameManager.instance.otherKeys["enter"].key)) {
             //Send Chat message
-            if (chatBox.text == "" || chatBox.text.Length > 50)
+            if (chatBox.text == "" || chatBox.text.Length > 100)
                 return;
             EnteredChat(chatBox.text);
         }
@@ -56,24 +61,13 @@ public class Chatting : MonoBehaviourPunCallbacks {
 
     [PunRPC]
     void SendChatToAll(string message) {
-        UpdateChat(message);
+        StartCoroutine(UpdateChat(message));
     }
 
-    void UpdateChat(string message) {
+    IEnumerator UpdateChat(string message) {
         chatListText.text += message;
-        chatCount++;
 
-        if (chatCount > maxChats)
-            DeleteTillN();
+        yield return new WaitForSeconds(10);
+        chatListText.text = chatListText.text.Remove(0, message.Length);
     }
-
-    void DeleteTillN() {
-        int i;
-        for (i = 0; i < chatListText.text.Length; i++)
-            if (chatListText.text[i] == '\n')
-                break;
-
-        chatListText.text = chatListText.text.Remove(0, i + 1);
-    }
-
 }

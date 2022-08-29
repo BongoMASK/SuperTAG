@@ -5,11 +5,12 @@ using TMPro;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.SceneManagement;
 
-public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
+public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
+
+    #region Variables
 
     [SerializeField] GameObject canvas;
     [SerializeField] GameObject tagFeed;
-    [SerializeField] Transform tagFeedList;
 
     //player colour material
     private Renderer renderer;
@@ -25,23 +26,20 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
     PhotonView PV;
 
-    [HideInInspector]
-    public AudioManager audioManager;
-
     float countdown = 5f;
     [SerializeField] float countdownStart = 5f;
 
     [SerializeField] TMP_Text[] colourTexts;
     [SerializeField] Color32[] teamColour;
 
-    PlayerManager playerManager;
-
-    [SerializeField] const float maxHealth = 100f;
     [SerializeField] int fallDown = -3;
-    float currentHealth = maxHealth;
 
     [SerializeField] Transform pointer;
     [SerializeField] Transform orientation;
+
+    [SerializeField] float refillTime = 6f;
+
+    #endregion
 
     private void Awake() {
         if (SceneManager.GetActiveScene().name == "Tutorial")
@@ -51,7 +49,6 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
         PV = GetComponent<PhotonView>();
         renderer = GetComponent<Renderer>();
-        playerManager = PhotonView.Find((int)PV.InstantiationData[0]).GetComponent<PlayerManager>();
     }
 
     void Start() {
@@ -63,10 +60,6 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
             Destroy(pointer);
             renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
             return;
-
-            Destroy(tagFeedList.gameObject);
-            tagFeedList = GameObject.FindGameObjectWithTag("Feed").GetComponent<Transform>();
-
         }
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -78,6 +71,8 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
         SetDenners();
         ChangeColour();
+
+        SendFeedToAll(PhotonNetwork.LocalPlayer, null, "joined the game");
     }
 
     void Update() {
@@ -86,10 +81,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
 
         FindClosestPlayer();
 
-        if (audioManager == null)
-            audioManager = FindObjectOfType<AudioManager>();
-
-        if (!GameManager.gameIsPaused)
+        if (!GameManager.instance.gameIsPaused)
             ChangeItem();
 
         if (countdown > -0.5f) { //So that it doesnt keep doing the countdown to infinity
@@ -98,34 +90,16 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
             InfoText.gameObject.SetActive(countdown > 0);
         }
 
-        if (canvas != null) canvas.SetActive(!GameManager.gameIsPaused);
+        if (canvas != null) canvas.SetActive(!GameManager.instance.gameIsPaused);
 
         Respawn();
     }
 
-    void FindClosestPlayer() {
-        PlayerNetworking[] playerNetworkings = FindObjectsOfType<PlayerNetworking>();
-
-        Vector3 closest = playerNetworkings[0].transform.position;
-        float minDist = 99999;
-        foreach(PlayerNetworking p in playerNetworkings) {
-            if (p == this)
-                continue;
-            float dist = Vector3.Distance(transform.position, p.transform.position);
-            if (dist < minDist) {
-                minDist = dist;
-                closest = p.transform.position;
-            }
-        }
-
-        Vector3 vec = transform.position - closest;
-        float angle = Vector3.SignedAngle(orientation.transform.forward, vec, Vector3.up);
-        pointer.eulerAngles = new Vector3(0, 0, -angle);
-    }
+    #region Item Functions
 
     void ChangeItem() {
         for (int i = 0; i < items.Length; i++) {
-            if (Input.GetKeyDown(GameManager.GM.itemKeys[i].key)) {
+            if (Input.GetKeyDown(GameManager.instance.itemKeys[i].key)) {
                 EquipItem(i);
                 break;
             }
@@ -147,10 +121,10 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
 
         //switch to prev weapon
-        if (Input.GetKeyDown(GameManager.GM.otherKeys["prevWeapon"].key))
+        if (Input.GetKeyDown(GameManager.instance.otherKeys["prevWeapon"].key))
             EquipItem(prevWeapon);
 
-        if (Input.GetKey(GameManager.GM.otherKeys["fire"].key))
+        if (Input.GetKey(GameManager.instance.otherKeys["fire"].key))
             items[itemIndex].Use();
     }
 
@@ -178,6 +152,10 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
     }
 
+    #endregion
+
+    #region Photon Overrides
+
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps) {
         //when something happens to other players
         if (!PV.IsMine && targetPlayer == PV.Owner) {
@@ -197,18 +175,94 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
     }
 
+    public override void OnPlayerEnteredRoom(Player newPlayer) {
+        if (!PV.IsMine) return;
+
+        SpawnTagFeed(newPlayer, null, "is connecting");
+    }
+
+    public override void OnPlayerLeftRoom(Player player) {
+        if (!PV.IsMine) return;
+
+        SpawnTagFeed(player, null, "has disconnected");
+    }
+
+    public override void OnMasterClientSwitched(Player newMasterClient) {
+        if (!PV.IsMine) return;
+
+        SpawnTagFeed(newMasterClient, null, "is the new Server Host");
+    }
+
+    #endregion
+
+    #region Player Functions
+
     void Respawn() {    //when player falls off the edge of the map
         if (transform.position.y <= -40f) {
             transform.position = new Vector3(0f, 0f, 0f);
             PV.RPC("AddScore", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, fallDown);
-
+            SendFeedToAll(PhotonNetwork.LocalPlayer, null, "fell to a painful death");
         }
     }
+
+    void ChangeMyTeam(int team) {
+        Hashtable hash2 = new Hashtable {
+            { "team", team },
+            { "TeamName", PlayerInfo.Instance.allTeams[team] }
+        };
+        PhotonNetwork.LocalPlayer.SetCustomProperties(hash2);
+    }
+
+    void DisplayTagFeed(Player player1, Player player2 = null, string text = "") {
+        GameObject t = Instantiate(tagFeed);
+
+        t.transform.SetParent(GameManager.instance.tagFeedList);
+        if (GameManager.instance.tagFeedList.childCount > 4) {
+            Destroy(GameManager.instance.tagFeedList.GetChild(0).gameObject);
+        }
+
+        Destroy(t, 10f);
+        if (player2 == null) {
+            t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " <#FFF>" + text;
+            return;
+        }
+        t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " <#FFF>tagged<#FF0000> " + player2.NickName;
+    }
+
+    public void GetAmmo(AmmoPickUp a) {
+        Gun g = (Gun)items[(int)a.slot];
+        if (g.currentAmmo == g.maxAmmo)
+            return;
+        a.Refill(refillTime);
+        items[(int)a.slot].IncreaseAmmo();
+    }
+
+    void FindClosestPlayer() {
+        Vector3 closest = GameManager.instance.playerObjectList[0].position;
+        float minDist = 99999;
+        foreach (Transform p in GameManager.instance.playerObjectList) {
+            if (p == transform)
+                continue;
+            float dist = Vector3.Distance(transform.position, p.position);
+            if (dist < minDist) {
+                minDist = dist;
+                closest = p.position;
+            }
+        }
+
+        Vector3 vec = transform.position - closest;
+        float angle = Vector3.SignedAngle(orientation.transform.forward, vec, Vector3.up);
+        pointer.eulerAngles = new Vector3(0, 0, -angle);
+    }
+
+    #endregion
+
+    #region Network Functions
 
     void ChangeOnTeamsChange() {
         countdown = countdownStart;
         renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
-        audioManager.Play("TagSound");
+        AudioManager.instance.Play("TagSound");
 
         string denrun = "Chase after other Runners to Tag them";
         if ((int)PV.Owner.CustomProperties["team"] == 0)
@@ -249,20 +303,6 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         }
     }
 
-    //changes colour of texts as per team / den
-    void ChangeColour() {
-        for (int i = 0; i < colourTexts.Length; i++)
-            colourTexts[i].color = teamColour[(int)PV.Owner.CustomProperties["team"]];
-
-        GameManager.GM.yourName.color = teamColour[(int)PV.Owner.CustomProperties["team"]];
-        GameManager.GM.yourScore.color = teamColour[(int)PV.Owner.CustomProperties["team"]];
-    }
-
-    private void OnTriggerEnter(Collider other) {
-        if (other.gameObject.CompareTag("Player") && countdown <= 0f)
-            TagOtherPlayer(other, 1, 0);
-    }
-
     void TagOtherPlayer(Collider other, int team1, int team2) {
         //if (PV.ViewID == PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).ViewID)
         //  return;
@@ -276,10 +316,32 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
                 countdown = countdownStart;
 
                 SendFeedToAll(PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
-                Debug.Log(PV.ViewID + " tagged " + PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).ViewID);
             }
         }
     }
+
+    void SendFeedToAll(Player player1, Player player2 = null, string text = "") {
+        PV.RPC("SpawnTagFeed", RpcTarget.All, player1, player2, text);
+    }
+
+    public void ChangeRefillTime(int newValue) {
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        PV.RPC("RPC_ChangeRefillTime", RpcTarget.AllBuffered, newValue);
+    }
+
+    //changes colour of texts as per team / den
+    void ChangeColour() {
+        for (int i = 0; i < colourTexts.Length; i++)
+            colourTexts[i].color = teamColour[(int)PV.Owner.CustomProperties["team"]];
+
+        GameManager.instance.yourName.color = teamColour[(int)PV.Owner.CustomProperties["team"]];
+        GameManager.instance.yourScore.color = teamColour[(int)PV.Owner.CustomProperties["team"]];
+    }
+
+    #endregion
+
+    #region Remote Procedure Callbacks
 
     [PunRPC]
     void RPC_SwitchPlayerTeam(int viewID, int team) {
@@ -291,57 +353,29 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, IDamageable {
         PhotonView.Find(viewID).Owner.SetCustomProperties(hash);
     }
 
-    void SendFeedToAll(Player player1, Player player2) {
-        PV.RPC("SpawnTagFeed", RpcTarget.All, player1, player2);
-    }
-
-    void ChangeMyTeam(int team) {
-        Hashtable hash2 = new Hashtable {
-            { "team", team },
-            { "TeamName", PlayerInfo.Instance.allTeams[team] }
-        };
-        PhotonNetwork.LocalPlayer.SetCustomProperties(hash2);
+    [PunRPC]
+    void SpawnTagFeed(Player player1, Player player2 = null, string text = "") {
+        DisplayTagFeed(player1, player2, text);
     }
 
     [PunRPC]
-    void SpawnTagFeed(Player player1, Player player2) {
-        DisplayTagFeed(player1, player2);
+    void RPC_ChangeRefillTime(int newValue) {
+        refillTime = newValue;
+
+        Message.message("Changed refillTime to: " + newValue);
     }
 
-    void DisplayTagFeed(Player player1, Player player2) {
-        GameObject t = Instantiate(tagFeed);
+    #endregion
 
-        if (tagFeedList != null) {  //checks if there is tagfeed
-            t.transform.SetParent(tagFeedList);
-            if (tagFeedList.childCount > 4) {
-                Destroy(tagFeedList.GetChild(0));
-            }
-        }
-        else {
-            Debug.Log("no tagfeed lol. view ID" + PV.ViewID);
+    private void OnTriggerEnter(Collider other) {
+        // Tagging
+        if (other.gameObject.CompareTag("Player") && countdown <= 0f) {
+            TagOtherPlayer(other, 1, 0);
         }
 
-        t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " <#FFF>tagged<#FF0000> " + player2.NickName;
-        Destroy(t, 10f);
-    }
-
-    public void TakeDamage(float damage) {
-        PV.RPC("RPC_TakeDamage", RpcTarget.All, damage);
-    }
-
-    [PunRPC]
-    void RPC_TakeDamage(float damage) {
-        if (!PV.IsMine) return;
-
-        Debug.Log("took damage " + damage);
-        currentHealth -= damage;
-
-        if (currentHealth <= 0f) {
-            Die();
+        // Ammo Pickup
+        if (other.gameObject.CompareTag("Ammo")) {
+            GetAmmo(other.GetComponent<AmmoPickUp>());
         }
-    }
-
-    void Die() {
-        playerManager.Die();
     }
 }

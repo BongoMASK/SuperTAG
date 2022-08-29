@@ -15,6 +15,7 @@ public class DebugController : MonoBehaviour
     public static DebugCommand<string, int> set_points;
     public static DebugCommand<string, int> set_room;
     public static DebugCommand<int> set_time;
+    public static DebugCommand<int> set_refill;
     public static DebugCommand<int> set_maxRounds;
     public static DebugCommand<float> set_game_time;
     public static DebugCommand time_pause;
@@ -68,6 +69,13 @@ public class DebugController : MonoBehaviour
             }
         });
 
+        set_refill = new DebugCommand<int>("set_refill", "Changes refill count of ammo spots", "set_refill <value>", (a) => {
+            PlayerNetworking[] players = FindObjectsOfType<PlayerNetworking>();
+            foreach (var player in players) {
+                player.ChangeRefillTime(a);
+            }
+        });
+
         set_maxRounds = new DebugCommand<int>("set_maxRounds", "Changes max rounds of game", "set_maxRounds <value>", (a) => {
             TeamSetup[] players = FindObjectsOfType<TeamSetup>();
             foreach (TeamSetup player in players) {
@@ -117,6 +125,7 @@ public class DebugController : MonoBehaviour
             set_player,
             set_room,
             set_time,
+            set_refill,
             set_maxRounds,
             set_game_time,
             set_points,

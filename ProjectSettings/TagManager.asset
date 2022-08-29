@@ -10,6 +10,7 @@ TagManager:
   - Projectile
   - Chat
   - Feed
+  - Ammo
   layers:
   - Default
   - TransparentFX

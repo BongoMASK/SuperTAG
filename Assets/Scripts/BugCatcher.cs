@@ -8,9 +8,8 @@ public class BugCatcher : MonoBehaviourPunCallbacks
 
     public static BugCatcher instance;
     [HideInInspector]
-    public string roomName;
+    public string roomName { get; private set; }
 
-    private string data;
     string currentVersion;
 
     private void Awake() {
@@ -24,44 +23,31 @@ public class BugCatcher : MonoBehaviourPunCallbacks
 
         DontDestroyOnLoad(gameObject);
 
-        currentVersion = "SuperTAG v" + Application.version;
+        currentVersion = "SuperTAG TEST v" + Application.version;
+        // currentVersion = "SuperTAG v" + Application.version;
         Debug.Log(currentVersion);
-
-        //StartCoroutine(BugCatcher.instance.GetDataFromWebpage(url));
     }
 
     public void Disconnect() {
         if (roomName == PhotonNetwork.CurrentRoom.Name) {
             roomName = null;
+            Debug.Log("not disconnecting");
             return;
         }
 
         roomName = PhotonNetwork.CurrentRoom.Name;
-        PhotonNetwork.Disconnect();
         Debug.Log("disconnected");
+        PhotonNetwork.Disconnect();
         SceneManager.LoadScene(0);
-    }
-
-    public override void OnConnectedToMaster() {
-        Debug.Log("connected to Master");
-        PhotonNetwork.JoinLobby();
-        PhotonNetwork.AutomaticallySyncScene = true;
-    }
-
-    public override void OnJoinedLobby() {
-        MenuManager.Instance.OpenMenu("title"); 
-        Debug.Log("joined lobby");
-        if (!string.IsNullOrEmpty(roomName)) {
-            MenuManager.Instance.OpenMenu("loading");
-            PhotonNetwork.JoinRoom(roomName);
-        }
     }
 
     public IEnumerator GetDataFromWebpage(string url) {
         WWW webpage = new WWW(url);
         while (!webpage.isDone)
             yield return false;
-
+        
+        string data;
+        
         data = webpage.text;
         if (data.Contains(currentVersion)) {
             Debug.Log("Version matched!");

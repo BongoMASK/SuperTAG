@@ -9,12 +9,12 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using ExitGames.Client.Photon;
 
 public class GameManager : MonoBehaviour
 {
-    public static bool gameIsPaused = false;
-    public static float mouseSens = 50f;
+    #region Variables
+
+    public bool gameIsPaused = false;
 
     public GameObject pauseMenu;
     [SerializeField] GameObject TopScore;
@@ -48,13 +48,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] TMP_Dropdown dropdown; 
 
     [SerializeField] MenuManager menuManager;
+    public Transform tagFeedList;
 
     Player[] playerList;
+    public List<Transform> playerObjectList = new List<Transform>();
 
     [SerializeField] Color32[] teamColour;
 
     //Used for singleton
-    public static GameManager GM;
+    public static GameManager instance;
 
     public int sensitivity { get; set; }
     public float volume { get; set; } 
@@ -82,17 +84,21 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] GameObject decorations;
     [SerializeField] TMP_Text decorButtonText;
+    
+    #endregion
 
     void Awake() {
-        //Singleton pattern
-        if (GM == null) {
-            GM = this;
-        }
-        else if (GM != this) {
+        #region Singleton
+        if (instance == null) 
+            instance = this;
+        
+        else if (instance != this) 
             Destroy(gameObject);
-        }
+        #endregion
 
         PPvolume.profile.TryGet(out bloomSettings);
+
+        #region Input Keys
 
         //settings keys
         movementKeys.Add("jump", new InputKeys("jumpKey", "Space"));
@@ -114,6 +120,8 @@ public class GameManager : MonoBehaviour
         otherKeys.Add("fire", new InputKeys("fireKey", "Mouse0"));
         otherKeys.Add("chat", new InputKeys("chatKey", "Y"));
         otherKeys.Add("enter", new InputKeys("enterKey", "Return"));
+
+        #endregion
 
         if (SceneManager.GetActiveScene().name == "Tutorial")
             PhotonNetwork.OfflineMode = true;
@@ -145,6 +153,9 @@ public class GameManager : MonoBehaviour
     }
 
     private void Start() {
+
+        #region Text Assignment
+
         slider.value = sensitivity;
         volumeSlider.value = volume;
         decorButtonText.text = decorations.activeSelf.ToString();
@@ -165,7 +176,9 @@ public class GameManager : MonoBehaviour
             roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
         }
 
-        if(SceneManager.GetActiveScene().name == "vry gg map")
+        #endregion
+
+        if (SceneManager.GetActiveScene().name == "vry gg map")
             Message.message("as the server host, type 'set_impulseBall reloadTime 3' in the console to change aspects of the game.", 10);
 
         if (!PhotonNetwork.IsMasterClient)
@@ -173,20 +186,49 @@ public class GameManager : MonoBehaviour
     }
 
     private void Update() {
-
-        if (Input.GetKeyDown(otherKeys["escape"].key) && SceneManager.GetActiveScene().buildIndex != 0) {
+        #region Pause / Resume
+        
+        if (Input.GetKeyDown(otherKeys["escape"].key) && SceneManager.GetActiveScene().buildIndex != 0) 
             gameIsPaused = !gameIsPaused;
-            pauseMenu.SetActive(gameIsPaused);
-        }
-
+        
+        // Pause / Resume
         if (!gameIsPaused) Resume();
         else Pause();
+        
+        #endregion
 
         DisplayPlayerList();
 
-        if (PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.PlayerCount > 1)
-            ShowTopPlayers();
+        ShowTopPlayers();
 
+        GetFPS();
+
+        UpdatePlayerObjectList();
+    }
+
+    #region Manager Functions
+
+    public void Pause() {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = gameIsPaused;
+        pauseMenu.SetActive(gameIsPaused);
+    }
+
+    public void Resume() {
+        menuManager.CloseAllMenus();
+        menuManager.OpenMenu("pause");
+
+        DebugController.showConsole = false;
+        gameIsPaused = false;
+        pauseMenu.SetActive(gameIsPaused);
+
+        if (SceneManager.GetActiveScene().buildIndex != 0) {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = gameIsPaused;
+        }
+    }
+
+    void GetFPS() {
         if (fpsCounter && Time.time - currentTime > 1) {
             float fps = 1 / Time.unscaledDeltaTime;
             fpsDisplayText.text = (int)fps + " FPS";
@@ -194,16 +236,37 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void GetQualityNames() {
-        dropdown.options.Clear();
-        foreach(string option in QualitySettings.names)
-            dropdown.options.Add(new TMP_Dropdown.OptionData(option));
-        dropdown.value = QualitySettings.GetQualityLevel(); 
+    bool ToBool(int value) {
+        if (value == 0) return false;
+        else return true;
     }
 
-    public void ChangeQuality(int value) {
-        QualitySettings.SetQualityLevel(value);
-        quality.ChangePrefs(value);
+    int ToInt(bool b) {
+        if (b) return 1;
+        return 0;
+    }
+
+    #endregion
+
+    #region Network Functions
+
+    void ShowTopPlayers() {
+        if (PhotonNetwork.CurrentRoom == null || PhotonNetwork.CurrentRoom.PlayerCount <= 1)
+            return;
+
+        Player topPlayer = playerList[0];
+        if (playerList[0] == PhotonNetwork.LocalPlayer) {
+            topPlayer = playerList[1];
+        }
+
+        topName.text = topPlayer.NickName;
+        topScore.text = ((int)topPlayer.CustomProperties["score"]).ToString();
+        topName.color = teamColour[(int)topPlayer.CustomProperties["team"]];
+        topScore.color = teamColour[(int)topPlayer.CustomProperties["team"]];
+
+        yourScore.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["score"]).ToString();
+
+        TopScore.SetActive(!gameIsPaused);
     }
 
     void SortPlayersByScore() {
@@ -226,7 +289,7 @@ public class GameManager : MonoBehaviour
             leaderBoard.SetActive(true);
             serverHost.gameObject.SetActive(PhotonNetwork.IsMasterClient);
 
-            if((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= 5) {
+            if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= 5) {
                 roundText.text = "Final Round";
             }
 
@@ -242,47 +305,25 @@ public class GameManager : MonoBehaviour
                 score[i].text = "...";
             }
         }
-        if(Input.GetKeyUp(otherKeys["scoreboard"].key)) {
+        if (Input.GetKeyUp(otherKeys["scoreboard"].key)) {
             leaderBoard.SetActive(false);
         }
     }
 
-    void ShowTopPlayers() {
-        Player topPlayer = playerList[0];
-        if(playerList[0] == PhotonNetwork.LocalPlayer) {
-            topPlayer = playerList[1];
-        }
+    public void UpdatePlayerObjectList() {
+        PlayerNetworking[] list = FindObjectsOfType<PlayerNetworking>();
+        playerObjectList.Clear();
 
-        topName.text = topPlayer.NickName;
-        topScore.text = ((int)topPlayer.CustomProperties["score"]).ToString();
-        topName.color = teamColour[(int)topPlayer.CustomProperties["team"]];
-        topScore.color = teamColour[(int)topPlayer.CustomProperties["team"]];
-
-        yourScore.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["score"]).ToString();
-
-        TopScore.SetActive(!gameIsPaused);
+        for (int i = 0; i < list.Length; i++)
+            playerObjectList.Add(list[i].transform);
     }
 
-    public void Pause() {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = gameIsPaused;
-    }
+    #endregion
 
-    public void Resume() {
-        menuManager.CloseAllMenus();
-        menuManager.OpenMenu("pause");
-
-        DebugController.showConsole = false;
-        gameIsPaused = false;
-        pauseMenu.SetActive(gameIsPaused);
-
-        if (SceneManager.GetActiveScene().buildIndex != 0) {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = gameIsPaused;
-        }
-    }
+    #region Button Functions
 
     public void LeaveRoom() {
+        print("discon");
         Hashtable hash = PhotonNetwork.LocalPlayer.CustomProperties;
         hash.Remove("score");
         hash.Add("score", 1);
@@ -321,7 +362,7 @@ public class GameManager : MonoBehaviour
     }
 
     public void ChangeVolume(float newVolume) {
-        AudioListener.volume = newVolume/100;
+        AudioListener.volume = newVolume / 100;
         vol.ChangePrefs((int)newVolume);
         volumeText.text = ((int)newVolume).ToString();
     }
@@ -333,15 +374,19 @@ public class GameManager : MonoBehaviour
         fpsDisplayText.gameObject.SetActive(fpsCounter);
     }
 
-    bool ToBool(int value) {
-        if (value == 0) return false;
-        else return true;
+    void GetQualityNames() {
+        dropdown.options.Clear();
+        foreach (string option in QualitySettings.names)
+            dropdown.options.Add(new TMP_Dropdown.OptionData(option));
+        dropdown.value = QualitySettings.GetQualityLevel();
     }
 
-    int ToInt(bool b) {
-        if (b) return 1;
-        return 0;
+    public void ChangeQuality(int value) {
+        QualitySettings.SetQualityLevel(value);
+        quality.ChangePrefs(value);
     }
+
+    #endregion
 }
 
 public class StoredData {

@@ -105,7 +105,7 @@ public class MovementNoNetworking : MonoBehaviour {
     }
 
     private void Update() {
-        if (!GameManager.gameIsPaused) {
+        if (!GameManager.instance.gameIsPaused) {
             MyInput();
             Look();
         }
@@ -187,43 +187,43 @@ public class MovementNoNetworking : MonoBehaviour {
 
     private void MyInput() {
 
-        if (Input.GetKey(GameManager.GM.movementKeys["right"].key))
+        if (Input.GetKey(GameManager.instance.movementKeys["right"].key))
             userInput.x = 1;     //Input.GetAxisRaw("Horizontal");
-        else if (Input.GetKey(GameManager.GM.movementKeys["left"].key))
+        else if (Input.GetKey(GameManager.instance.movementKeys["left"].key))
             userInput.x = -1;
         else
             userInput.x = 0;
 
-        if (Input.GetKey(GameManager.GM.movementKeys["forward"].key))
+        if (Input.GetKey(GameManager.instance.movementKeys["forward"].key))
             userInput.y = 1;
-        else if (Input.GetKey(GameManager.GM.movementKeys["backward"].key))
+        else if (Input.GetKey(GameManager.instance.movementKeys["backward"].key))
             userInput.y = -1;
         else
             userInput.y = 0;
 
-        userInput.jumping = Input.GetKey(GameManager.GM.movementKeys["jump"].key);
-        userInput.slide = Input.GetKey(GameManager.GM.movementKeys["slide"].key);
-        userInput.crouching = Input.GetKey(GameManager.GM.movementKeys["crouch"].key);
+        userInput.jumping = Input.GetKey(GameManager.instance.movementKeys["jump"].key);
+        userInput.slide = Input.GetKey(GameManager.instance.movementKeys["slide"].key);
+        userInput.crouching = Input.GetKey(GameManager.instance.movementKeys["crouch"].key);
 
-        if (Input.GetKeyDown(GameManager.GM.otherKeys["console"].key)) {
+        if (Input.GetKeyDown(GameManager.instance.otherKeys["console"].key)) {
             DebugController.showConsole = !DebugController.showConsole;
-            GameManager.gameIsPaused = !GameManager.gameIsPaused;
-            GameManager.GM.pauseMenu.SetActive(GameManager.gameIsPaused);
+            GameManager.instance.gameIsPaused = !GameManager.instance.gameIsPaused;
+            GameManager.instance.pauseMenu.SetActive(GameManager.instance.gameIsPaused);
         }
 
         // Sliding
         if (!gooped) {
-            if (Input.GetKeyDown(GameManager.GM.movementKeys["slide"].key))
+            if (Input.GetKeyDown(GameManager.instance.movementKeys["slide"].key))
                 StartCrouch();
-            if (Input.GetKeyUp(GameManager.GM.movementKeys["slide"].key))
+            if (Input.GetKeyUp(GameManager.instance.movementKeys["slide"].key))
                 StopCrouch();
         }
 
-        if (Input.GetKeyDown(GameManager.GM.movementKeys["crouch"].key)) {
+        if (Input.GetKeyDown(GameManager.instance.movementKeys["crouch"].key)) {
             ChangePlayerHeight(crouchScale);
             maxSpeed = 5;
         }
-        if (Input.GetKeyUp(GameManager.GM.movementKeys["crouch"].key)) {
+        if (Input.GetKeyUp(GameManager.instance.movementKeys["crouch"].key)) {
             ChangePlayerHeight(playerScale);
             maxSpeed = 20;
         }

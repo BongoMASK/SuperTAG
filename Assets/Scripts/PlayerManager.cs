@@ -1,27 +1,31 @@
 ﻿using UnityEngine;
 using Photon.Pun;
+using Photon.Realtime;
 
-public class PlayerManager : MonoBehaviour
+public class PlayerManager : MonoBehaviourPunCallbacks
 {
     PhotonView PV;
-
     GameObject controller;
-    //[SerializeField] GameObject canvas;
+
+    Camera spectatorCam;
+
+    GameObject[] players; 
 
     private void Awake() {
         PV = GetComponent<PhotonView>();
     }
 
     private void Start() {
-        //if (PhotonNetwork.IsMasterClient)
-            CreateController();
+        CreateController();
     }
 
+    /// <summary>
+    /// Instantiates Player into the scene
+    /// </summary>
     public void CreateController() {
         if (!PV.IsMine)
             return;
 
-        //canvas.SetActive(false);
         Vector3 spawnPosition;
 
         spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
@@ -40,8 +44,15 @@ public class PlayerManager : MonoBehaviour
 
     }
 
+    public void CreateSpectator() {
+        
+    }
+
     public void Die() {
         PhotonNetwork.Destroy(controller);
         CreateController();
     }
+
+    // TODO: Create Spectator Mode
+    // TODO: Spawn player on button press
 }

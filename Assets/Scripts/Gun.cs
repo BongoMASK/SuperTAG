@@ -9,8 +9,25 @@ public abstract class Gun : Item {
     [SerializeField] protected Transform shootingPoint;
 
     //Ammo
-    protected int currentAmmo;
-    [SerializeField] protected int maxAmmo;
+    private int _currentAmmo;
+    [SerializeField] private int _maxAmmo;
+
+    public int currentAmmo {
+        get {
+            return _currentAmmo;
+        }
+        protected set {
+            _currentAmmo = value;
+        }
+    }
+    public int maxAmmo {
+        get {
+            return _maxAmmo;
+        }
+        protected set {
+            _maxAmmo = value;
+        }
+    }
 
     //Reload / Firing
     [SerializeField] protected bool reloadWhenInactive = false;
@@ -75,6 +92,10 @@ public abstract class Gun : Item {
     bool IntToBool(int value) {
         if (value == 0) return false;
         else return true;
+    }
+
+    public override void IncreaseAmmo() {
+        currentAmmo = maxAmmo;
     }
 }
  

@@ -7,6 +7,9 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.SceneManagement;
 
 public class TeamSetup : MonoBehaviourPunCallbacks {
+
+    #region Variables
+
     private PhotonView PV;
 
     public TMP_Text isDennerText;
@@ -38,6 +41,8 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     public static bool disableHUD = true;
 
     bool isOnline = true;
+
+    #endregion
 
     private void Awake() {
         if (SceneManager.GetActiveScene().name == "Tutorial") {
@@ -83,7 +88,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         //scorecountdown setting options
         scoreCountdown = 1 / multiplier;
         scoreCountdownDivider = (int)(time / scoreCountdown);
-        GameManager.GM.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
+        GameManager.instance.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
         countDownSlider.maxValue = 1001;
         countDownSlider.minValue = 1000;
     }
@@ -95,7 +100,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         if (isOnline)
             GameOver();
  
-        if (Input.GetKeyDown(GameManager.GM.otherKeys["hideUI"].key)) 
+        if (Input.GetKeyDown(GameManager.instance.otherKeys["hideUI"].key)) 
             DisableHUD();
 
         if (Time.time - checkForDennerCountdown > 10) {     //checks for denners every 10 seconds
@@ -109,18 +114,6 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
     int scoreCountdownDivider;
 
-    void ScoreCountdown() {
-        if (time < countDownSlider.minValue) {
-            scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / multiplier;
-            GameManager.GM.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
-
-            scoreCountdownDivider = (int)(time / scoreCountdown);
-            countDownSlider.maxValue = (scoreCountdownDivider + 1) * scoreCountdown;
-            countDownSlider.minValue = scoreCountdownDivider * scoreCountdown;
-            SetScore();
-        }
-    }
-
     void EnableText() {
         isDennerText.enabled = !PhotonNetwork.OfflineMode;
         WinText.enabled = !PhotonNetwork.OfflineMode;
@@ -131,32 +124,10 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
     void DisableHUD() {
         disableHUD = !disableHUD;
         canvas.GetComponent<Canvas>().enabled = disableHUD;
-        GameManager.GM.GetComponentInChildren<Canvas>().enabled = disableHUD;
+        GameManager.instance.GetComponentInChildren<Canvas>().enabled = disableHUD;
     }
 
-    [PunRPC]
-    void ScoreAdder(int adder) {
-        string add = "+";
-        if (adder < 0)
-            add = "-";
-
-        GameObject s = Instantiate(scoreAdder);
-        if (adder > coolDownLose && adder > roundLose)
-            s.GetComponentInChildren<TMP_Text>().color = new Color32(58, 117, 225, 255);
-
-        s.GetComponentInChildren<TMP_Text>().text = add + Mathf.Abs(adder);
-        Destroy(s, 1f);
-    }
-
-    [PunRPC]
-    void AddScore(Player player, int score) {
-        Hashtable hash = new Hashtable();
-        int currentScore = (int)player.CustomProperties["score"];
-        hash.Add("score", currentScore + score);
-        player.SetCustomProperties(hash);
-
-        PV.RPC("ScoreAdder", player, score);
-    }
+    #region Network Functions
 
     void SetScore() {
         if (isPaused) return;
@@ -171,15 +142,6 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                 AddScore(PhotonNetwork.PlayerList[i], coolDownLose);
             }
         }
-    }
-
-
-    //resets the countdown slider. Useful when starting a new round.
-    [PunRPC]
-    private void ResetCountdown(int time) {
-        scoreCountdownDivider = (int)(time / scoreCountdown);
-        countDownSlider.maxValue = time + scoreCountdown;
-        countDownSlider.minValue = time;
     }
 
     void GameOver() {
@@ -206,7 +168,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             if ((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] < 0f && WinText != null) {        //after round finishes 
 
                 if ((float)PhotonNetwork.CurrentRoom.CustomProperties["Time"] > -0.1f) {
-                    playerNetworking.audioManager.Play("Round Timer End");
+                    AudioManager.instance.Play("Round Timer End");
                 }
 
                 if (hasWon == true) {
@@ -230,7 +192,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                         //this statement is required, when master client leaves server.
                         roundNumber = (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
                     }
-                    GameManager.GM.roundText.text = "Round " + roundNumber;
+                    GameManager.instance.roundText.text = "Round " + roundNumber;
 
                     if ((int)PhotonNetwork.LocalPlayer.CustomProperties["team"] == 0) {
                         WinText.text = "You WIN!";
@@ -270,21 +232,14 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         hash2.Add("roundNumber", roundNumber);
         PhotonNetwork.CurrentRoom.SetCustomProperties(hash2);
     }
-
     
     public void StartNewRound() {  //resets player positions and sets time back to start
         PV.RPC("RPC_StartNewRound", RpcTarget.All);
     }
 
-    [PunRPC]
-    void RPC_StartNewRound() {
-        if (PhotonNetwork.IsMasterClient) time = (int)PV.Owner.CustomProperties["time"];
-        else time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
-
-        Vector3 spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
-        transform.position = spawnPosition;
-    }
-
+    /// <summary>
+    /// Checks if there are more or less denners
+    /// </summary>
     void CheckForDenners() {
         if (PhotonNetwork.CurrentRoom.PlayerCount <= 1 || !PhotonNetwork.IsMasterClient) return;
 
@@ -378,7 +333,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
         if (time <= 10 && timer <= 0f) {
             timer = 1f;
-            playerNetworking.audioManager.Play("Round Timer");
+            AudioManager.instance.Play("Round Timer");
         }
 
         if (WinText != null) {
@@ -391,19 +346,6 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         if (!PhotonNetwork.IsMasterClient) return;
 
         PV.RPC("ChangeScoreValuesOnAll", RpcTarget.AllBuffered, name, newScore);
-    }
-
-    [PunRPC]
-    void ChangeScoreValuesOnAll(string name, int newScore) {
-        if (name == nameof(roundLose)) roundLose = newScore;
-        else if (name == nameof(roundWin)) roundWin = newScore;
-        else if (name == nameof(coolDownLose)) coolDownLose = newScore;
-        else if (name == nameof(coolDownWin)) coolDownWin = newScore;
-
-        else 
-            return;
-
-        Message.message("Changed " + name + " to: " + newScore);
     }
 
     public void ChangeTime(int newTime) {
@@ -420,8 +362,8 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
 
         scoreCountdown = time / multiplier;
-        GameManager.GM.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
-        GameManager.GM.roundText.text = "Round " + roundNumber;
+        GameManager.instance.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
+        GameManager.instance.roundText.text = "Round " + roundNumber;
     }
 
     public void ChangeRoomSettings(string name, int value) {
@@ -452,7 +394,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         PV.Owner.SetCustomProperties(hash);
 
         scoreCountdown = time / multiplier;
-        GameManager.GM.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
+        GameManager.instance.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
         countDownSlider.maxValue = scoreCountdown;
     }
 
@@ -473,7 +415,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         time = 1f;
         StartNewRound();
         roundNumber = 1;
-        GameManager.GM.roundText.text = "Round " + roundNumber;
+        GameManager.instance.roundText.text = "Round " + roundNumber;
 
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
             Hashtable hash = new Hashtable {
@@ -484,6 +426,46 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         PV.RPC("ResetCountdown", RpcTarget.All, (int)time - scoreCountdown);
     }
 
+    void ScoreCountdown() {
+        if (time < countDownSlider.minValue) {
+            scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / multiplier;
+            GameManager.instance.coolDownText.text = "Score Cooldown: " + (int)scoreCountdown;
+
+            scoreCountdownDivider = (int)(time / scoreCountdown);
+            countDownSlider.maxValue = (scoreCountdownDivider + 1) * scoreCountdown;
+            countDownSlider.minValue = scoreCountdownDivider * scoreCountdown;
+            SetScore();
+        }
+    }
+
+    #endregion
+
+    #region Remote Procedural Callbacks RPCs
+
+    [PunRPC]
+    void ScoreAdder(int adder) {
+        string add = "+";
+        if (adder < 0)
+            add = "-";
+
+        GameObject s = Instantiate(scoreAdder);
+        if (adder > coolDownLose && adder > roundLose)
+            s.GetComponentInChildren<TMP_Text>().color = new Color32(58, 117, 225, 255);
+
+        s.GetComponentInChildren<TMP_Text>().text = add + Mathf.Abs(adder);
+        Destroy(s, 1f);
+    }
+
+    [PunRPC]
+    void AddScore(Player player, int score) {
+        Hashtable hash = new Hashtable();
+        int currentScore = (int)player.CustomProperties["score"];
+        hash.Add("score", currentScore + score);
+        player.SetCustomProperties(hash);
+
+        PV.RPC("ScoreAdder", player, score);
+    }
+
     [PunRPC]
     void RPC_GetMaxTime(int viewID) {
         int t = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"];
@@ -492,4 +474,39 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         hash.Add("time", t);
         PhotonView.Find(viewID).Owner.SetCustomProperties(hash);
     }
+
+    [PunRPC]
+    void ChangeScoreValuesOnAll(string name, int newScore) {
+        if (name == nameof(roundLose)) roundLose = newScore;
+        else if (name == nameof(roundWin)) roundWin = newScore;
+        else if (name == nameof(coolDownLose)) coolDownLose = newScore;
+        else if (name == nameof(coolDownWin)) coolDownWin = newScore;
+
+        else
+            return;
+
+        Message.message("Changed " + name + " to: " + newScore);
+    }
+
+    /// <summary>
+    /// resets the countdown slider. Useful when starting a new round.
+    /// </summary>
+    /// <param name="time"></param>
+    [PunRPC]
+    private void ResetCountdown(int time) {
+        scoreCountdownDivider = (int)(time / scoreCountdown);
+        countDownSlider.maxValue = time + scoreCountdown;
+        countDownSlider.minValue = time;
+    }
+
+    [PunRPC]
+    void RPC_StartNewRound() {
+        if (PhotonNetwork.IsMasterClient) time = (int)PV.Owner.CustomProperties["time"];
+        else time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
+
+        Vector3 spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
+        transform.position = spawnPosition;
+    }
+
+    #endregion
 }

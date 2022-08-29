@@ -49,9 +49,9 @@ MonoBehaviour:
   itemGameObject: {fileID: 5195025230847727613}
   weaponName: Impulse Ball
   shootingPoint: {fileID: 0}
-  maxAmmo: 2
+  _maxAmmo: 2
   reloadWhenInactive: 1
-  reloadTime: 7
+  reloadTime: 9999
   fireRate: 1
   ammoSlider: {fileID: 0}
   ammoText: {fileID: 0}

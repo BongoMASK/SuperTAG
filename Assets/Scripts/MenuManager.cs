@@ -15,7 +15,6 @@ public class MenuManager : MonoBehaviour
 
     private void Awake() {
         Instance = this;
-        tipText.text = gameTips.GetRandomTip();
     }
 
     public void OpenMenu(string menuName) {

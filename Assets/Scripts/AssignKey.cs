@@ -38,24 +38,21 @@ public class AssignKey : MonoBehaviour {
 
 				GameObject option = optionPanel[j].GetChild(i).gameObject;
 
-				if (GameManager.GM.movementKeys.ContainsKey(option.name)) {
-					string name = ChangeButtonNames(GameManager.GM.movementKeys[option.name].key.ToString());
+				if (GameManager.instance.movementKeys.ContainsKey(option.name)) {
+					string name = ChangeButtonNames(GameManager.instance.movementKeys[option.name].key.ToString());
 					option.GetComponentInChildren<TMP_Text>().text = name;
 				}
 
-				else if (GameManager.GM.otherKeys.ContainsKey(option.name)) {
-					string name = ChangeButtonNames(GameManager.GM.otherKeys[option.name].key.ToString());
+				else if (GameManager.instance.otherKeys.ContainsKey(option.name)) {
+					string name = ChangeButtonNames(GameManager.instance.otherKeys[option.name].key.ToString());
 					option.GetComponentInChildren<TMP_Text>().text = name;
 				}
 
 				else if (keyNameExists(option.name)) {
-					for (int k = 0; k < GameManager.GM.itemKeys.Count; k++)
-						if (GameManager.GM.itemKeys[k].keyName == option.name)
-							option.GetComponentInChildren<TMP_Text>().text = GameManager.GM.itemKeys[k].key.ToString();
+					for (int k = 0; k < GameManager.instance.itemKeys.Count; k++)
+						if (GameManager.instance.itemKeys[k].keyName == option.name)
+							option.GetComponentInChildren<TMP_Text>().text = GameManager.instance.itemKeys[k].key.ToString();
 				}
-
-				else
-					Debug.LogWarning(option.name + " does not exist.");
 			}
 		}
 	}
@@ -68,8 +65,8 @@ public class AssignKey : MonoBehaviour {
     }
 
 	bool keyNameExists(string name) {
-		for (int k = 0; k < GameManager.GM.itemKeys.Count; k++)
-			if (GameManager.GM.itemKeys[k].keyName == name)
+		for (int k = 0; k < GameManager.instance.itemKeys.Count; k++)
+			if (GameManager.instance.itemKeys[k].keyName == name)
 				return true;
 		return false;
 	}
@@ -91,6 +88,10 @@ public class AssignKey : MonoBehaviour {
 		if (keyEvent.isMouse && waitingForKey) {
 			newKey = MouseButtons[keyEvent.button]; //Assigns newKey to the mouse user presses
 			waitingForKey = false;
+		}
+
+		if(keyEvent.isScrollWheel && waitingForKey) {
+			Debug.Log(keyEvent.delta);
 		}
 	}
 
@@ -129,7 +130,7 @@ public class AssignKey : MonoBehaviour {
 		yield return WaitForKey(); //Executes endlessly until user presses a key
 		InputKeys inputKeys;
 
-		foreach (var i in GameManager.GM.movementKeys) {
+		foreach (var i in GameManager.instance.movementKeys) {
 			if (keyName == i.Key) {
 				inputKeys = i.Value;
 				Assign(inputKeys);
@@ -137,16 +138,16 @@ public class AssignKey : MonoBehaviour {
 		}
 
 		//make an array of input keys to make this better
-		foreach (var i in GameManager.GM.otherKeys) {
+		foreach (var i in GameManager.instance.otherKeys) {
 			if (keyName == i.Key) {
 				inputKeys = i.Value;
 				Assign(inputKeys);
 			}
 		}
 
-		for (int i = 0; i < GameManager.GM.itemKeys.Count; i++) {
-			if(GameManager.GM.itemKeys[i].keyName == keyName) {
-				inputKeys = GameManager.GM.itemKeys[i];
+		for (int i = 0; i < GameManager.instance.itemKeys.Count; i++) {
+			if(GameManager.instance.itemKeys[i].keyName == keyName) {
+				inputKeys = GameManager.instance.itemKeys[i];
 				Assign(inputKeys);
 			}
 		}

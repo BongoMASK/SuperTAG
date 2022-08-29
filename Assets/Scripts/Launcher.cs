@@ -7,10 +7,10 @@ using UnityEngine.UI;
 using TMPro;
 using Photon.Realtime;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
-using System.Collections;
 
 public class Launcher : MonoBehaviourPunCallbacks
 {
+    #region Variables
 
     public static Launcher Instance;
 
@@ -19,6 +19,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] TMP_Text errorText;
     [SerializeField] TMP_Text roomNameText;
     [SerializeField] TMP_Text playerNameText;
+    [SerializeField] TMP_Text playerCount;
 
     //Room List Variables
     [SerializeField] Transform roomListContent;
@@ -47,11 +48,16 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] TMP_Text tagCountdownText;
     [SerializeField] TMP_Text mapText;
     [SerializeField] TMP_Text versionText;
+    [SerializeField] TMP_Text noRooms;
+
+    [SerializeField] TMP_InputField roomNameField;
 
     private List<GameObject> _listings = new List<GameObject>();
 
-    int hasPlayed = 0;
-    [SerializeField] string url = "https://b0ngo.itch.io/supertag";
+    // string url = "https://b0ngo.itch.io/supertag";
+    string url = "https://b0ngo.itch.io/supertag-test";
+
+    #endregion
 
     private void Awake() {
         Instance = this;
@@ -59,19 +65,68 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        hasPlayed = PlayerPrefs.GetInt("hasPlayed", 0);
+        // If player has never played the game before, Open Tutorial
+        int hasPlayed = PlayerPrefs.GetInt("hasPlayed", 0);
         if (hasPlayed == 0)
             StartTutorial();
+
+        Connect();
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        // Check if current version is latest version
+        StartCoroutine(BugCatcher.instance.GetDataFromWebpage(url));
+    }
+
+    private void Update() {
+        SetLauncherDetails();
+    }
+
+    void SetLauncherDetails() {
+        if (!PhotonNetwork.IsConnectedAndReady)
+            return;
+
+        timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
+        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
+
+        if (PhotonNetwork.CurrentRoom != null && tagCountdownText.isActiveAndEnabled) {
+            roundCountText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["rounds"]).ToString();
+            tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"]).ToString();
+            mapText.text = GetSceneNameByIndex((int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"]);
+        }
+
+        playerCount.text = "Players Online: " + PhotonNetwork.CountOfPlayers;
+    }
+
+    void ErrorMessage(string message) {
+        errorText.text = message;
+        Debug.LogError(message);
+        MenuManager.Instance.OpenMenu("error");
+    }
+
+    #region Photon Functions
+    
+    public void JoinRoom(RoomInfo info) {
+        PhotonNetwork.JoinRoom(info.Name);
+        MenuManager.Instance.OpenMenu("loading");
+    }
+
+    // Connect to master server
+    void Connect() {
+        if (PhotonNetwork.IsConnected)
+            PhotonNetwork.Disconnect();
 
         PhotonNetwork.OfflineMode = false;
 
         Debug.Log("connecting to Master");
         PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion = Application.version;
-        versionText.text = "v" + PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion;
+        versionText.text = "TEST v" + PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion;
+        //versionText.text = "v" + PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion;
+    }
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
+    // Assigns player custom properties
+    void AssignPlayerDetails() {
         Hashtable hash = new Hashtable {
             { "time", time },
             { "denner", dennerCount }
@@ -98,194 +153,16 @@ public class Launcher : MonoBehaviourPunCallbacks
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash1);
 
         PhotonNetwork.NickName = PlayerPrefs.GetString("playerName", "Player " + Random.Range(0, 1000).ToString("0000"));
-        playerNameText.text = PlayerPrefs.GetString("playerName", "Player " + Random.Range(0, 1000).ToString("0000"));
-
-        StartCoroutine(BugCatcher.instance.GetDataFromWebpage(url));
+        playerNameText.text = PhotonNetwork.NickName;
     }
 
-    private void Update() {
-        timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
-        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
+    #endregion
 
-        if (PhotonNetwork.CurrentRoom != null && tagCountdownText.isActiveAndEnabled) {
-            roundCountText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["rounds"]).ToString();
-            tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"]).ToString();
-            mapText.text = GetSceneNameByIndex((int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"]);
-        }
-    }
+    #region Photon Overrides
 
-    public override void OnConnectedToMaster() {
-        Debug.Log("connected to Master");
-        PhotonNetwork.JoinLobby();
-        PhotonNetwork.AutomaticallySyncScene = true;
-    }
-
-    public override void OnJoinedLobby() {
-        MenuManager.Instance.OpenMenu("title");
-        Debug.Log("joined lobby");
-        if (!string.IsNullOrEmpty(BugCatcher.instance.roomName)) {
-            MenuManager.Instance.OpenMenu("loading");
-            PhotonNetwork.JoinRoom(BugCatcher.instance.roomName);
-        }
-    }
-
-    public void CreateRoom() {
-        RoomOptions options = new RoomOptions();
-        if(string.IsNullOrEmpty(roomNameInputField.text)) {
-            return;
-        }
-
-        options.MaxPlayers = 6;
-        options.BroadcastPropsChangeToAll = true;
-
-        // TODO: make the players set the room settings offline or in game
-
-        PhotonNetwork.CreateRoom(roomNameInputField.text);
-        MenuManager.Instance.OpenMenu("loading");
-    }
-
-    public void CreatePlayerName() {
-        if (string.IsNullOrEmpty(playerNameInputField.text)) {
-            ErrorMessage("Username must exist");
-            return;
-        }
-        else if (playerNameInputField.text[0].ToString() == " ") {
-            ErrorMessage("Cannot start username with a Space");
-            return;
-        }
-        else if (playerNameInputField.text.Length >= 50) {
-            ErrorMessage("Username cannot go over 50 characters");
-            return;
-        }
-
-        PlayerPrefs.SetString("playerName", playerNameInputField.text);
-        PhotonNetwork.NickName = playerNameInputField.text;
-        playerNameText.text = playerNameInputField.text;
-    }
-
-    public override void OnJoinedRoom() {
-        _listings.Clear();
-        foreach (Transform trans in roomListContent) {
-            Destroy(trans.gameObject);
-        }
-
-        Hashtable hash = new Hashtable {
-            { "time", time },
-            { "denner", dennerCount },
-            { "mapCount", mapCount },
-            { "tagCountdown", tagCountdown},
-            { "roundNumber", 1 },
-            { "rounds", 5 },
-            { "hasStarted", false}
-        };
-
-        if (PhotonNetwork.IsMasterClient) {
-            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
-        }
-
-        if (!PhotonNetwork.IsMasterClient) {
-            mapCount = (int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"];
-        }
-
-        //Debug.Log((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"]);
-
-        MenuManager.Instance.OpenMenu("room");
-        roomNameText.text = PhotonNetwork.CurrentRoom.Name;
-
-        //starts room for player if game has started already
-        //if ((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"]) StartRoom();
-
-        Player[] players = PhotonNetwork.PlayerList;
-
-        foreach (Transform child in playerListContent) {
-            Destroy(child.gameObject);
-        }
-
-        for (int i = 0; i < players.Count(); i++) {
-            Instantiate(playerListItemPrefab, playerListContent).GetComponent<PlayerListItem>().SetUp(players[i]);
-        }
-
-        for (int i = 0; i < masterClientButtons.Length; i++) {
-            masterClientButtons[i].SetActive(PhotonNetwork.IsMasterClient);
-        }
-    }
-
-    public override void OnJoinRoomFailed(short returnCode, string message) {
-        errorText.text = "Room Join Failed. " + message;
-        Debug.LogError("Room Join Failed. " + message);
-        MenuManager.Instance.OpenMenu("error");
-    }
-
-    public override void OnMasterClientSwitched(Player newMasterClient) {
-        for (int i = 0; i < masterClientButtons.Length; i++) {
-            masterClientButtons[i].SetActive(PhotonNetwork.IsMasterClient);
-        }
-        Debug.Log("Master Client switched");
-    }
-
-    public override void OnCreateRoomFailed(short returnCode, string message) {
-        errorText.text = "Room Creation Failed. " + message;
-        Debug.LogError("Room Creation Failed. " + message);
-        MenuManager.Instance.OpenMenu("error");
-    }
-
-    public void StartRoom() {
-        Debug.Log("Loading map");
-        MenuManager.Instance.OpenMenu("loading");
-        
-        PhotonNetwork.LoadLevel(mapCount);
-        if (PhotonNetwork.IsMasterClient) {
-            Hashtable hash = PhotonNetwork.CurrentRoom.CustomProperties;
-            hash.Remove("hasStarted");
-            hash.Add("hasStarted", true);
-            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
-        }
-    }
-
-    public void StartTutorial() {
-        PlayerPrefs.SetInt("hasPlayed", 1);
-        SceneManager.LoadScene("Tutorial");
-    }
-
-    public void LeaveRoom() {
-        PhotonNetwork.LeaveRoom(); 
-        Hashtable hash = new Hashtable();
-        hash.Add("score", 1);
-        PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
-        MenuManager.Instance.OpenMenu("loading");
-    }
-
-    public void StartPractice() {
-        SceneManager.LoadScene("Practice");
-    }
-
-    public void JoinRoom(RoomInfo info) {
-        PhotonNetwork.JoinRoom(info.Name);
-        MenuManager.Instance.OpenMenu("loading");
-    }
-
-    [SerializeField] TMP_InputField roomNameField;
-    public void JoinRoom() {
-        if (roomNameField.text == null)
-            return;
-        PhotonNetwork.JoinRoom(roomNameField.text);
-        MenuManager.Instance.OpenMenu("loading");
-    }
-
-    public override void OnLeftRoom() {
-        MenuManager.Instance.OpenMenu("title");
-    }
-
-    void ErrorMessage(string message) {
-        errorText.text = message;
-        Debug.LogError(message);
-        MenuManager.Instance.OpenMenu("error");
-    }
-
-    [SerializeField] TMP_Text noRooms;
     public override void OnRoomListUpdate(List<RoomInfo> roomList) {    //12:47
 
-        foreach(RoomInfo info in roomList) {
+        foreach (RoomInfo info in roomList) {
             //removed from list
             if (info.Name.StartsWith("PRIVATE_"))
                 continue;
@@ -330,6 +207,113 @@ public class Launcher : MonoBehaviourPunCallbacks
         Instantiate(playerListItemPrefab, playerListContent).GetComponent<PlayerListItem>().SetUp(newPlayer);
     }
 
+    public override void OnLeftRoom() {
+        MenuManager.Instance.OpenMenu("title");
+        print("left room");
+    }
+
+    public override void OnJoinRoomFailed(short returnCode, string message) {
+        errorText.text = "Room Join Failed. " + message;
+        Debug.LogError("Room Join Failed. " + message);
+        MenuManager.Instance.OpenMenu("error");
+    }
+
+    public override void OnMasterClientSwitched(Player newMasterClient) {
+        for (int i = 0; i < masterClientButtons.Length; i++) {
+            masterClientButtons[i].SetActive(PhotonNetwork.IsMasterClient);
+        }
+        Debug.Log("Master Client switched");
+    }
+
+    public override void OnCreateRoomFailed(short returnCode, string message) {
+        errorText.text = "Room Creation Failed. " + message;
+        Debug.LogError("Room Creation Failed. " + message);
+        MenuManager.Instance.OpenMenu("error");
+    }
+
+    public override void OnJoinedRoom() {
+        PhotonNetwork.AutomaticallySyncScene = true;
+
+        _listings.Clear();
+        foreach (Transform trans in roomListContent) {
+            Destroy(trans.gameObject);
+        }
+
+        Hashtable hash = new Hashtable {
+            { "time", time },
+            { "denner", dennerCount },
+            { "mapCount", mapCount },
+            { "tagCountdown", tagCountdown},
+            { "roundNumber", 1 },
+            { "rounds", 5 },
+            { "hasStarted", false}
+        };
+
+        if (PhotonNetwork.IsMasterClient) {
+            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        }
+
+        if (!PhotonNetwork.IsMasterClient) {
+            mapCount = (int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"];
+        }
+
+        //Debug.Log((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"]);
+
+        MenuManager.Instance.OpenMenu("room");
+        roomNameText.text = PhotonNetwork.CurrentRoom.Name;
+
+        //starts room for player if game has started already
+        //if ((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"]) StartRoom();
+
+        Player[] players = PhotonNetwork.PlayerList;
+
+        foreach (Transform child in playerListContent) {
+            Destroy(child.gameObject);
+        }
+
+        for (int i = 0; i < players.Count(); i++) {
+            Instantiate(playerListItemPrefab, playerListContent).GetComponent<PlayerListItem>().SetUp(players[i]);
+        }
+
+        for (int i = 0; i < masterClientButtons.Length; i++) {
+            masterClientButtons[i].SetActive(PhotonNetwork.IsMasterClient);
+        }
+
+        if ((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"])
+            PhotonNetwork.LoadLevel(mapCount);
+    }
+
+    public override void OnConnectedToMaster() {
+        Debug.Log("connected to Master");
+        PhotonNetwork.JoinLobby();
+        PhotonNetwork.AutomaticallySyncScene = true;
+
+        AssignPlayerDetails();
+    }
+
+    public override void OnDisconnected(DisconnectCause cause) {
+        Debug.Log(cause);
+    }
+
+    public override void OnJoinedLobby() {
+        MenuManager.Instance.OpenMenu("title");
+        Debug.Log("joined lobby");
+        if (!string.IsNullOrEmpty(BugCatcher.instance.roomName)) {
+            MenuManager.Instance.OpenMenu("loading");
+            PhotonNetwork.JoinRoom(BugCatcher.instance.roomName);
+            print("Joining game");
+        }
+    }
+
+    #endregion
+
+    #region Button Functions
+    [SerializeField] Slider slider;
+
+    public void Quit() {
+        Application.Quit();
+    }
+
     public void SetTime(int increment) {
         if (time <= 20 && increment < 0) {
             return;
@@ -345,7 +329,7 @@ public class Launcher : MonoBehaviourPunCallbacks
             { "time", time }
         };
 
-        foreach(Player player in PhotonNetwork.PlayerList) {
+        foreach (Player player in PhotonNetwork.PlayerList) {
             player.SetCustomProperties(hash);
         }
     }
@@ -430,6 +414,78 @@ public class Launcher : MonoBehaviourPunCallbacks
         PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
     }
 
+    public void CreatePlayerName() {
+        if (string.IsNullOrEmpty(playerNameInputField.text)) {
+            ErrorMessage("Username must exist");
+            return;
+        }
+        else if (playerNameInputField.text[0].ToString() == " ") {
+            ErrorMessage("Cannot start username with a Space");
+            return;
+        }
+        else if (playerNameInputField.text.Length >= 50) {
+            ErrorMessage("Username cannot go over 50 characters");
+            return;
+        }
+
+        PlayerPrefs.SetString("playerName", playerNameInputField.text);
+        PhotonNetwork.NickName = playerNameInputField.text;
+        playerNameText.text = playerNameInputField.text;
+    }
+
+    public void StartPractice() {
+        SceneManager.LoadScene("Practice");
+    }
+
+    public void StartTutorial() {
+        PlayerPrefs.SetInt("hasPlayed", 1);
+        SceneManager.LoadScene("Tutorial");
+    }
+
+    public void LeaveRoom() {
+        print("leving room");
+        PhotonNetwork.LeaveRoom();
+        Hashtable hash = new Hashtable();
+        hash.Add("score", 1);
+        PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
+        MenuManager.Instance.OpenMenu("loading");
+    }
+
+    public void StartRoom() {
+        Debug.Log("Loading map");
+        MenuManager.Instance.OpenMenu("loading");
+
+        PhotonNetwork.LoadLevel(mapCount);
+        if (PhotonNetwork.IsMasterClient) {
+            Hashtable hash = PhotonNetwork.CurrentRoom.CustomProperties;
+            hash.Remove("hasStarted");
+            hash.Add("hasStarted", true);
+            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        }
+    }
+
+    public void CreateRoom() {
+        RoomOptions options = new RoomOptions();
+        if (string.IsNullOrEmpty(roomNameInputField.text)) {
+            return;
+        }
+
+        options.MaxPlayers = 6;
+        options.BroadcastPropsChangeToAll = true;
+
+        // TODO: make the players set the room settings offline or in game
+
+        PhotonNetwork.CreateRoom(roomNameInputField.text);
+        MenuManager.Instance.OpenMenu("loading");
+    }
+
+    public void JoinRoom() {
+        if (roomNameField.text == null)
+            return;
+        PhotonNetwork.JoinRoom(roomNameField.text);
+        MenuManager.Instance.OpenMenu("loading");
+    }
+
     private static string GetSceneNameByIndex(int buildIndex) {
         if (buildIndex > SceneManager.sceneCountInBuildSettings - 1) {
             Debug.LogErrorFormat("Incorrect buildIndex {0}!", buildIndex);
@@ -442,26 +498,7 @@ public class Launcher : MonoBehaviourPunCallbacks
         return sceneName;
     }
 
-    [SerializeField] Slider slider;
-
-    //used to show loading of a level
-    void LoadLevel(int sceneIndex) {
-        StartCoroutine(LoadScene(sceneIndex));
-    }
-
-    IEnumerator LoadScene(int sceneIndex) {
-        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneIndex);
-        slider.gameObject.SetActive(true);
-        while(!operation.isDone) {
-            float progress = Mathf.Clamp01(operation.progress / 0.9f);
-            slider.value = progress;
-            yield return null;
-        }
-    }
-
-    public void Quit() {
-        Application.Quit();
-    }
+    #endregion
 }
 
 [System.Serializable]

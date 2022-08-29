@@ -67,13 +67,13 @@ public class CheckForConditions : MonoBehaviour {
 
     public bool IsWASD() {
         bool w = false, a = false, s = false, d = false;
-        if (Input.GetKey(GameManager.GM.movementKeys["right"].key))
+        if (Input.GetKey(GameManager.instance.movementKeys["right"].key))
             d = true;
-        if (Input.GetKey(GameManager.GM.movementKeys["backward"].key))
+        if (Input.GetKey(GameManager.instance.movementKeys["backward"].key))
             s = true;
-        if (Input.GetKey(GameManager.GM.movementKeys["left"].key))
+        if (Input.GetKey(GameManager.instance.movementKeys["left"].key))
             a = true;
-        if (Input.GetKey(GameManager.GM.movementKeys["forward"].key))
+        if (Input.GetKey(GameManager.instance.movementKeys["forward"].key))
             w = true;
 
         WASD = w && a && s && d;
@@ -81,14 +81,14 @@ public class CheckForConditions : MonoBehaviour {
     }
 
     public bool IsJump() {
-        if (Input.GetKey(GameManager.GM.movementKeys["jump"].key))
+        if (Input.GetKey(GameManager.instance.movementKeys["jump"].key))
             return jump = true;
 
         return jump = false;
     }
 
     public bool IsSlide() {
-        if (Input.GetKey(GameManager.GM.movementKeys["slide"].key)) {
+        if (Input.GetKey(GameManager.instance.movementKeys["slide"].key)) {
             Rigidbody rb = FindObjectOfType<Rigidbody>();
 
             if(rb.velocity.magnitude > 27)
@@ -99,7 +99,7 @@ public class CheckForConditions : MonoBehaviour {
     }
 
     public bool IsCrouched() {
-        if (Input.GetKey(GameManager.GM.movementKeys["crouch"].key)) {
+        if (Input.GetKey(GameManager.instance.movementKeys["crouch"].key)) {
             Rigidbody rb = FindObjectOfType<Rigidbody>();
 
             if (rb.velocity.magnitude > 5)
@@ -110,7 +110,7 @@ public class CheckForConditions : MonoBehaviour {
     }
 
     public bool IsSlideJump() {
-        if (Input.GetKey(GameManager.GM.movementKeys["slide"].key) && Input.GetKey(GameManager.GM.movementKeys["jump"].key)) {
+        if (Input.GetKey(GameManager.instance.movementKeys["slide"].key) && Input.GetKey(GameManager.instance.movementKeys["jump"].key)) {
             Rigidbody rb = FindObjectOfType<Rigidbody>();
 
             if (rb.velocity.magnitude > 30)
