@@ -19,8 +19,6 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
     [SerializeField] Slider countDownSlider;
 
-    [SerializeField] PlayerNetworking playerNetworking;
-
     [SerializeField] GameObject canvas;
 
     [SerializeField] GameObject scoreAdder;
@@ -129,21 +127,34 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
     #region Network Functions
 
-    void SetScore() {
+    void SetScoreOnCountdown() {
         if (isPaused) return;
-        if (PhotonNetwork.CurrentRoom.PlayerCount <= 1) return;
+        if (GameManager.instance.playerObjectList.Count <= 1) return;
         if (!PhotonNetwork.IsMasterClient) return;
 
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
+            // give *coolDownWin* points to runner
             if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0) {
                 AddScore(PhotonNetwork.PlayerList[i], coolDownWin);
             }
+            // give *coolDownLose* points to denner
             else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1) {
                 AddScore(PhotonNetwork.PlayerList[i], coolDownLose);
             }
         }
     }
 
+    void SetScoreOnRoundOver() {
+
+    }
+
+    void UpdateRoundTime() {
+
+    }
+
+    
+
+    // TODO: Clean up this function
     void GameOver() {
         if (PhotonNetwork.IsMasterClient && !isPaused) {     //time is set here
             time -= Time.deltaTime;
@@ -153,10 +164,11 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             ht.Add("Time", time);
             PhotonNetwork.CurrentRoom.SetCustomProperties(ht);
         }
-        else time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
+        else 
+            time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
 
         //when there arent enough players in the game
-        if (PhotonNetwork.CurrentRoom.PlayerCount <= 1) {
+        if (GameManager.instance.playerObjectList.Count <= 1) {
             TimeText.text = "\nWaiting For Players";
             time = (int)PV.Owner.CustomProperties["time"];
             scoreCountdown = time / multiplier;
@@ -174,18 +186,17 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
                 if (hasWon == true) {
                     if (PhotonNetwork.IsMasterClient) {
                         //sends round number over network
-                        if (PhotonNetwork.IsMasterClient) SetCurrentRound(roundNumber);
+                        if (PhotonNetwork.IsMasterClient) 
+                            SetCurrentRound(roundNumber);
+
                         roundNumber++;
 
                         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
-                            Hashtable hash = new Hashtable();
                             if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 0)
                                 AddScore(PhotonNetwork.PlayerList[i], roundWin);
 
                             else if ((int)PhotonNetwork.PlayerList[i].CustomProperties["team"] == 1)
                                 AddScore(PhotonNetwork.PlayerList[i], roundLose);
-
-                            PhotonNetwork.PlayerList[i].SetCustomProperties(hash);
                         }
                     }
                     else {
@@ -216,8 +227,9 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
                 if (roundNumber >= maxRounds + 1 && PhotonNetwork.IsMasterClient) SceneManager.LoadScene("WinScreen");
 
-                //starting a new round
-                if (time <= -10 && PhotonNetwork.IsMasterClient) StartNewRound();
+                // Start new round when time <= -10
+                if (time <= -10 && PhotonNetwork.IsMasterClient) 
+                    StartNewRound();
 
                 WinText.gameObject.SetActive(true);
             }
@@ -426,6 +438,9 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
         PV.RPC("ResetCountdown", RpcTarget.All, (int)time - scoreCountdown);
     }
 
+    /// <summary>
+    /// Handles countdown for Assigning Scores to each player
+    /// </summary>
     void ScoreCountdown() {
         if (time < countDownSlider.minValue) {
             scoreCountdown = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / multiplier;
@@ -434,7 +449,7 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
             scoreCountdownDivider = (int)(time / scoreCountdown);
             countDownSlider.maxValue = (scoreCountdownDivider + 1) * scoreCountdown;
             countDownSlider.minValue = scoreCountdownDivider * scoreCountdown;
-            SetScore();
+            SetScoreOnCountdown();
         }
     }
 
@@ -501,8 +516,10 @@ public class TeamSetup : MonoBehaviourPunCallbacks {
 
     [PunRPC]
     void RPC_StartNewRound() {
-        if (PhotonNetwork.IsMasterClient) time = (int)PV.Owner.CustomProperties["time"];
-        else time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
+        if (PhotonNetwork.IsMasterClient) 
+            time = (int)PV.Owner.CustomProperties["time"];
+        else 
+            time = (float)PhotonNetwork.CurrentRoom.CustomProperties["Time"];
 
         Vector3 spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
         transform.position = spawnPosition;

@@ -56,7 +56,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     //Input
     protected struct UserInput {
         public int x, y;
-        public bool jumping, sprinting, slide, crouching;
+        public bool jumping, sprinting, slide;
         public bool pressed;
 
         public bool IsPressed() {
@@ -87,7 +87,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
     [Header("Script References")]
     public PlayerAudio playerAudio;
-    [SerializeField] PlayerNetworking playerNetworking;
 
     Vector3 currentGravity;
 
@@ -149,9 +148,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     float currentYPos;
 
     void Sounds() {
-        if (userInput.crouching)
-            return;
-
         //slide
         if (userInput.slide && !userInput.jumping && grounded) {
             if (Mathf.Abs(rb.velocity.x) > 12 || Mathf.Abs(rb.velocity.z) > 12) {
@@ -229,7 +225,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
 
         userInput.jumping = Input.GetKey(GameManager.instance.movementKeys["jump"].key);
         userInput.slide = Input.GetKey(GameManager.instance.movementKeys["slide"].key);
-        userInput.crouching = Input.GetKey(GameManager.instance.movementKeys["crouch"].key);
 
         if (Input.GetKeyDown(GameManager.instance.otherKeys["console"].key)) {
             DebugController.showConsole = !DebugController.showConsole;
@@ -243,15 +238,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
                 StartCrouch();
             if (Input.GetKeyUp(GameManager.instance.movementKeys["slide"].key))
                 StopCrouch();
-        }
-
-        if (Input.GetKeyDown(GameManager.instance.movementKeys["crouch"].key)) {
-            ChangePlayerHeight(crouchScale);
-            maxSpeed = 5;
-        }
-        if (Input.GetKeyUp(GameManager.instance.movementKeys["crouch"].key)) {
-            ChangePlayerHeight(playerScale);
-            maxSpeed = 20;
         }
 
         if (gooped) {

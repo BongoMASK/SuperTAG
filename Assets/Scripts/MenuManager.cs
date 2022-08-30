@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class MenuManager : MonoBehaviour
@@ -17,6 +15,10 @@ public class MenuManager : MonoBehaviour
         Instance = this;
     }
 
+    /// <summary>
+    /// Opens menu using unique string
+    /// </summary>
+    /// <param name="menuName"></param>
     public void OpenMenu(string menuName) {
         if(menuName == "loading")
             tipText.text = gameTips.GetRandomTip();
@@ -43,6 +45,10 @@ public class MenuManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Opens menu using Menu object
+    /// </summary>
+    /// <param name="menu"></param>
     public void OpenMenu(Menu menu) {
         for (int i = 0; i < menus.Length; i++) {
             if (menus[i].open) {
@@ -58,15 +64,27 @@ public class MenuManager : MonoBehaviour
         tipText.text = gameTips.GetRandomTip();
     }
 
+    /// <summary>
+    /// Closes menu using Menu object
+    /// </summary>
+    /// <param name="menu"></param>
     public void CloseMenu(Menu menu) {
         menu.Close();
     }
 
+    /// <summary>
+    /// Closes all menus
+    /// </summary>
     public void CloseAllMenus() {
         foreach (Menu menu in menus)
             CloseMenu(menu);
     }
 
+    /// <summary>
+    /// checks if current menu is a tip menu
+    /// </summary>
+    /// <param name="menu"></param>
+    /// <returns></returns>
     bool CheckIfTipScreen(Menu menu) {
         for (int i = 0; i < tipMenus.Length; i++)
             if (menu == tipMenus[i])

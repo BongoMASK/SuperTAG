@@ -232,24 +232,23 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     public override void OnJoinedRoom() {
-        PhotonNetwork.AutomaticallySyncScene = true;
 
         _listings.Clear();
         foreach (Transform trans in roomListContent) {
             Destroy(trans.gameObject);
         }
 
-        Hashtable hash = new Hashtable {
-            { "time", time },
-            { "denner", dennerCount },
-            { "mapCount", mapCount },
-            { "tagCountdown", tagCountdown},
-            { "roundNumber", 1 },
-            { "rounds", 5 },
-            { "hasStarted", false}
-        };
-
         if (PhotonNetwork.IsMasterClient) {
+            Hashtable hash = new Hashtable {
+                { "time", time },
+                { "denner", dennerCount },
+                { "mapCount", mapCount },
+                { "tagCountdown", tagCountdown},
+                { "roundNumber", 1 },
+                { "rounds", 5 },
+                { "hasStarted", false}
+            };
+
             PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
         }
 
@@ -257,13 +256,8 @@ public class Launcher : MonoBehaviourPunCallbacks
             mapCount = (int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"];
         }
 
-        //Debug.Log((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"]);
-
         MenuManager.Instance.OpenMenu("room");
         roomNameText.text = PhotonNetwork.CurrentRoom.Name;
-
-        //starts room for player if game has started already
-        //if ((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"]) StartRoom();
 
         Player[] players = PhotonNetwork.PlayerList;
 
@@ -279,8 +273,10 @@ public class Launcher : MonoBehaviourPunCallbacks
             masterClientButtons[i].SetActive(PhotonNetwork.IsMasterClient);
         }
 
-        if ((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"])
-            PhotonNetwork.LoadLevel(mapCount);
+        print("joined room");
+
+        //if ((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"])
+        //    PhotonNetwork.LoadLevel(mapCount);
     }
 
     public override void OnConnectedToMaster() {

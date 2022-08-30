@@ -51,6 +51,7 @@ public class GameManager : MonoBehaviour
     public Transform tagFeedList;
 
     Player[] playerList;
+    [HideInInspector]
     public List<Transform> playerObjectList = new List<Transform>();
 
     [SerializeField] Color32[] teamColour;
@@ -58,7 +59,7 @@ public class GameManager : MonoBehaviour
     //Used for singleton
     public static GameManager instance;
 
-    public int sensitivity { get; set; }
+    public int sensitivity { get; private set; }
     public float volume { get; set; } 
 
     public List<InputKeys> itemKeys = new List<InputKeys>();
@@ -84,6 +85,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] GameObject decorations;
     [SerializeField] TMP_Text decorButtonText;
+
+    private PlayerManager playerManager;
     
     #endregion
 
@@ -106,7 +109,6 @@ public class GameManager : MonoBehaviour
         movementKeys.Add("backward", new InputKeys("backwardKey", "S"));
         movementKeys.Add("left", new InputKeys("leftKey", "A"));
         movementKeys.Add("right", new InputKeys("rightKey", "D"));
-        movementKeys.Add("crouch", new InputKeys("crouchKey", "LeftControl"));
         movementKeys.Add("slide", new InputKeys("slideKey", "LeftShift"));
 
         itemKeys.Add(new InputKeys("item1key", "Alpha1"));
@@ -183,6 +185,13 @@ public class GameManager : MonoBehaviour
 
         if (!PhotonNetwork.IsMasterClient)
             BugCatcher.instance.Disconnect();
+
+        // Let them choose their team, if not master client
+        if (!PhotonNetwork.IsMasterClient) {
+            Pause();
+            menuManager.CloseAllMenus();
+            menuManager.OpenMenu("team");
+        }
     }
 
     private void Update() {
@@ -209,6 +218,7 @@ public class GameManager : MonoBehaviour
     #region Manager Functions
 
     public void Pause() {
+        gameIsPaused = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = gameIsPaused;
         pauseMenu.SetActive(gameIsPaused);
@@ -384,6 +394,39 @@ public class GameManager : MonoBehaviour
     public void ChangeQuality(int value) {
         QualitySettings.SetQualityLevel(value);
         quality.ChangePrefs(value);
+    }
+
+    void GetPlayerManager() {
+        PlayerManager[] list = FindObjectsOfType<PlayerManager>();
+        foreach (PlayerManager l in list) {
+            if (l.PV.IsMine) {
+                playerManager = l;
+                return;
+            }
+        }
+    }
+
+    public void JoinGameAsPlayer() {
+        if (playerManager == null) 
+            GetPlayerManager();
+        
+        playerManager.CreateController();
+        Resume();
+    }
+
+    public void JoinGameAsSpectator() {
+        if(playerObjectList.Count < 1) {
+            string message = "Cant spectate when there is no one to spectate";
+            Debug.LogError(message);
+            Message.message(message);
+            return;
+        }
+
+        if (playerManager == null)
+            GetPlayerManager();
+
+        playerManager.CreateSpectator();
+        Resume();
     }
 
     #endregion
