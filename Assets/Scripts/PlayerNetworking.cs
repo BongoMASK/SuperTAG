@@ -3,73 +3,67 @@ using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
-using UnityEngine.SceneManagement;
+using Properties;
+using System.Collections;
 
 public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
 
     #region Variables
+    public PhotonView PV { get; private set; }
 
-    [SerializeField] GameObject canvas;
-    [SerializeField] GameObject tagFeed;
+    [Header("Assignables")]
 
     //player colour material
-    private Renderer renderer;
-    [SerializeField] Material[] material;
-
-    [SerializeField] TMP_Text InfoText;
-
-    //items
-    [SerializeField] Item[] items;
-    int itemIndex;
-    int previousItemIndex = -1;
-    int prevWeapon = -1;
-
-    PhotonView PV;
-
-    float countdown = 5f;
-    [SerializeField] float countdownStart = 5f;
-
-    [SerializeField] TMP_Text[] colourTexts;
-    [SerializeField] Color32[] teamColour;
-
-    [SerializeField] int fallDown = -3;
+    [SerializeField] Renderer rend;
 
     [SerializeField] Transform pointer;
     [SerializeField] Transform orientation;
 
+    [SerializeField] GameObject canvas;
+    [SerializeField] GameObject tagFeed;
+    
+    [Header("Text")]
+    [SerializeField] TMP_Text InfoText;
+    [SerializeField] TMP_Text playerNameText;
+    [SerializeField] TMP_Text[] colourTexts;
+
+    [Header("Other")]
+    [SerializeField] Item[] items;
     [SerializeField] float refillTime = 6f;
+
+    // Items
+    int itemIndex;
+    int previousItemIndex = -1;
+    int prevWeapon = -1;
+
+    // Tagging
+    int countdownStart {
+        get => (int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.tagCountdown];
+    }
+    bool isTaggable = true;
 
     #endregion
 
-    private void Awake() {
-        if (SceneManager.GetActiveScene().name == "Tutorial")
-            PhotonNetwork.OfflineMode = true;
-        else
-            PhotonNetwork.OfflineMode = false;
-
+    void Awake() {
         PV = GetComponent<PhotonView>();
-        renderer = GetComponent<Renderer>();
     }
 
     void Start() {
         if (PV.IsMine) {
             EquipItem(1);
             GetComponent<MeshRenderer>().enabled = false;
+            Destroy(playerNameText.gameObject);
         }
         else {
             Destroy(pointer);
-            renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
+            rend.sharedMaterial = PlayerInfo.Instance.teamMaterials[(int)PV.Owner.CustomProperties[PlayerProps.team]];
+            playerNameText.text = PV.Owner.NickName;
             return;
         }
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString();
-
-        countdownStart = (int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"];
-
-        SetDenners();
         ChangeColour();
 
         SendFeedToAll(PhotonNetwork.LocalPlayer, null, "joined the game");
@@ -84,13 +78,8 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
         if (!GameManager.instance.gameIsPaused)
             ChangeItem();
 
-        if (countdown > -0.5f) { //So that it doesnt keep doing the countdown to infinity
-            countdown -= Time.deltaTime;
-            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\nTag Cooldown: " + (int)countdown;
-            InfoText.gameObject.SetActive(countdown > 0);
-        }
-
-        if (canvas != null) canvas.SetActive(!GameManager.instance.gameIsPaused);
+        if (canvas != null) 
+            canvas.SetActive(!GameManager.instance.gameIsPaused);
 
         Respawn();
     }
@@ -146,7 +135,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
 
         if (PV.IsMine) {
             Hashtable hash = new Hashtable {
-                { "itemIndex", itemIndex }
+                { PlayerProps.itemIndex, itemIndex }
             };
             PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
         }
@@ -159,17 +148,17 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps) {
         //when something happens to other players
         if (!PV.IsMine && targetPlayer == PV.Owner) {
-            if (changedProps.ContainsKey("itemIndex")) {
-                EquipItem((int)changedProps["itemIndex"]);
+            if (changedProps.ContainsKey(PlayerProps.itemIndex)) {
+                EquipItem((int)changedProps[PlayerProps.itemIndex]);
             }
-            if (changedProps.ContainsKey("team")) {
-                renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
+            if (changedProps.ContainsKey(PlayerProps.team)) {
+                rend.sharedMaterial = PlayerInfo.Instance.teamMaterials[(int)PV.Owner.CustomProperties[PlayerProps.team]];
             }
         }
 
         //when something happens to you
         if (PV.IsMine && targetPlayer == PhotonNetwork.LocalPlayer) {
-            if (changedProps.ContainsKey("team")) {
+            if (changedProps.ContainsKey(PlayerProps.team)) {
                 ChangeOnTeamsChange();
             }
         }
@@ -193,24 +182,16 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
         SpawnTagFeed(newMasterClient, null, "is the new Server Host");
     }
 
-    #endregion
+    #endregion 
 
     #region Player Functions
 
     void Respawn() {    //when player falls off the edge of the map
         if (transform.position.y <= -40f) {
             transform.position = new Vector3(0f, 0f, 0f);
-            PV.RPC("AddScore", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, fallDown);
+            GameManager.instance.playerManager.OnFall(PhotonNetwork.LocalPlayer);
             SendFeedToAll(PhotonNetwork.LocalPlayer, null, "fell to a painful death");
         }
-    }
-
-    void ChangeMyTeam(int team) {
-        Hashtable hash2 = new Hashtable {
-            { "team", team },
-            { "TeamName", PlayerInfo.Instance.allTeams[team] }
-        };
-        PhotonNetwork.LocalPlayer.SetCustomProperties(hash2);
     }
 
     void DisplayTagFeed(Player player1, Player player2 = null, string text = "") {
@@ -259,61 +240,48 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
 
     #region Network Functions
 
+    /// <summary>
+    /// Called when player custom properties change
+    /// </summary>
     void ChangeOnTeamsChange() {
-        countdown = countdownStart;
-        renderer.sharedMaterial = material[(int)PV.Owner.CustomProperties["team"]];
+        StartCoroutine(TeamsChanged());
+    }
+
+    IEnumerator TeamsChanged() {
+        isTaggable = false;
+        rend.sharedMaterial = PlayerInfo.Instance.teamMaterials[(int)PV.Owner.CustomProperties[PlayerProps.team]];
         AudioManager.instance.Play("TagSound");
+            
+        ChangeColour();
 
         string denrun = "Chase after other Runners to Tag them";
-        if ((int)PV.Owner.CustomProperties["team"] == 0)
+        if ((int)PV.Owner.CustomProperties[PlayerProps.team] == 0)
             denrun = "Run from the Denner for as long as possible";
 
         if (InfoText != null) {
-            InfoText.text = "You are now the " + PhotonNetwork.LocalPlayer.CustomProperties["TeamName"].ToString() + "\n" + denrun + "\nTag Cooldown: " + (int)countdown;
             InfoText.gameObject.SetActive(true);
-            ChangeColour();
-
-            if (PV.Owner.CustomProperties["team"] != null) {
-                GetComponent<TeamSetup>().isDennerText.text = PV.Owner.CustomProperties["TeamName"].ToString();
-            }
-        }
-    }
-
-    void SetDenners() {
-        if (!PhotonNetwork.IsMasterClient) {
-            return;
+            string team = PlayerInfo.Instance.allTeams[(int)PhotonNetwork.LocalPlayer.CustomProperties[PlayerProps.team]];
+            InfoText.text = "You are now the " + team + "\n" + denrun + "\nTag Cooldown: " + countdownStart;
         }
 
-        int value = Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount - (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]);
+        yield return new WaitForSeconds(countdownStart);
 
-        for (int i = 0; i < PhotonNetwork.CurrentRoom.PlayerCount; i++) {
-            Hashtable hash2 = new Hashtable {
-                { "team", 0 },
-                { "TeamName", PlayerInfo.Instance.allTeams[0] }
-            };
-            PhotonNetwork.PlayerList[i].SetCustomProperties(hash2);
-        }
-
-        for (int i = 0; i < (int)PhotonNetwork.CurrentRoom.CustomProperties["denner"]; i++) {
-            Hashtable hash2 = new Hashtable {
-                { "team", 1 },
-                { "TeamName", PlayerInfo.Instance.allTeams[1] }
-            };
-            PhotonNetwork.PlayerList[value + i].SetCustomProperties(hash2);
-        }
+        InfoText.gameObject.SetActive(false);
+        isTaggable = true;
     }
 
     void TagOtherPlayer(Collider other, int team1, int team2) {
-        //if (PV.ViewID == PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).ViewID)
-        //  return;
 
-        if ((int)PV.Owner.CustomProperties["team"] == team1) {
-            if ((int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties["team"] == team2) {
+        if ((int)PV.Owner.CustomProperties[PlayerProps.team] == team1) {
+            if ((int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties[PlayerProps.team] == team2) {
                 // calling function to master client because only the master client can change the custom properties of other players
-                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, team1);
 
-                ChangeMyTeam(team2);
-                countdown = countdownStart;
+                PhotonView PV = GameManager.instance.playerManager.PV;
+
+                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, team1);
+                PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, PV.ViewID, team2);
+
+                isTaggable = false;
 
                 SendFeedToAll(PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
             }
@@ -333,10 +301,10 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
     //changes colour of texts as per team / den
     void ChangeColour() {
         for (int i = 0; i < colourTexts.Length; i++)
-            colourTexts[i].color = teamColour[(int)PV.Owner.CustomProperties["team"]];
+            colourTexts[i].color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
 
-        GameManager.instance.yourName.color = teamColour[(int)PV.Owner.CustomProperties["team"]];
-        GameManager.instance.yourScore.color = teamColour[(int)PV.Owner.CustomProperties["team"]];
+        GameManager.instance.yourName.color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
+        GameManager.instance.yourScore.color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
     }
 
     #endregion
@@ -346,8 +314,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
     [PunRPC]
     void RPC_SwitchPlayerTeam(int viewID, int team) {
         Hashtable hash = new Hashtable {
-            { "team", team },
-            { "TeamName", PlayerInfo.Instance.allTeams[team] }
+            { PlayerProps.team, team }
         };
 
         PhotonView.Find(viewID).Owner.SetCustomProperties(hash);
@@ -368,8 +335,11 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
     #endregion
 
     private void OnTriggerEnter(Collider other) {
+        if (!PV.IsMine)
+            return;
+
         // Tagging
-        if (other.gameObject.CompareTag("Player") && countdown <= 0f) {
+        if (other.gameObject.CompareTag("Player") && isTaggable) {
             TagOtherPlayer(other, 1, 0);
         }
 

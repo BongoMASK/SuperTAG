@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class SparkLightTimer : MonoBehaviour
 {
-    Light light;
+    Light l;
     float timer;
     [SerializeField] int[] times;
 
     private void Awake() {
-        light = GetComponent<Light>();
+        l = GetComponent<Light>();
     }
 
     private void Update() {

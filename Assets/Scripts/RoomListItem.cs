@@ -1,8 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Photon.Realtime;
 using TMPro;
+using Properties;
 using UnityEngine.SceneManagement;
 
 public class RoomListItem : MonoBehaviour
@@ -14,7 +13,7 @@ public class RoomListItem : MonoBehaviour
 
     public void SetUp(RoomInfo _info) {
         info = _info;
-        text.text = _info.Name + ", Players: " + info.PlayerCount;
+        text.text = _info.Name + ", " + info.PlayerCount + " Players";
     }
 
     private static string GetSceneNameByIndex(int buildIndex) {

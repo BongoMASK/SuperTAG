@@ -38,7 +38,6 @@ public class PlayerMovement : MonoBehaviourPunCallbacks {
     private Vector3 playerScale;
     [SerializeField] float slideForce = 400;
     [SerializeField] float slideCounterMovement = 0.2f;
-    [SerializeField] float crouchCamPos = -2;
 
     //[HideInInspector]
     public bool lockInput = false;

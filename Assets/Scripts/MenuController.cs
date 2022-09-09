@@ -12,7 +12,6 @@ public class MenuController : MonoBehaviour
 
     public void OnClickTeamSelect(int whichTeam) {
         if(PlayerInfo.Instance != null) {
-            PlayerInfo.Instance.mySelectedTeam = whichTeam;
             PlayerPrefs.SetInt("MyTeam", whichTeam);
         }
     }

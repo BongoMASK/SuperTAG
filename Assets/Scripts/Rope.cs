@@ -7,7 +7,7 @@ public class Rope : MonoBehaviour
     private LineRenderer lr;
     private Vector2 grappelPoint, mousePos;
     public LayerMask WhatIsGrapplePoint;
-    public Transform guntip, camera, Player;
+    public Transform guntip, cam, Player;
     public float maxDistance = 100f;
     private SpringJoint joint;
 

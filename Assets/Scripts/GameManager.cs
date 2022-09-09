@@ -9,55 +9,68 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using Properties;
 
 public class GameManager : MonoBehaviour
 {
     #region Variables
 
+    //Used for singleton
+    public static GameManager instance;
     public bool gameIsPaused = false;
 
+    [Header("Menu")]
     public GameObject pauseMenu;
-    [SerializeField] GameObject TopScore;
+    [SerializeField] MenuManager menuManager;
 
+    [Header("UI")]
+    // Tagfeed
+    public Transform tagFeedList;
+
+    // Score
+    [SerializeField] GameObject TopScore;
+    [SerializeField] GameObject leaderBoard;
+    public TMP_Text yourScore;
+    public TMP_Text yourName;
+
+    [SerializeField] TMP_Text topScore;
+    [SerializeField] TMP_Text topName;
+
+    [SerializeField] TMP_Text[] score;
+    [SerializeField] TMP_Text[] playerName;
+
+    // Sliders
     [SerializeField] Slider slider;
     [SerializeField] Slider volumeSlider;
     [SerializeField] Slider bloomSlider;
 
-    [SerializeField] GameObject leaderBoard;
-
+    // Text
     [SerializeField] TMP_Text mouseSensText;
     [SerializeField] TMP_Text volumeText;
     [SerializeField] TMP_Text roomNameText;
     [SerializeField] TMP_Text serverHost;
     [SerializeField] TMP_Text ping;
-    public TMP_Text roundText;
-    public TMP_Text coolDownText;
+    [SerializeField] TMP_Text roundText;
+    [SerializeField] TMP_Text coolDownText;
+    [SerializeField] TMP_Text decorButtonText;
 
+    // FPS
     [SerializeField] TMP_Text fpsButtonText;
     [SerializeField] TMP_Text fpsDisplayText;
 
-    [SerializeField] TMP_Text[] score;
-    [SerializeField] TMP_Text[] playerName;
+    //Post Processing
+    [SerializeField] Volume PPvolume;
+    [SerializeField] TMP_Text bloomIteration;
+    [SerializeField] TMP_Text bloomButtonText;
+    Bloom bloomSettings;
 
-    public TMP_Text yourScore;
-    public TMP_Text yourName;
-    
-    [SerializeField] TMP_Text topScore;
-    [SerializeField] TMP_Text topName;
-
-    [SerializeField] TMP_Dropdown dropdown; 
-
-    [SerializeField] MenuManager menuManager;
-    public Transform tagFeedList;
+    // Dropdown
+    [SerializeField] TMP_Dropdown dropdown;
+    [SerializeField] GameObject decorations;
 
     Player[] playerList;
     [HideInInspector]
     public List<Transform> playerObjectList = new List<Transform>();
-
-    [SerializeField] Color32[] teamColour;
-
-    //Used for singleton
-    public static GameManager instance;
 
     public int sensitivity { get; private set; }
     public float volume { get; set; } 
@@ -77,16 +90,7 @@ public class GameManager : MonoBehaviour
     bool fpsCounter = true;
     float currentTime;
 
-    //Post Processing
-    [SerializeField] Volume PPvolume;
-    [SerializeField] TMP_Text bloomIteration;
-    [SerializeField] TMP_Text bloomButtonText;
-    Bloom bloomSettings;
-
-    [SerializeField] GameObject decorations;
-    [SerializeField] TMP_Text decorButtonText;
-
-    private PlayerManager playerManager;
+    public PlayerManager playerManager { get; private set; }
     
     #endregion
 
@@ -174,14 +178,17 @@ public class GameManager : MonoBehaviour
             else 
                 roomNameText.text = SceneManager.GetActiveScene().name;
 
-            coolDownText.text = "Score Cooldown: " + (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] / 5;
-            roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"];
+            coolDownText.text = "Score Cooldown: " + (int)(float)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.maxTime] / 5;
+            roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.roundNumber];
         }
 
         #endregion
 
         if (SceneManager.GetActiveScene().name == "vry gg map")
             Message.message("as the server host, type 'set_impulseBall reloadTime 3' in the console to change aspects of the game.", 10);
+
+        if (SceneManager.GetActiveScene().name == "WinScreen")
+            Invoke("LeaveRoom", 30);
 
         if (!PhotonNetwork.IsMasterClient)
             BugCatcher.instance.Disconnect();
@@ -190,8 +197,10 @@ public class GameManager : MonoBehaviour
         if (!PhotonNetwork.IsMasterClient) {
             Pause();
             menuManager.CloseAllMenus();
-            menuManager.OpenMenu("team");
+            menuManager.OpenMenu(PlayerProps.team);
         }
+
+        GetPlayerManager();
     }
 
     private void Update() {
@@ -270,11 +279,11 @@ public class GameManager : MonoBehaviour
         }
 
         topName.text = topPlayer.NickName;
-        topScore.text = ((int)topPlayer.CustomProperties["score"]).ToString();
-        topName.color = teamColour[(int)topPlayer.CustomProperties["team"]];
-        topScore.color = teamColour[(int)topPlayer.CustomProperties["team"]];
+        topScore.text = ((int)topPlayer.CustomProperties[PlayerProps.score]).ToString();
+        topName.color = PlayerInfo.Instance.teamColours[(int)topPlayer.CustomProperties[PlayerProps.team]];
+        topScore.color = PlayerInfo.Instance.teamColours[(int)topPlayer.CustomProperties[PlayerProps.team]];
 
-        yourScore.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["score"]).ToString();
+        yourScore.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties[PlayerProps.score]).ToString();
 
         TopScore.SetActive(!gameIsPaused);
     }
@@ -283,7 +292,7 @@ public class GameManager : MonoBehaviour
         playerList = PhotonNetwork.PlayerList;
         for (int i = 0; i < playerList.Length; i++) {
             for (int j = i + 1; j < playerList.Length; j++) {
-                if ((int)playerList[i].CustomProperties["score"] < (int)playerList[j].CustomProperties["score"]) {
+                if ((int)playerList[i].CustomProperties[PlayerProps.score] < (int)playerList[j].CustomProperties[PlayerProps.score]) {
                     Player a = playerList[i];
                     playerList[i] = playerList[j];
                     playerList[j] = a;
@@ -292,23 +301,29 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Show PlayerScore when you press tab
     private void DisplayPlayerList() {
         SortPlayersByScore();
-        if (Input.GetKeyDown(otherKeys["scoreboard"].key)) {
+        
+        if(Input.GetKey(otherKeys["scoreboard"].key))
             ping.text = PhotonNetwork.GetPing() + "ms";
+
+        if (Input.GetKeyDown(otherKeys["scoreboard"].key)) {
             leaderBoard.SetActive(true);
             serverHost.gameObject.SetActive(PhotonNetwork.IsMasterClient);
 
-            if ((int)PhotonNetwork.CurrentRoom.CustomProperties["roundNumber"] >= 5) {
+            coolDownText.text = "Score Cooldown: " + (int)(float)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.maxTime] / 5;
+            
+            roundText.text = "Round " + (int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.roundNumber];
+            if ((int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.roundNumber] >= (int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.rounds])
                 roundText.text = "Final Round";
-            }
 
             for (int i = 0; i < playerList.Length; i++) {
                 Player player = playerList[i];
                 playerName[i].text = player.NickName;
-                score[i].text = ((int)player.CustomProperties["score"]).ToString();
-                playerName[i].color = teamColour[(int)player.CustomProperties["team"]];
-                score[i].color = teamColour[(int)player.CustomProperties["team"]];
+                score[i].text = ((int)player.CustomProperties[PlayerProps.score]).ToString();
+                playerName[i].color = PlayerInfo.Instance.teamColours[(int)player.CustomProperties[PlayerProps.team]];
+                score[i].color = PlayerInfo.Instance.teamColours[(int)player.CustomProperties[PlayerProps.team]];
             }
             for (int i = PhotonNetwork.PlayerList.Length; i < 6; i++) {
                 playerName[i].text = "...";
@@ -333,12 +348,11 @@ public class GameManager : MonoBehaviour
     #region Button Functions
 
     public void LeaveRoom() {
-        print("discon");
         Hashtable hash = PhotonNetwork.LocalPlayer.CustomProperties;
-        hash.Remove("score");
-        hash.Add("score", 1);
+        hash.Remove(PlayerProps.score);
+        hash.Add(PlayerProps.score, 1);
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
-        PhotonNetwork.Disconnect();       //need to disconnect the player before we change scenes
+        PhotonNetwork.LeaveRoom();       //need to disconnect the player before we change scenes
         SceneManager.LoadScene(0);
         gameIsPaused = false;
     }

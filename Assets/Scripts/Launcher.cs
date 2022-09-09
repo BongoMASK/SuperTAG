@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
-using UnityEngine.UI;
 using TMPro;
 using Photon.Realtime;
+using Properties;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using UnityEngine.UI;
+using System.Collections;
 
 public class Launcher : MonoBehaviourPunCallbacks
 {
@@ -25,7 +27,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] Transform roomListContent;
     [SerializeField] GameObject roomListItemPrefab;
 
-    //Player variables
+    //Player List variables
     [SerializeField] Transform playerListContent;
     [SerializeField] GameObject playerListItemPrefab;
 
@@ -34,8 +36,9 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     [SerializeField] GameObject roomManager;
 
-    //setting player properties
-    int time = 120;
+    // Room Default Settings
+    float time = 120;       // For game
+    //float time = 20;        // For testing
     int dennerCount = 1;
     int rounds = 5;
     int mapCount = 1;
@@ -51,6 +54,8 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] TMP_Text noRooms;
 
     [SerializeField] TMP_InputField roomNameField;
+
+    [SerializeField] Button startButton;
 
     private List<GameObject> _listings = new List<GameObject>();
 
@@ -77,25 +82,9 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         // Check if current version is latest version
         StartCoroutine(BugCatcher.instance.GetDataFromWebpage(url));
-    }
+    } 
 
     private void Update() {
-        SetLauncherDetails();
-    }
-
-    void SetLauncherDetails() {
-        if (!PhotonNetwork.IsConnectedAndReady)
-            return;
-
-        timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
-        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
-
-        if (PhotonNetwork.CurrentRoom != null && tagCountdownText.isActiveAndEnabled) {
-            roundCountText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["rounds"]).ToString();
-            tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"]).ToString();
-            mapText.text = GetSceneNameByIndex((int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"]);
-        }
-
         playerCount.text = "Players Online: " + PhotonNetwork.CountOfPlayers;
     }
 
@@ -106,7 +95,17 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     #region Photon Functions
-    
+
+    void SetLauncherDetails() {
+        if (PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.maxTime] == null)
+            return;
+        timeText.text = (float)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.maxTime] + "s";
+        dennerCountText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.denner]).ToString();
+        roundCountText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.rounds]).ToString();
+        tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.tagCountdown]).ToString();
+        mapText.text = GetSceneNameByIndex((int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.mapCount]);
+    }
+
     public void JoinRoom(RoomInfo info) {
         PhotonNetwork.JoinRoom(info.Name);
         MenuManager.Instance.OpenMenu("loading");
@@ -128,29 +127,10 @@ public class Launcher : MonoBehaviourPunCallbacks
     // Assigns player custom properties
     void AssignPlayerDetails() {
         Hashtable hash = new Hashtable {
-            { "time", time },
-            { "denner", dennerCount }
+            { PlayerProps.score, 1 },
+            { PlayerProps.team, 2 }
         };
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
-
-        if (PhotonNetwork.IsMasterClient) {
-            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
-        }
-
-        timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
-        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
-
-        Instantiate(roomManager);
-
-        Hashtable hash1 = new Hashtable {
-            { "team", 0 },
-            { "TeamName", "Runner" },
-            { "name", PhotonNetwork.LocalPlayer.NickName },
-            { "score", 1 },
-            { "countdown", false },
-            { "mapCount", mapCount },
-        };
-        PhotonNetwork.LocalPlayer.SetCustomProperties(hash1);
 
         PhotonNetwork.NickName = PlayerPrefs.GetString("playerName", "Player " + Random.Range(0, 1000).ToString("0000"));
         playerNameText.text = PhotonNetwork.NickName;
@@ -200,16 +180,12 @@ public class Launcher : MonoBehaviourPunCallbacks
                 }
             }
         }
-        noRooms.gameObject.SetActive(_listings.Count <= 0);
+        if(noRooms != null)
+            noRooms.gameObject.SetActive(_listings.Count <= 0);
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer) {
         Instantiate(playerListItemPrefab, playerListContent).GetComponent<PlayerListItem>().SetUp(newPlayer);
-    }
-
-    public override void OnLeftRoom() {
-        MenuManager.Instance.OpenMenu("title");
-        print("left room");
     }
 
     public override void OnJoinRoomFailed(short returnCode, string message) {
@@ -238,22 +214,21 @@ public class Launcher : MonoBehaviourPunCallbacks
             Destroy(trans.gameObject);
         }
 
+        StartCoroutine(DontStart());
+
         if (PhotonNetwork.IsMasterClient) {
             Hashtable hash = new Hashtable {
-                { "time", time },
-                { "denner", dennerCount },
-                { "mapCount", mapCount },
-                { "tagCountdown", tagCountdown},
-                { "roundNumber", 1 },
-                { "rounds", 5 },
-                { "hasStarted", false}
+                { RoomProps.maxTime, time },
+                { RoomProps.Time, time },
+                { RoomProps.denner, dennerCount },
+                { RoomProps.mapCount, mapCount },
+                { RoomProps.tagCountdown, tagCountdown},
+                { RoomProps.roundNumber, 1 },
+                { RoomProps.rounds, 5 },
+                { RoomProps.hasStarted, false}
             };
 
             PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
-        }
-
-        if (!PhotonNetwork.IsMasterClient) {
-            mapCount = (int)PhotonNetwork.CurrentRoom.CustomProperties["mapCount"];
         }
 
         MenuManager.Instance.OpenMenu("room");
@@ -261,22 +236,28 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         Player[] players = PhotonNetwork.PlayerList;
 
+        // Destroy all previous player prefabs in playerListContent
         foreach (Transform child in playerListContent) {
             Destroy(child.gameObject);
         }
 
+        // Instantiate new players prefab
         for (int i = 0; i < players.Count(); i++) {
             Instantiate(playerListItemPrefab, playerListContent).GetComponent<PlayerListItem>().SetUp(players[i]);
         }
 
+        // Set Master Client Buttons
         for (int i = 0; i < masterClientButtons.Length; i++) {
             masterClientButtons[i].SetActive(PhotonNetwork.IsMasterClient);
         }
 
-        print("joined room");
+        // Try joining if room has already started
+        //if (PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.hasStarted] != null && (bool)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.hasStarted])
+        //    PhotonNetwork.LoadLevel((int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.mapCount]);
+    }
 
-        //if ((bool)PhotonNetwork.CurrentRoom.CustomProperties["hasStarted"])
-        //    PhotonNetwork.LoadLevel(mapCount);
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged) {
+        SetLauncherDetails();
     }
 
     public override void OnConnectedToMaster() {
@@ -284,7 +265,9 @@ public class Launcher : MonoBehaviourPunCallbacks
         PhotonNetwork.JoinLobby();
         PhotonNetwork.AutomaticallySyncScene = true;
 
+        Instantiate(roomManager);
         AssignPlayerDetails();
+        DiscordUpdate();
     }
 
     public override void OnDisconnected(DisconnectCause cause) {
@@ -304,7 +287,6 @@ public class Launcher : MonoBehaviourPunCallbacks
     #endregion
 
     #region Button Functions
-    [SerializeField] Slider slider;
 
     public void Quit() {
         Application.Quit();
@@ -319,15 +301,10 @@ public class Launcher : MonoBehaviourPunCallbacks
         }
 
         time += increment;
-        timeText.text = (int)PhotonNetwork.LocalPlayer.CustomProperties["time"] + "s";
 
-        Hashtable hash = new Hashtable {
-            { "time", time }
-        };
-
-        foreach (Player player in PhotonNetwork.PlayerList) {
-            player.SetCustomProperties(hash);
-        }
+        Hashtable hash2 = PhotonNetwork.CurrentRoom.CustomProperties;
+        hash2.UpdateHashtable(RoomProps.maxTime, time);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash2);
     }
 
     public void SetDenner(int increment) {
@@ -339,17 +316,10 @@ public class Launcher : MonoBehaviourPunCallbacks
         }
 
         dennerCount += increment;
-        dennerCountText.text = ((int)PhotonNetwork.LocalPlayer.CustomProperties["denner"]).ToString();
 
-        Hashtable hash = new Hashtable {
-            { "denner", dennerCount }
-        };
-
-        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
-
-        foreach (Player player in PhotonNetwork.PlayerList) {
-            player.SetCustomProperties(hash);
-        }
+        Hashtable hash2 = PhotonNetwork.CurrentRoom.CustomProperties;
+        hash2.UpdateHashtable(RoomProps.denner, dennerCount);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash2);
     }
 
     public void SetRounds(int increment) {
@@ -359,15 +329,9 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         rounds += increment;
 
-        Hashtable hash = new Hashtable {
-            { "rounds", rounds }
-        };
-
-        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
-        roundCountText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["rounds"]).ToString();
-
-        foreach (Player player in PhotonNetwork.PlayerList)
-            player.SetCustomProperties(hash);
+        Hashtable hash2 = PhotonNetwork.CurrentRoom.CustomProperties;
+        hash2.UpdateHashtable(RoomProps.rounds, rounds);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash2);
     }
 
     public void SetCountdown(int increment) {
@@ -379,13 +343,10 @@ public class Launcher : MonoBehaviourPunCallbacks
         }
 
         tagCountdown += increment;
-        tagCountdownText.text = ((int)PhotonNetwork.CurrentRoom.CustomProperties["tagCountdown"]).ToString();
 
-        Hashtable hash = new Hashtable {
-            { "tagCountdown", tagCountdown }
-        };
-
-        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        Hashtable hash2 = PhotonNetwork.CurrentRoom.CustomProperties;
+        hash2.UpdateHashtable(RoomProps.tagCountdown, tagCountdown);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash2);
     }
 
     public void ChooseMap(int increment) {
@@ -397,17 +358,10 @@ public class Launcher : MonoBehaviourPunCallbacks
         }
 
         mapCount += increment;
-        mapText.text = GetSceneNameByIndex(mapCount);
 
-        Hashtable hash = new Hashtable {
-            { "mapCount", mapCount }
-        };
-
-        foreach (Player player in PhotonNetwork.PlayerList) {
-            player.SetCustomProperties(hash);
-        }
-
-        PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+        Hashtable hash2 = PhotonNetwork.CurrentRoom.CustomProperties;
+        hash2.UpdateHashtable(RoomProps.mapCount, mapCount);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(hash2);
     }
 
     public void CreatePlayerName() {
@@ -441,9 +395,6 @@ public class Launcher : MonoBehaviourPunCallbacks
     public void LeaveRoom() {
         print("leving room");
         PhotonNetwork.LeaveRoom();
-        Hashtable hash = new Hashtable();
-        hash.Add("score", 1);
-        PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
         MenuManager.Instance.OpenMenu("loading");
     }
 
@@ -454,8 +405,8 @@ public class Launcher : MonoBehaviourPunCallbacks
         PhotonNetwork.LoadLevel(mapCount);
         if (PhotonNetwork.IsMasterClient) {
             Hashtable hash = PhotonNetwork.CurrentRoom.CustomProperties;
-            hash.Remove("hasStarted");
-            hash.Add("hasStarted", true);
+            hash.Remove(RoomProps.hasStarted);
+            hash.Add(RoomProps.hasStarted, true);
             PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
         }
     }
@@ -495,6 +446,23 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     #endregion
+
+    void DiscordUpdate() {
+        // Updating Discord Status
+        string state = "Main Menu";
+        string details = "";
+
+        DiscordManager.instance.state = state;
+        DiscordManager.instance.details = details;
+        DiscordManager.instance.UpdateDiscord();
+    }
+
+    IEnumerator DontStart() {
+        startButton.interactable = false;
+        yield return new WaitForSeconds(5);
+        startButton.interactable = true;
+    }
+
 }
 
 [System.Serializable]

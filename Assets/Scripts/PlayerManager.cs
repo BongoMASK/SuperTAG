@@ -1,12 +1,18 @@
 ﻿using UnityEngine;
 using Photon.Pun;
-using System.Collections;
+using ExitGames.Client.Photon;
+using Photon.Realtime;
+using Properties;
 
-public class PlayerManager : MonoBehaviour
+public class PlayerManager : MonoBehaviourPunCallbacks
 {
     #region Variables
 
     public PhotonView PV { get; private set; }
+
+    [SerializeField] ServerInfoManager serverInfo;
+    [SerializeField] ClientInfoManager clientInfo;
+
     GameObject controller;
 
     [SerializeField] Camera spectatorCam;
@@ -15,11 +21,8 @@ public class PlayerManager : MonoBehaviour
 
     int currentPlayerIndex = 0;
 
-    bool _isSpectating = false;
-
     public bool isSpectator { 
-        get => _isSpectating; 
-        private set => _isSpectating = value;
+        get => controller == null; 
     }
 
     float desiredX;
@@ -56,30 +59,41 @@ public class PlayerManager : MonoBehaviour
         if (!PV.IsMine)
             return;
         
-        isSpectator = false;
-        currentPlayer = null;
-        spectatorCam.gameObject.SetActive(false);
-
-        Vector3 spawnPosition;
-
-        spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
-
-        if (FindObjectOfType<SpawnPoints>() != null) {
-            Transform[] spawnPositions = FindObjectOfType<SpawnPoints>().spawnPoints;
-            for (int i = 0; i < spawnPositions.Length; i++) {
-                spawnPosition = spawnPositions[i].position;
-            }
-        }
-
         if (controller != null)
             return;
 
-        controller = PhotonNetwork.Instantiate(System.IO.Path.Combine("PhotonPrefabs", "PlayerContainer 1"), spawnPosition, Quaternion.identity, 0, new object[] { PV.ViewID });
+        ChangeMyTeam(1);
+        currentPlayer = null;
+        spectatorCam.gameObject.SetActive(false);
+
+        controller = PhotonNetwork.Instantiate(System.IO.Path.Combine("PhotonPrefabs", "PlayerContainer 1"), GetSpawnPosition(), Quaternion.identity, 0, new object[] { PV.ViewID });
     }
 
     public void Die() {
         PhotonNetwork.Destroy(controller);
-        CreateController();
+        CreateSpectator();
+    }
+
+    public void Respawn() {
+        if (controller == null)
+            return;
+        controller.transform.GetChild(0).position = GetSpawnPosition();
+    }
+
+    public void OnFall(Player player) {
+        PV.RPC("RPC_Fall", RpcTarget.MasterClient, player);
+    }
+
+    private Vector3 GetSpawnPosition() {
+        Vector3 spawnPosition;
+        spawnPosition = new Vector3(Random.Range(-50, 50), 0f, Random.Range(-20, 20));
+
+        SpawnPoints[] spawnPositions = FindObjectsOfType<SpawnPoints>();
+
+        if (spawnPositions.Length == 0)
+            return spawnPosition;
+        else
+            return spawnPositions[Random.Range(0, spawnPositions.Length)].transform.position;
     }
 
     #endregion
@@ -93,11 +107,10 @@ public class PlayerManager : MonoBehaviour
         if (controller != null)
             PhotonNetwork.Destroy(controller);
 
-        Hashtable hash = PhotonNetwork.LocalPlayer.CustomProperties;
-
         spectatorCam.gameObject.SetActive(true);
-        isSpectator = true;
         ChangePlayerSpectating(10);
+
+        ChangeMyTeam(2);
     }
 
     void FollowPlayer() {
@@ -155,8 +168,54 @@ public class PlayerManager : MonoBehaviour
         if (Input.GetKeyDown(GameManager.instance.otherKeys["fire"].key))
             ChangePlayerSpectating(currentPlayerIndex + 1);
     }
-    
+
     #endregion
 
-    // TODO: Handle player networking, Team Setup, etc on Player Manager
+    #region RPCs
+
+    /// <summary>
+    /// Called on MasterClient when player falls down
+    /// </summary>
+    /// <param name="player"></param>
+    [PunRPC]
+    void RPC_Fall(Player player) {
+        serverInfo.PlayerFallDownScore(player);
+    }
+
+    /// <summary>
+    /// Called on Specific player by MasterClient to show score going down
+    /// </summary>
+    /// <param name="score"></param>
+    [PunRPC]
+    void RPC_ScoreAdder(int score) {
+        clientInfo.AddScore(score);
+    }
+    // TODO: Do it with onPlayerPropsChange()
+
+    [PunRPC]
+    void RPC_StartNewRound() {
+        Respawn();
+    }
+
+    /// <summary>
+    /// Changes team of player. Only called on master client
+    /// </summary>
+    /// <param name="viewID"></param>
+    /// <param name=PlayerProps.team></param>
+    [PunRPC]
+    void RPC_SwitchPlayerTeam(int viewID, int team) {
+        Hashtable hash = new Hashtable {
+            { PlayerProps.team, team }
+        };
+        PhotonView.Find(viewID).Owner.SetCustomProperties(hash);
+    }
+
+    #endregion
+
+    private void ChangeMyTeam(int team) {
+        Hashtable hash = new Hashtable {
+            { PlayerProps.team, team }
+        };
+        PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
+    }
 }

@@ -9,8 +9,6 @@ public class Chatting : MonoBehaviourPunCallbacks {
     [SerializeField] TMP_InputField chatBox;
     [SerializeField] PlayerMovement playerMovement;
 
-    [SerializeField] int maxChats = 5;
-
     bool isChatting = false;
 
     private void Start() {

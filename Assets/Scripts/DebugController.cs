@@ -17,7 +17,7 @@ public class DebugController : MonoBehaviour
     public static DebugCommand<int> set_time;
     public static DebugCommand<int> set_refill;
     public static DebugCommand<int> set_maxRounds;
-    public static DebugCommand<float> set_game_time;
+    public static DebugCommand<int> set_game_time;
     public static DebugCommand time_pause;
     public static DebugCommand restart_round;
     public static DebugCommand restart_game;
@@ -56,15 +56,15 @@ public class DebugController : MonoBehaviour
         });
 
         set_room = new DebugCommand<string, int>("set_room", "Sets values of room", "set_room <variable name, value>", (b, a) => {
-            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
-            foreach (TeamSetup player in players) {
+            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
+            foreach (ServerInfoManager player in players) {
                 player.ChangeRoomSettings(b, a);
             }
         });
 
         set_time = new DebugCommand<int>("set_time", "Changes time of game", "set_time <value>", (a) => {
-            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
-            foreach (TeamSetup player in players) {
+            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
+            foreach (ServerInfoManager player in players) {
                 player.ChangeTime(a);
             }
         });
@@ -77,44 +77,44 @@ public class DebugController : MonoBehaviour
         });
 
         set_maxRounds = new DebugCommand<int>("set_maxRounds", "Changes max rounds of game", "set_maxRounds <value>", (a) => {
-            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
-            foreach (TeamSetup player in players) {
+            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
+            foreach (ServerInfoManager player in players) {
                 player.ChangeMaxRounds(a);
             }
         });
 
-        set_game_time = new DebugCommand<float>("set_game_time", "Sets values of player", "set_game_time <value>", (a) => {
-            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
-            foreach (TeamSetup player in players) {
+        set_game_time = new DebugCommand<int>("set_game_time", "Sets values of player", "set_game_time <value>", (a) => {
+            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
+            foreach (ServerInfoManager player in players) {
                 player.ChangeGameTime(a);
             }
         });
 
         set_points = new DebugCommand<string, int>("set_points", "Sets points of game", "set_points <value>", (b, a) => {
             Debug.Log("Changed point " + b + " to " + a);
-            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
-            foreach (TeamSetup player in players) {
+            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
+            foreach (ServerInfoManager player in players) {
                 player.ChangeScoreValues(b, a);
             }
         });
 
         time_pause = new DebugCommand("time_pause", "Sets values of player", "time_pause <value>", () => {
-            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
-            foreach (TeamSetup player in players) {
+            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
+            foreach (ServerInfoManager player in players) {
                 player.PauseMatch();
             }
         });
 
         restart_round = new DebugCommand("restart_round", "Sets values of player", "restart_round", () => {
-            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
-            foreach (TeamSetup player in players) {
+            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
+            foreach (ServerInfoManager player in players) {
                 player.RestartRound();
             }
         });
 
         restart_game = new DebugCommand("restart_game", "Sets values of player", "restart_game", () => {
-            TeamSetup[] players = FindObjectsOfType<TeamSetup>();
-            foreach (TeamSetup player in players) {
+            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
+            foreach (ServerInfoManager player in players) {
                 player.RestartGame();
             }
         });
@@ -156,12 +156,12 @@ public class DebugController : MonoBehaviour
         // TODO: make enter work while inside textbox
         // TODO: add a helper tool to autoComplete
 
-        if (Input.GetKeyDown(KeyCode.Return)) {
-            if (showConsole) {
-                HandleInput();
-                input = "";
-            }
-        }
+        //if (Input.GetKeyDown(KeyCode.Return)) {
+        //    if (showConsole) {
+        //        HandleInput();
+        //        input = "";
+        //    }
+        //}
     }
 
     void HandleInput() {
@@ -172,12 +172,15 @@ public class DebugController : MonoBehaviour
             if (input.Contains(commandbase.commandId)) {
                 if (commandList[i] as DebugCommand != null) {
                     (commandList[i] as DebugCommand).Invoke();
+                    return;
                 }
                 else if(commandList[i] as DebugCommand<int> != null) {
                     (commandList[i] as DebugCommand<int>).Invoke(int.Parse(properties[properties.Length - 1]));
+                    return;
                 }
                 else if(commandList[i] as DebugCommand<string, int> != null) {
                     (commandList[i] as DebugCommand<string, int>).Invoke(properties[properties.Length - 2], int.Parse(properties[properties.Length - 1]));
+                    return;
                 }
                 goto l;
             }

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AppSettings:
     AppIdRealtime: b502e169-f8ba-4f4b-acd6-375c0e3ddf20
+    AppIdFusion: 
     AppIdChat: 
     AppIdVoice: 
     AppVersion: 
@@ -32,7 +33,28 @@ MonoBehaviour:
   EnableSupportLogger: 0
   RunInBackground: 1
   StartInOfflineMode: 0
-  RpcList: []
+  RpcList:
+  - AddScore
+  - ChangeScoreValuesOnAll
+  - ClickRpc
+  - DestroyRpc
+  - ResetCountdown
+  - RPC_ChangeRefillTime
+  - RPC_ChangeValues
+  - RPC_ChangeValuesOnAll
+  - RPC_Fall
+  - RPC_GetMaxTime
+  - RPC_GetSound
+  - RPC_PauseSound
+  - RPC_PlaySound
+  - RPC_ScoreAdder
+  - RPC_SpawnProjectile
+  - RPC_StartNewRound
+  - RPC_StartRefill
+  - RPC_SwitchPlayerTeam
+  - ScoreAdder
+  - SendChatToAll
+  - SpawnTagFeed
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

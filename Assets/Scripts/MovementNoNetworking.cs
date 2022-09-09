@@ -36,7 +36,6 @@ public class MovementNoNetworking : MonoBehaviour {
     private Vector3 playerScale;
     [SerializeField] float slideForce = 400;
     [SerializeField] float slideCounterMovement = 0.2f;
-    [SerializeField] float crouchCamPos = -2;
     [SerializeField] MoveCamera moveCamera;
 
     //jumping
@@ -54,7 +53,7 @@ public class MovementNoNetworking : MonoBehaviour {
     //Input
     protected struct UserInput {
         public int x, y;
-        public bool jumping, sprinting, slide, crouching;
+        public bool jumping, sprinting, slide;
         public bool pressed;
 
         public bool IsPressed() {
@@ -130,8 +129,6 @@ public class MovementNoNetworking : MonoBehaviour {
     float currentYPos;
 
     void Sounds() {
-        if (userInput.crouching)
-            return;
 
         //slide
         if (userInput.slide && !userInput.jumping && grounded) {
@@ -203,7 +200,6 @@ public class MovementNoNetworking : MonoBehaviour {
 
         userInput.jumping = Input.GetKey(GameManager.instance.movementKeys["jump"].key);
         userInput.slide = Input.GetKey(GameManager.instance.movementKeys["slide"].key);
-        userInput.crouching = Input.GetKey(GameManager.instance.movementKeys["crouch"].key);
 
         if (Input.GetKeyDown(GameManager.instance.otherKeys["console"].key)) {
             DebugController.showConsole = !DebugController.showConsole;
@@ -217,15 +213,6 @@ public class MovementNoNetworking : MonoBehaviour {
                 StartCrouch();
             if (Input.GetKeyUp(GameManager.instance.movementKeys["slide"].key))
                 StopCrouch();
-        }
-
-        if (Input.GetKeyDown(GameManager.instance.movementKeys["crouch"].key)) {
-            ChangePlayerHeight(crouchScale);
-            maxSpeed = 5;
-        }
-        if (Input.GetKeyUp(GameManager.instance.movementKeys["crouch"].key)) {
-            ChangePlayerHeight(playerScale);
-            maxSpeed = 20;
         }
 
         if (gooped) {

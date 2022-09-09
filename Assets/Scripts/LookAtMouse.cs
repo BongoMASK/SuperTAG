@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class LookAtMouse : MonoBehaviour
 {
-    [SerializeField] Transform camera;
+    [SerializeField] Transform cam;
 
     void Update()
     {
         Vector3 mousePos = Input.mousePosition;
         Debug.Log(mousePos);
-        mousePos.z = camera.transform.position.z;
+        mousePos.z = cam.transform.position.z;
         transform.LookAt(mousePos);
     }
 }
