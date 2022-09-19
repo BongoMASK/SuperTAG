@@ -31,12 +31,10 @@ public class BugCatcher : MonoBehaviourPunCallbacks
     public void Disconnect() {
         if (roomName == PhotonNetwork.CurrentRoom.Name) {
             roomName = null;
-            Debug.Log("not disconnecting");
             return;
         }
 
         roomName = PhotonNetwork.CurrentRoom.Name;
-        Debug.Log("disconnected");
         PhotonNetwork.Disconnect();
         SceneManager.LoadScene(0);
     }

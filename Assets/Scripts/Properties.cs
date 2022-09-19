@@ -15,6 +15,7 @@ namespace Properties {
         public static string score = "score";
         public static string team = "team";
         public static string itemIndex = "itemIndex";
+        public static string canTag = "canTag";
     }
 }
 

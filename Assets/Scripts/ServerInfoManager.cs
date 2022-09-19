@@ -26,9 +26,7 @@ public class ServerInfoManager : MonoBehaviourPunCallbacks
 
     private float time;
 
-    private bool isWaiting { 
-        get => GameManager.instance.playerObjectList.Count <= 1;
-    }
+    private bool isWaiting { get => GameManager.instance.playerObjectList.Count <= 1; }
     private bool isPaused = false;
     float checkForDennerCountdown = 10f;
 
@@ -84,6 +82,9 @@ public class ServerInfoManager : MonoBehaviourPunCallbacks
         PV.RPC("RPC_ScoreAdder", player, score);
     }
 
+    /// <summary>
+    /// Gives score to players every scoreCountdown seconds
+    /// </summary>
     void GiveScoreOnCountdown() {
         if (isPaused || isWaiting || time < -1) {
             countDownMin = (int)(float)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.maxTime] - scoreCountDown;
@@ -110,9 +111,9 @@ public class ServerInfoManager : MonoBehaviourPunCallbacks
     /// Syncs time to server
     /// </summary>
     void SetTime() {
-        // Dont update time, if paused or waiting
         time -= Time.deltaTime;
 
+        // Dont update time, if paused or waiting
         if (isWaiting || isPaused)
             time = (float)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.maxTime];
 
@@ -369,7 +370,6 @@ public class ServerInfoManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient)
             return;
         isPaused = !isPaused;
-        //Message.messageToAll("match paused", PV, RpcTarget.All);
     }
 
     public void RestartRound() {

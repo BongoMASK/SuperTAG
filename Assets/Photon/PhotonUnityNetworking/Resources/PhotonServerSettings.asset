@@ -17,7 +17,7 @@ MonoBehaviour:
     AppIdFusion: 
     AppIdChat: 
     AppIdVoice: 
-    AppVersion: 
+    AppVersion: 0.9
     UseNameServer: 1
     FixedRegion: in
     Server: 
@@ -55,6 +55,11 @@ MonoBehaviour:
   - ScoreAdder
   - SendChatToAll
   - SpawnTagFeed
+  - ChangeMyTeam
+  - HandleCollision
+  - RPC_HandleCollision
+  - RPC_HandleTag
+  - RPC_ForceSpectator
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

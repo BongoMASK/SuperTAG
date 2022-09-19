@@ -24,4 +24,6 @@ public class PlayerInfo : MonoBehaviour
     }
 }
 
-// Set team colours in playerInfo
+// 0 - Runner
+// 1 - Denner
+// 2 - Spectator

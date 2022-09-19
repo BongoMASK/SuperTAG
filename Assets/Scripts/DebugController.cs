@@ -56,15 +56,15 @@ public class DebugController : MonoBehaviour
         });
 
         set_room = new DebugCommand<string, int>("set_room", "Sets values of room", "set_room <variable name, value>", (b, a) => {
-            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
-            foreach (ServerInfoManager player in players) {
+            GameMode[] players = FindObjectsOfType<GameMode>();
+            foreach (GameMode player in players) {
                 player.ChangeRoomSettings(b, a);
             }
         });
 
         set_time = new DebugCommand<int>("set_time", "Changes time of game", "set_time <value>", (a) => {
-            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
-            foreach (ServerInfoManager player in players) {
+            GameMode[] players = FindObjectsOfType<GameMode>();
+            foreach (GameMode player in players) {
                 player.ChangeTime(a);
             }
         });
@@ -84,8 +84,8 @@ public class DebugController : MonoBehaviour
         });
 
         set_game_time = new DebugCommand<int>("set_game_time", "Sets values of player", "set_game_time <value>", (a) => {
-            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
-            foreach (ServerInfoManager player in players) {
+            GameMode[] players = FindObjectsOfType<GameMode>();
+            foreach (GameMode player in players) {
                 player.ChangeGameTime(a);
             }
         });
@@ -99,22 +99,22 @@ public class DebugController : MonoBehaviour
         });
 
         time_pause = new DebugCommand("time_pause", "Sets values of player", "time_pause <value>", () => {
-            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
-            foreach (ServerInfoManager player in players) {
+            GameMode[] players = FindObjectsOfType<GameMode>();
+            foreach (GameMode player in players) {
                 player.PauseMatch();
             }
         });
 
         restart_round = new DebugCommand("restart_round", "Sets values of player", "restart_round", () => {
-            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
-            foreach (ServerInfoManager player in players) {
+            GameMode[] players = FindObjectsOfType<GameMode>();
+            foreach (GameMode player in players) {
                 player.RestartRound();
             }
         });
 
         restart_game = new DebugCommand("restart_game", "Sets values of player", "restart_game", () => {
-            ServerInfoManager[] players = FindObjectsOfType<ServerInfoManager>();
-            foreach (ServerInfoManager player in players) {
+            GameMode[] players = FindObjectsOfType<GameMode>();
+            foreach (GameMode player in players) {
                 player.RestartGame();
             }
         });

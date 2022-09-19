@@ -23,9 +23,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
     [SerializeField] GameObject tagFeed;
     
     [Header("Text")]
-    [SerializeField] TMP_Text InfoText;
     [SerializeField] TMP_Text playerNameText;
-    [SerializeField] TMP_Text[] colourTexts;
 
     [Header("Other")]
     [SerializeField] Item[] items;
@@ -40,7 +38,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
     int countdownStart {
         get => (int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.tagCountdown];
     }
-    bool isTaggable = true;
+    bool canTag = true;
 
     #endregion
 
@@ -66,7 +64,7 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
 
         ChangeColour();
 
-        SendFeedToAll(PhotonNetwork.LocalPlayer, null, "joined the game");
+        SendFeedToAll(PhotonNetwork.LocalPlayer, null, "joined as Player");
     }
 
     void Update() {
@@ -248,26 +246,14 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
     }
 
     IEnumerator TeamsChanged() {
-        isTaggable = false;
-        rend.sharedMaterial = PlayerInfo.Instance.teamMaterials[(int)PV.Owner.CustomProperties[PlayerProps.team]];
+        canTag = false;
         AudioManager.instance.Play("TagSound");
             
         ChangeColour();
 
-        string denrun = "Chase after other Runners to Tag them";
-        if ((int)PV.Owner.CustomProperties[PlayerProps.team] == 0)
-            denrun = "Run from the Denner for as long as possible";
-
-        if (InfoText != null) {
-            InfoText.gameObject.SetActive(true);
-            string team = PlayerInfo.Instance.allTeams[(int)PhotonNetwork.LocalPlayer.CustomProperties[PlayerProps.team]];
-            InfoText.text = "You are now the " + team + "\n" + denrun + "\nTag Cooldown: " + countdownStart;
-        }
-
         yield return new WaitForSeconds(countdownStart);
 
-        InfoText.gameObject.SetActive(false);
-        isTaggable = true;
+        canTag = true;
     }
 
     void TagOtherPlayer(Collider other, int team1, int team2) {
@@ -275,13 +261,12 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
         if ((int)PV.Owner.CustomProperties[PlayerProps.team] == team1) {
             if ((int)PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner.CustomProperties[PlayerProps.team] == team2) {
                 // calling function to master client because only the master client can change the custom properties of other players
+                canTag = false;
 
                 PhotonView PV = GameManager.instance.playerManager.PV;
 
                 PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, other.gameObject.GetComponent<PhotonView>().ViewID, team1);
                 PV.RPC("RPC_SwitchPlayerTeam", RpcTarget.MasterClient, PV.ViewID, team2);
-
-                isTaggable = false;
 
                 SendFeedToAll(PhotonNetwork.LocalPlayer, PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner);
             }
@@ -300,9 +285,6 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
 
     //changes colour of texts as per team / den
     void ChangeColour() {
-        for (int i = 0; i < colourTexts.Length; i++)
-            colourTexts[i].color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
-
         GameManager.instance.yourName.color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
         GameManager.instance.yourScore.color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
     }
@@ -310,15 +292,6 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
     #endregion
 
     #region Remote Procedure Callbacks
-
-    [PunRPC]
-    void RPC_SwitchPlayerTeam(int viewID, int team) {
-        Hashtable hash = new Hashtable {
-            { PlayerProps.team, team }
-        };
-
-        PhotonView.Find(viewID).Owner.SetCustomProperties(hash);
-    }
 
     [PunRPC]
     void SpawnTagFeed(Player player1, Player player2 = null, string text = "") {
@@ -339,13 +312,30 @@ public class PlayerNetworking : MonoBehaviourPunCallbacks, AmmoInterface {
             return;
 
         // Tagging
-        if (other.gameObject.CompareTag("Player") && isTaggable) {
-            TagOtherPlayer(other, 1, 0);
-        }
+        //if (other.gameObject.CompareTag("Player") && canTag) {
+        //    TagOtherPlayer(other, 1, 0);
+        //    // Call OnTag   Function
+        //}
 
         // Ammo Pickup
         if (other.gameObject.CompareTag("Ammo")) {
             GetAmmo(other.GetComponent<AmmoPickUp>());
+
+            //PhotonView p = GameManager.instance.playerManager.PV;
+
+            //int viewID = other.gameObject.GetComponent<PhotonView>().ViewID;
+            //// p.RPC("RPC_HandleCollision", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, other.gameObject);
+            // p.RPC("RPC_HandleCollision", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, viewID);
+        }
+
+        //GameModeManager.gameMode.OnTriggerCollision(other, this);
+
+        if (other.gameObject.CompareTag("Player")) {
+            PhotonView p = GameManager.instance.playerManager.PV;
+            Player otherPlayer = PhotonView.Find(other.gameObject.GetComponent<PhotonView>().ViewID).Owner;
+
+            // Calls tagging on the master client
+            p.RPC("RPC_HandleTag", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer, otherPlayer);
         }
     }
 }

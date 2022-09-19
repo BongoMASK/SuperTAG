@@ -3,6 +3,7 @@ using Photon.Pun;
 using ExitGames.Client.Photon;
 using Photon.Realtime;
 using Properties;
+using TMPro;
 
 public class PlayerManager : MonoBehaviourPunCallbacks
 {
@@ -12,6 +13,7 @@ public class PlayerManager : MonoBehaviourPunCallbacks
 
     [SerializeField] ServerInfoManager serverInfo;
     [SerializeField] ClientInfoManager clientInfo;
+    [SerializeField] GameObject tagFeed;
 
     GameObject controller;
 
@@ -35,12 +37,15 @@ public class PlayerManager : MonoBehaviourPunCallbacks
     }
 
     private void Start() {
-        if (PV.IsMine) {
-            if (PhotonNetwork.IsMasterClient)
-                CreateController();
+        if (!PV.IsMine) {
+            Destroy(spectatorCam.gameObject);
             return;
         }
-        Destroy(spectatorCam.gameObject);
+
+        if (PhotonNetwork.IsMasterClient)
+            CreateController();
+        else
+            SendFeedToAll(PhotonNetwork.LocalPlayer, null, "joined as Spectator");
     }
 
     private void LateUpdate() {
@@ -107,7 +112,8 @@ public class PlayerManager : MonoBehaviourPunCallbacks
         if (controller != null)
             PhotonNetwork.Destroy(controller);
 
-        spectatorCam.gameObject.SetActive(true);
+        if (spectatorCam != null)
+            spectatorCam.gameObject.SetActive(true);
         ChangePlayerSpectating(10);
 
         ChangeMyTeam(2);
@@ -179,7 +185,7 @@ public class PlayerManager : MonoBehaviourPunCallbacks
     /// <param name="player"></param>
     [PunRPC]
     void RPC_Fall(Player player) {
-        serverInfo.PlayerFallDownScore(player);
+        GameModeManager.gameMode.PlayerFallDownScore(player);
     }
 
     /// <summary>
@@ -190,7 +196,6 @@ public class PlayerManager : MonoBehaviourPunCallbacks
     void RPC_ScoreAdder(int score) {
         clientInfo.AddScore(score);
     }
-    // TODO: Do it with onPlayerPropsChange()
 
     [PunRPC]
     void RPC_StartNewRound() {
@@ -210,12 +215,107 @@ public class PlayerManager : MonoBehaviourPunCallbacks
         PhotonView.Find(viewID).Owner.SetCustomProperties(hash);
     }
 
+    /// <summary>
+    /// Spawns tag feed on client
+    /// </summary>
+    /// <param name="player1"></param>
+    /// <param name="player2"></param>
+    /// <param name="text"></param>
+    [PunRPC]
+    void SpawnTagFeed(Player player1, Player player2 = null, string text = "") {
+        DisplayTagFeed(player1, player2, text);
+    }
+
+    [PunRPC]
+    void RPC_HandleTag(Player p1, Player p2) {
+        GameModeManager.gameMode.HandleTag(p1, p2);
+    }
+
+    [PunRPC]
+    void RPC_HandleCollision(Player p1, GameObject other) {
+        GameModeManager.gameMode.HandleCollision(p1, other);
+    }
+
+    [PunRPC]
+    void RPC_ForceSpectator() {
+
+        CreateSpectator();
+    }
+
     #endregion
 
+    #region Photon Overrides
+
+    // Calls "Player is connecting"
+    public override void OnPlayerEnteredRoom(Player newPlayer) {
+        if (!PV.IsMine) return;
+
+        SpawnTagFeed(newPlayer, null, "is connecting");
+    }
+
+    // Calls "Player has disconnected"
+    public override void OnPlayerLeftRoom(Player player) {
+        if (!PV.IsMine) return;
+
+        SpawnTagFeed(player, null, "has disconnected");
+    }
+
+    // Calls "Player is new Server Host"
+    public override void OnMasterClientSwitched(Player newMasterClient) {
+        if (!PV.IsMine) return;
+
+        SpawnTagFeed(newMasterClient, null, "is the new Server Host");
+    }
+
+    #endregion
+
+    #region Player Functions
+
+    /// <summary>
+    /// Spawns tag feed for client
+    /// </summary>
+    /// <param name="player1"></param>
+    /// <param name="player2"></param>
+    /// <param name="text"></param>
+    void DisplayTagFeed(Player player1, Player player2 = null, string text = "") {
+        GameObject t = Instantiate(tagFeed);
+
+        t.transform.SetParent(GameManager.instance.tagFeedList);
+        if (GameManager.instance.tagFeedList.childCount > 4) {
+            Destroy(GameManager.instance.tagFeedList.GetChild(0).gameObject);
+        }
+
+        Destroy(t, 10f);
+        if (player2 == null) {
+            t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " <#FFF>" + text;
+            return;
+        }
+        t.GetComponentInChildren<TMP_Text>().text = player1.NickName + " <#FFF>tagged<#FF0000> " + player2.NickName;
+    }
+
+    /// <summary>
+    /// Spawns tag feed across all clients
+    /// </summary>
+    /// <param name="player1"></param>
+    /// <param name="player2"></param>
+    /// <param name="text"></param>
+    void SendFeedToAll(Player player1, Player player2 = null, string text = "") {
+        PV.RPC("SpawnTagFeed", RpcTarget.All, player1, player2, text);
+    }
+
+    /// <summary>
+    /// Changes player team
+    /// </summary>
+    /// <param name="team"></param>
     private void ChangeMyTeam(int team) {
         Hashtable hash = new Hashtable {
             { PlayerProps.team, team }
         };
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
     }
+    
+    #endregion
 }
+
+// TODO: Make Tag Feed only accessible through Player Manager
+// TODO: Make isTaggable Player CustomProperty

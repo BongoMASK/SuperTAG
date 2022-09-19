@@ -128,7 +128,9 @@ public class Launcher : MonoBehaviourPunCallbacks
     void AssignPlayerDetails() {
         Hashtable hash = new Hashtable {
             { PlayerProps.score, 1 },
-            { PlayerProps.team, 2 }
+            { PlayerProps.team, 2 },
+            { PlayerProps.canTag, true },
+            { PlayerProps.itemIndex, 0 }
         };
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
 
@@ -280,7 +282,6 @@ public class Launcher : MonoBehaviourPunCallbacks
         if (!string.IsNullOrEmpty(BugCatcher.instance.roomName)) {
             MenuManager.Instance.OpenMenu("loading");
             PhotonNetwork.JoinRoom(BugCatcher.instance.roomName);
-            print("Joining game");
         }
     }
 

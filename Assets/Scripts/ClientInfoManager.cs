@@ -1,12 +1,13 @@
-using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using Properties;
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class ClientInfoManager : MonoBehaviourPunCallbacks
 {
@@ -24,6 +25,7 @@ public class ClientInfoManager : MonoBehaviourPunCallbacks
     [SerializeField] TMP_Text isDennerText;
     [SerializeField] TMP_Text TimeText;
     [SerializeField] TMP_Text WinText;
+    [SerializeField] TMP_Text InfoText;
 
     private int scoreParam = 1;
     private float time;
@@ -32,9 +34,10 @@ public class ClientInfoManager : MonoBehaviourPunCallbacks
         get => (int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.roundNumber];
     }
 
-    public bool isWaiting {
-        get => GameManager.instance.playerObjectList.Count <= 1;
-    }
+    private bool canTag { get => (bool)PhotonNetwork.LocalPlayer.CustomProperties[PlayerProps.canTag]; }
+
+    int countdownStart { get => (int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.tagCountdown]; }
+    public bool isWaiting { get => GameManager.instance.playerObjectList.Count <= 1; }
 
     bool winCheck = false;
 
@@ -59,6 +62,8 @@ public class ClientInfoManager : MonoBehaviourPunCallbacks
             return;
 
         GameLogicLoop();
+        if (InfoText != null)
+            InfoText.gameObject.SetActive(!canTag);
     }
 
     #region Time Functions
@@ -153,17 +158,6 @@ public class ClientInfoManager : MonoBehaviourPunCallbacks
 
     #region Client Functions
 
-    /// <summary>
-    /// Changes UI colour as per team
-    /// </summary>
-    void ChangeTextColour() {
-        isDennerText.text = PlayerInfo.Instance.allTeams[(int)PV.Owner.CustomProperties[PlayerProps.team]];
-
-        isDennerText.color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
-        TimeText.color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
-        WinText.color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
-    }
-
     public void AddScore(int adder) {
         string add = "+";
         if (adder < 0)
@@ -177,6 +171,44 @@ public class ClientInfoManager : MonoBehaviourPunCallbacks
         Destroy(s, 1f);
     }
 
+    /// <summary>
+    /// Changes UI colour as per team
+    /// </summary>
+    void ChangeTextColour() {
+        isDennerText.text = PlayerInfo.Instance.allTeams[(int)PV.Owner.CustomProperties[PlayerProps.team]];
+
+        Color color = PlayerInfo.Instance.teamColours[(int)PV.Owner.CustomProperties[PlayerProps.team]];
+        isDennerText.color = color;
+        TimeText.color = color;
+        WinText.color = color;
+        InfoText.color = color;
+
+        GameManager.instance.yourName.color = color;
+        GameManager.instance.yourScore.color = color;
+    }
+
+    void ChangeOnTeamsChange() {
+        StartCoroutine(TeamsChanged());
+    }
+
+    IEnumerator TeamsChanged() {
+        //AudioManager.instance.Play("TagSound");
+
+        string denrun = "Chase after other Runners to Tag them";
+        if ((int)PV.Owner.CustomProperties[PlayerProps.team] == 0)
+            denrun = "Run from the Denner for as long as possible";
+
+        if (InfoText != null) {
+            InfoText.gameObject.SetActive(true);
+            string team = PlayerInfo.Instance.allTeams[(int)PhotonNetwork.LocalPlayer.CustomProperties[PlayerProps.team]];
+            InfoText.text = "You are now the " + team + "\n" + denrun + "\nTag Cooldown: " + countdownStart;
+        }
+
+        yield return new WaitForSeconds(countdownStart);
+
+        InfoText.gameObject.SetActive(false);
+    }
+
     #endregion
 
     #region Photon Overrides
@@ -187,15 +219,18 @@ public class ClientInfoManager : MonoBehaviourPunCallbacks
 
         // Updates discord whenever there is a change in player properties
         if (targetPlayer == PhotonNetwork.LocalPlayer) {
-            DiscordUpdate();
-            
             // Change PlayerManager UI text colour
-            if (changedProps.ContainsKey(PlayerProps.team))
+            if (changedProps.ContainsKey(PlayerProps.team)) {
+                ChangeOnTeamsChange();
                 ChangeTextColour();
+            }
+
+            DiscordUpdate();
         }
     }
 
     #endregion
+
 
     /// <summary>
     /// Function for actually doing the DiscordUpdate
@@ -250,4 +285,16 @@ public class ClientInfoManager : MonoBehaviourPunCallbacks
 
         return max;
     }
+
+    /// <summary>
+    /// Changes player team
+    /// </summary>
+    /// <param name="team"></param>
+    private void ChangeMyTeam(int team) {
+        Hashtable hash = new Hashtable {
+            { PlayerProps.team, team }
+        };
+        PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
+    }
+
 }

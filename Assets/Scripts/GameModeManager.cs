@@ -8,9 +8,11 @@ public class GameModeManager : MonoBehaviour
 
     public static GameMode gameMode;
 
-    public bool isRoundOver = true;
-
     private void Awake() {
-        gameMode = gameModes[(int)PhotonNetwork.CurrentRoom.CustomProperties[RoomProps.mapCount]];
+        //foreach (GameMode gameMode in gameModes) {
+        //    gameMode.enabled = false;
+        //}
+        gameMode = gameModes[0];
+        gameMode.enabled = true;
     }
 }
