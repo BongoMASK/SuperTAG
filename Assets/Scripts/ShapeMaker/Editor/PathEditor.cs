@@ -40,7 +40,7 @@ public class PathEditor : Editor {
 
         Handles.color = Color.red;
         for (int i = 0; i < path.NumPoints; i++) {
-            Vector2 newPos = Handles.FreeMoveHandle(path[i], Quaternion.identity, .1f, Vector2.zero, Handles.CylinderHandleCap);
+            var fmh_43_62_638799161353190846 = Quaternion.identity; Vector2 newPos = Handles.FreeMoveHandle(path[i], .1f, Vector2.zero, Handles.CylinderHandleCap);
             if (path[i] != newPos) {
                 Undo.RecordObject(creator, "Move point");
                 path.MovePoint(i, newPos);
